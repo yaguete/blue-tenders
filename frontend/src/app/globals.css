@@ -45,6 +45,9 @@
   --color-status-urgent: var(--status-urgent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-wash: var(--accent-wash);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-pale: var(--brand-pale);
+  --color-deadline-urgent: var(--deadline-urgent-text);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -85,6 +88,9 @@
   --status-urgent: oklch(0.52 0.16 25);
   --accent-ink: oklch(0.42 0.06 200);
   --accent-wash: oklch(0.95 0.02 200);
+  --brand-blue: #0A50D4;
+  --brand-pale: #EEF6FE;
+  --deadline-urgent-text: #C8241A;
   --background: oklch(0.985 0.004 230);
   --foreground: oklch(0.22 0.02 250);
   --sidebar: oklch(0.985 0 0);
@@ -135,6 +141,9 @@
   --status-urgent: oklch(0.72 0.14 25);
   --accent-ink: oklch(0.75 0.06 200);
   --accent-wash: oklch(0.26 0.03 200);
+  --brand-blue: #5B8CFF;
+  --brand-pale: oklch(0.22 0.04 255);
+  --deadline-urgent-text: #FF6B5A;
 }
 
 @layer base {

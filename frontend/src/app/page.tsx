@@ -1,23 +1,36 @@
 "use client";
 
-import Link from "next/link";
-import { clearCompare } from "@/lib/compare";
+import { CtaBand } from "@/components/landing/cta-band";
+import { ClosingList } from "@/components/landing/closing-list";
+import { landingFont } from "@/components/landing/fonts";
+import { Hero } from "@/components/landing/hero";
+import { HowItWorks } from "@/components/landing/how-it-works";
+import { Sectors } from "@/components/landing/sectors";
+import { StatsStrip } from "@/components/landing/stats-strip";
+import { useLandingData } from "@/components/landing/use-landing-data";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
+  const { stats, calls, vertical, sectorCounts } = useLandingData();
+  const showSectors = vertical.status === "ready";
+  const numbered = ["closing", ...(showSectors ? ["sectors"] : []), "how"];
+  const sectionNumber = (id: string) => numbered.indexOf(id) + 1;
+
   return (
-    <div className="max-w-xl space-y-6">
-      <h1 className="text-4xl font-semibold tracking-tight">Find the call. See who has done it before.</h1>
-      <p className="text-muted-foreground">
-        Grants, public tenders and a short list of funders, classified for offshore wind, ocean energy,
-        ports, fleets and subsea cables. Figures on a page point at the official text.
-      </p>
-      <Link
-        href="/search"
-        onClick={() => clearCompare()}
-        className="inline-flex h-10 items-center bg-primary px-4 text-sm text-primary-foreground"
-      >
-        Search calls
-      </Link>
+    <div
+      className={cn(
+        landingFont.variable,
+        "[font-family:var(--font-landing),sans-serif] [&_button]:[font-family:inherit] [&_input]:[font-family:inherit]",
+      )}
+    >
+      <Hero />
+      <div className="flex flex-col gap-28 pb-8">
+        <StatsStrip stats={stats} />
+        <ClosingList n={sectionNumber("closing")} calls={calls} stats={stats} />
+        {showSectors && <Sectors n={sectionNumber("sectors")} vertical={vertical} counts={sectorCounts} />}
+        <HowItWorks n={sectionNumber("how")} />
+        <CtaBand stats={stats} />
+      </div>
     </div>
   );
 }

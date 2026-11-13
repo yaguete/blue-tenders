@@ -74,6 +74,7 @@ type Detail = {
   language: string | null;
   summary_en: string | null;
   description: string | null;
+  buyer: { name: string | null; country?: string | null } | null;
   updated_at: string | null;
   analysis: { summary: string | null; blocks: Block[]; model: string | null } | null;
   facts: {
@@ -127,6 +128,10 @@ export default function OpportunityPage() {
         ? t("closedLabel")
         : when(item.deadline_at);
   const callLine = callHeading(item);
+  const englishHeading = shortTitle(item.title, item.title_en);
+  const heading = original ? item.title : englishHeading;
+  const hasTranslation = englishHeading.trim() !== item.title.trim();
+  const notice = (item.summary_en || item.description || "").trim();
   const topicCount = factNumber(item, "call_topics_count");
   const portalNote = topic
     ? (topicCount != null ? t("portalListsTopics") : t("portalListsTopicsUnknown")).replace(
@@ -167,9 +172,8 @@ export default function OpportunityPage() {
           <ArrowLeft className="size-4" aria-hidden />
           {t("back")}
         </button>
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {original ? item.title : shortTitle(item.title, item.title_en)}
-        </h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{heading}</h1>
+        {item.buyer?.name && <p className="text-sm text-muted-foreground">{item.buyer.name}</p>}
         {topic && (
           <div className="space-y-1 text-sm">
             <p>
@@ -203,13 +207,23 @@ export default function OpportunityPage() {
           </div>
         )}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <a href={item.url} className="inline-flex bg-primary px-3 py-1.5 text-sm text-primary-foreground">
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex bg-primary px-3 py-1.5 text-sm text-primary-foreground"
+          >
             {topic ? t("openOnPortal") : t("officialCall")}
           </a>
           <p className="text-sm">
             {!closed && (
               <>
-                <a className="underline" href={`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/opportunities/${item.id}/calendar`}>
+                <a
+                  className="underline"
+                  href={`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/opportunities/${item.id}/calendar`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   Add deadline to calendar
                 </a>
                 {" · "}
@@ -236,7 +250,7 @@ export default function OpportunityPage() {
               ))}
             </ul>
           )}
-          {item.language && item.language !== "en" && (
+          {item.language && item.language !== "en" && hasTranslation && (
             <p className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
               <Globe className="size-4 shrink-0" aria-hidden />
               {original ? (
@@ -265,7 +279,7 @@ export default function OpportunityPage() {
         {portalNote && <p className="text-xs text-muted-foreground">* {portalNote}</p>}
       </header>
 
-      <OverviewSection analysis={item.analysis} />
+      <OverviewSection analysis={item.analysis} fallback={notice} />
 
       {item.awards.length > 0 && (
         <section>
@@ -369,11 +383,14 @@ function TrackRecordSection({ item, open, onToggle }: { item: Detail; open: bool
   );
 }
 
-function OverviewSection({ analysis }: { analysis: Detail["analysis"] }) {
+function OverviewSection({ analysis, fallback }: { analysis: Detail["analysis"]; fallback?: string }) {
   const blocks = analysis?.blocks ?? [];
   const summaryBlock = blocks.find((block) => block.heading.trim().toLowerCase() === "summary");
   const summary = analysis?.summary;
-  const lead = summaryBlock?.text || (summary && !blocks.some((block) => block.text === summary) ? summary : null);
+  const lead =
+    summaryBlock?.text ||
+    (summary && !blocks.some((block) => block.text === summary) ? summary : null) ||
+    (blocks.length === 0 ? fallback : null);
   const leadSource = summaryBlock ? sourceHref(summaryBlock) : null;
   const rows = blocks.filter((block) => block !== summaryBlock);
   if (!lead && rows.length === 0) return null;

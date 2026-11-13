@@ -33,11 +33,15 @@ function MenuGlyph({ open }: { open: boolean }) {
   );
 }
 
-function BrandLink() {
+function BrandLink({ mark = true }: { mark?: boolean }) {
   return (
     <Link href="/" className="flex shrink-0 items-center gap-2 text-sm font-semibold tracking-tight whitespace-nowrap">
-      <img src="/brand/mark.svg" alt="" width={32} height={32} className="size-8 dark:hidden" />
-      <img src="/brand/mark-on-dark.png" alt="" width={32} height={32} className="hidden size-8 dark:block" />
+      {mark && (
+        <>
+          <img src="/brand/mark.svg" alt="" width={32} height={32} className="size-8 dark:hidden" />
+          <img src="/brand/mark-on-dark.png" alt="" width={32} height={32} className="hidden size-8 dark:block" />
+        </>
+      )}
       Blue Tender
     </Link>
   );
@@ -156,7 +160,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex w-full items-center justify-between gap-3 sm:w-auto">
             <div className="flex items-center gap-1">
-              <BrandLink />
+              <BrandLink mark={false} />
               <p className="relative top-px text-xs whitespace-nowrap text-muted-foreground">© 2026</p>
             </div>
             <ThemeModeToggle className="shrink-0 sm:hidden" />

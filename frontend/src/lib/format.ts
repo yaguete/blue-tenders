@@ -1,3 +1,5 @@
+import { t } from "@/lib/i18n";
+
 export function money(value: number | null | undefined): string {
   if (value == null) return "—";
   return moneyOf(value, "EUR");
@@ -45,8 +47,9 @@ export function shortTitle(title: string | null | undefined, titleEn: string | n
   const english = (titleEn || "").trim();
   const original = (title || "").trim();
   if (!english) return original;
-  if (!original || english === original || !english.endsWith(original)) return english;
-  return english.slice(0, english.length - original.length).replace(/[\s–—-]+$/u, "") || english;
+  // TED's English title is "Country – CPV label – original title". The label is not the call.
+  if (original && english !== original && english.endsWith(original)) return original;
+  return english;
 }
 
 export function moneyCompact(value: number): string {
@@ -60,20 +63,21 @@ export function moneyCompact(value: number): string {
 
 export function checkedAt(iso: string): string {
   const date = new Date(iso);
-  const now = new Date();
-  const sameDay =
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate();
-  if (sameDay) {
-    const time = new Intl.DateTimeFormat("en", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hourCycle: "h23",
-    }).format(date);
-    return `today, ${time}`;
+  const elapsed = Date.now() - date.getTime();
+  if (Number.isNaN(date.getTime()) || elapsed < 60_000) return t("statsCheckedNow");
+  const minutes = Math.floor(elapsed / 60_000);
+  if (minutes < 60) {
+    const key = minutes === 1 ? "statsCheckedMinuteOne" : "statsCheckedMinutes";
+    return t(key).replace("{count}", String(minutes));
   }
-  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date);
+  const hours = Math.floor(elapsed / 3_600_000);
+  if (hours < 24) {
+    const key = hours === 1 ? "statsCheckedHourOne" : "statsCheckedHours";
+    return t(key).replace("{count}", String(hours));
+  }
+  const days = Math.floor(hours / 24);
+  const key = days === 1 ? "statsCheckedDayOne" : "statsCheckedDays";
+  return t(key).replace("{count}", String(days));
 }
 
 export function daysLeft(iso: string | null | undefined): string | null {

@@ -308,9 +308,7 @@ function SearchScreen() {
               label={t("statsSources")}
               value={stats ? figures.format(stats.sources) : "—"}
               note={
-                stats?.checked_at
-                  ? t("statsChecked").replace("{when}", checkedAt(stats.checked_at))
-                  : undefined
+                stats?.checked_at ? checkedAt(stats.checked_at) : undefined
               }
             />
           )}
