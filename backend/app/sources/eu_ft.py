@@ -1,7 +1,8 @@
 """EU Funding & Tenders Portal, Search API pública (clave SEDIA).
 
-Se trae el listado entero de abiertas y próximas. La descripción y el presupuesto
-ya vienen en la fila; el detalle solo se pide cuando la descripción falta.
+Se trae el listado entero de abiertas y próximas. El detalle (`TopicDetails`) se pide
+si faltan la descripción, el presupuesto o la call: ahí están el texto, las condiciones
+y `budgetOverviewJSONItem`.
 """
 
 import json
@@ -91,36 +92,86 @@ def _action_code(*chunks: str | None) -> str | None:
     return None
 
 
+def _budget_blob(raw: dict) -> dict | None:
+    blob = _meta(raw, "budgetOverview")
+    if isinstance(blob, str):
+        try:
+            blob = json.loads(blob)
+        except json.JSONDecodeError:
+            return None
+    return blob if isinstance(blob, dict) else None
+
+
+def _action_topic(action: str) -> str:
+    """El portal escribe `HORIZON-CL5-2023-D3-02-10 - HORIZON-RIA ...`. El código es lo de antes."""
+    if " - " not in action:
+        return ""
+    return action.split(" - ", 1)[0].strip()
+
+
 def _budget_entries(mapping: dict, identifier: str) -> list[dict]:
-    """El mapa del portal guarda una lista de acciones por topic, no un objeto."""
+    """Una entrada casa si su código de topic es exactamente el identificador.
+
+    La clave del mapa a veces es el identificador (el fixture) y a veces un id numérico
+    del portal. `startswith` hacía que `-1` se quedara con el presupuesto de `-10`.
+    """
     found = []
     for key, entry in mapping.items():
         items = entry if isinstance(entry, list) else [entry]
         for item in items:
             if not isinstance(item, dict):
                 continue
-            action = str(item.get("action") or "")
-            if str(key).startswith(identifier) or action.startswith(identifier):
+            code = _action_topic(str(item.get("action") or ""))
+            if code == identifier or str(key) == identifier:
                 found.append(item)
     return found
 
 
+def _year_amounts(entry: dict) -> list[float]:
+    years = entry.get("budgetYearMap") or []
+    amounts = []
+    if isinstance(years, dict):
+        for value in years.values():
+            if value is not None:
+                amounts.append(float(value))
+        return amounts
+    if isinstance(years, list):
+        for year in years:
+            if isinstance(year, dict) and year.get("budget") is not None:
+                amounts.append(float(year["budget"]))
+    return amounts
+
+
+def _topic_codes(blob: dict) -> set[str]:
+    mapping = blob.get("budgetTopicActionMap") or {}
+    if not isinstance(mapping, dict):
+        return set()
+    codes: set[str] = set()
+    for key, entry in mapping.items():
+        items = entry if isinstance(entry, list) else [entry]
+        named = False
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            code = _action_topic(str(item.get("action") or ""))
+            if code:
+                codes.add(code)
+                named = True
+        key_text = str(key)
+        if not named and "-" in key_text and any(char.isdigit() for char in key_text):
+            codes.add(key_text)
+    return codes
+
+
 def _budget_for(raw: dict, identifier: str) -> tuple[float | None, float | None, float | None, int | None]:
     """Presupuesto del topic, mínimo, máximo y proyectos esperados."""
-    blob = _meta(raw, "budgetOverview")
-    if isinstance(blob, str):
-        try:
-            blob = json.loads(blob)
-        except json.JSONDecodeError:
-            blob = None
+    blob = _budget_blob(raw)
     if isinstance(blob, dict):
         entries = _budget_entries(blob.get("budgetTopicActionMap") or {}, identifier)
         amounts = []
         grants = []
         for entry in entries:
-            for year in entry.get("budgetYearMap") or []:
-                if isinstance(year, dict) and year.get("budget") is not None:
-                    amounts.append(float(year["budget"]))
+            amounts.extend(_year_amounts(entry))
             if entry.get("expectedGrants") is not None:
                 grants.append(int(entry["expectedGrants"]))
         total = sum(amounts) if amounts else None
@@ -241,6 +292,51 @@ def _sections_html(html: str) -> str | None:
     return "\n\n".join(chunks) or _plain(marked)
 
 
+def _latest_contents(raw: dict) -> list[str]:
+    value = (raw.get("metadata") or {}).get("latestInfos")
+    if value is None:
+        return []
+    items = value if isinstance(value, list) else [value]
+    contents = []
+    for item in items:
+        if isinstance(item, dict):
+            content = item.get("content")
+            if isinstance(content, str) and content.strip():
+                contents.append(content)
+        elif isinstance(item, str) and item.strip():
+            contents.append(item)
+    return contents
+
+
+def _info_lines(raw: dict) -> list[str]:
+    lines = []
+    for content in _latest_contents(raw):
+        for part in re.split(r"</p>|<br\s*/?>", content, flags=re.IGNORECASE):
+            line = _plain(unescape(part))
+            if line:
+                lines.append(line)
+    return lines
+
+
+def _proposals_submitted(raw: dict, identifier: str) -> tuple[int, str] | None:
+    """La línea del portal que dice cuántas propuestas llegaron a este topic, o nada.
+
+    `-1` no puede casar con `-10`. Si dos líneas dan números distintos, no se guarda.
+    """
+    if not identifier:
+        return None
+    pattern = re.compile(rf"{re.escape(identifier)}(?!\d).*?(\d+)\s+proposals?\b", re.IGNORECASE)
+    hits: list[tuple[int, str]] = []
+    for line in _info_lines(raw):
+        match = pattern.search(line)
+        if match:
+            hits.append((int(match.group(1)), line))
+    numbers = {count for count, _line in hits}
+    if len(numbers) != 1:
+        return None
+    return hits[0]
+
+
 def _description(raw: dict) -> str | None:
     """Texto del topic. Si el HTML trae títulos, se conservan como secciones (`##`)."""
     value = _meta(raw, "descriptionByte", "description", "summary")
@@ -296,7 +392,11 @@ class EuFtSource(Source):
                     break
                 page += 1
             for row in kept.values():
-                if not _description(row):
+                if (
+                    not _description(row)
+                    or not _meta(row, "callIdentifier")
+                    or not _budget_blob(row)
+                ):
                     _fill_detail(client, row)
                 yield row
 
@@ -326,14 +426,40 @@ class EuFtSource(Source):
         description = _description(raw)
         if type_code == "8":
             description = _plain(_meta(raw, "description")) or description
+        conditions = _meta(raw, "topicConditions")
+        if conditions:
+            extra = _sections_html(str(conditions))
+            if extra:
+                if not extra.startswith("## "):
+                    extra = f"## Conditions\n\n{extra}"
+                description = f"{description}\n\n{extra}" if description else extra
         facts = []
         if grants is not None:
             facts.append(Fact(field="expected_grants", value=grants, origin=FactOrigin.source, confidence=0.9))
+        call_title = _meta(raw, "callTitle")
+        if call_title and str(call_title) != str(title):
+            facts.append(Fact(field="call_title", value=str(call_title), origin=FactOrigin.source, confidence=0.9))
+        blob = _budget_blob(raw)
+        if blob:
+            count = len(_topic_codes(blob))
+            if count:
+                facts.append(
+                    Fact(field="call_topics_count", value=count, origin=FactOrigin.source, confidence=0.9)
+                )
+        submitted = _proposals_submitted(raw, identifier)
+        if submitted:
+            count, line = submitted
+            facts.append(
+                Fact(
+                    field="proposals_submitted",
+                    value=count,
+                    origin=FactOrigin.source,
+                    confidence=0.8,
+                    quote=line[:500],
+                )
+            )
         if timeless:
             facts.append(Fact(field="deadline_time", value="unknown", origin=FactOrigin.source, confidence=0.9))
-        latest = _meta(raw, "latestInfos")
-        if latest:
-            facts.append(Fact(field="latest_info", value=str(latest)[:500], origin=FactOrigin.source, confidence=0.8))
         documents = _call_documents(raw, str(url))
         if _meta(raw, "allowPartnerSearch") in (True, "true", "True"):
             documents.append(
@@ -358,6 +484,7 @@ class EuFtSource(Source):
             description=description,
             language="en",
             programme_id=_programme(programme, identifier or external),
+            call_id=str(_meta(raw, "callIdentifier") or "") or None,
             topic_id=identifier or None,
             type_of_action=action,
             mission_ocean=identifier.startswith("HORIZON-MISS") and "OCEAN" in identifier,
@@ -405,6 +532,13 @@ def _public_url(raw: dict, identifier: str, type_code: str) -> str:
     return url or "https://ec.europa.eu/info/funding-tenders/opportunities/portal/"
 
 
+def _topic_details(payload: dict) -> dict:
+    inner = payload.get("TopicDetails") if isinstance(payload, dict) else None
+    if isinstance(inner, dict):
+        return inner
+    return payload if isinstance(payload, dict) else {}
+
+
 def _fill_detail(client: httpx.Client, row: dict) -> None:
     identifier = str(_meta(row, "identifier") or "")
     if not identifier:
@@ -413,13 +547,21 @@ def _fill_detail(client: httpx.Client, row: dict) -> None:
         response = client.get(DETAIL_URL.format(identifier.lower()), timeout=20)
         if response.status_code != 200:
             return
-        detail = response.json()
+        detail = _topic_details(response.json())
     except (httpx.HTTPError, ValueError):
         return
     meta = row.setdefault("metadata", {})
-    for key in ("descriptionByte", "budgetOverview", "topicConditions"):
-        if not meta.get(key) and detail.get(key):
-            meta[key] = detail[key]
+    copies = {
+        "descriptionByte": detail.get("description"),
+        "topicConditions": detail.get("conditions"),
+        "budgetOverview": detail.get("budgetOverviewJSONItem") or detail.get("budgetOverview"),
+        "callIdentifier": detail.get("callIdentifier"),
+        "callTitle": detail.get("callTitle"),
+        "latestInfos": detail.get("latestInfos"),
+    }
+    for key, value in copies.items():
+        if value and not meta.get(key):
+            meta[key] = value
 
 
 def _programme(label, identifier: str) -> str | None:

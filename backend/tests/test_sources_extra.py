@@ -1,10 +1,10 @@
 import json
 from pathlib import Path
 
-from app.models.opportunity import OpportunityKind
+from app.models.opportunity import Opportunity, OpportunityKind
 from app.sources.bdns import BdnsSource
 from app.sources.curated import CuratedSource
-from app.sources.eu_ft import EuFtSource
+from app.sources.eu_ft import EuFtSource, _fill_detail
 from app.sources.placsp import PlacspSource
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -275,3 +275,133 @@ def test_curated_sbep_keeps_the_checked_quote():
     assert item.deadline_at is not None
     assert item.deadline_at.day == 16
     assert any(doc.name == "Call (PDF)" and doc.url.endswith(".pdf") for doc in item.documents)
+
+
+def _portal_topic(identifier: str, **meta) -> dict:
+    base = {
+        "identifier": [identifier],
+        "title": ["Wave devices"],
+        "type": ["1"],
+        "callIdentifier": ["HORIZON-CL5-2023-D3-02"],
+        "callTitle": ["Sustainable, secure and competitive energy supply"],
+    }
+    base.update(meta)
+    return {"metadata": base}
+
+
+_OVERVIEW = {
+    "budgetTopicActionMap": {
+        "1": [
+            {
+                "action": "HORIZON-CL5-2023-D3-02-1 - HORIZON-RIA",
+                "budgetYearMap": {"2023": "1000000"},
+                "expectedGrants": 1,
+                "minContribution": 1000000,
+                "maxContribution": 1000000,
+            }
+        ],
+        "10": [
+            {
+                "action": "HORIZON-CL5-2023-D3-02-10 - HORIZON-RIA",
+                "budgetYearMap": {"2023": "8000000"},
+                "expectedGrants": 2,
+                "minContribution": 4000000,
+                "maxContribution": 4000000,
+            }
+        ],
+    }
+}
+
+
+def _fact(item, field):
+    return next(fact for fact in item.facts if fact.field == field)
+
+
+def test_eu_ft_reads_a_budget_year_map_object_for_the_exact_topic():
+    raw = _portal_topic("HORIZON-CL5-2023-D3-02-10", budgetOverview=[json.dumps(_OVERVIEW)])
+    item = EuFtSource().to_tender(raw)
+    assert item.budget_total_eur == 8_000_000
+    assert item.amount_min_eur == 4_000_000
+    assert item.amount_max_eur == 4_000_000
+    assert item.call_id == "HORIZON-CL5-2023-D3-02"
+    assert _fact(item, "call_title").value == "Sustainable, secure and competitive energy supply"
+    assert _fact(item, "call_topics_count").value == 2
+    assert _fact(item, "expected_grants").value == 2
+
+
+def test_eu_ft_does_not_give_topic_1_the_budget_of_topic_10():
+    raw = _portal_topic("HORIZON-CL5-2023-D3-02-1", budgetOverview=[json.dumps(_OVERVIEW)])
+    item = EuFtSource().to_tender(raw)
+    assert item.budget_total_eur == 1_000_000
+
+
+def test_eu_ft_reads_proposal_counts_without_mixing_neighbouring_topics():
+    infos = [
+        {
+            "content": (
+                "<p>HORIZON-CL5-2023-D3-02-10&#xa0;(RIA-LS): 15 proposals</p>"
+                "<p>HORIZON-CL5-2023-D3-02-01 (RIA): <a>16 proposals</a></p>"
+                "<p>The submission session is now available for: HORIZON-CL5-2023-D3-02-10(HORIZON-RIA)</p>"
+            )
+        }
+    ]
+    ten = EuFtSource().to_tender(_portal_topic("HORIZON-CL5-2023-D3-02-10", latestInfos=infos))
+    one = EuFtSource().to_tender(_portal_topic("HORIZON-CL5-2023-D3-02-01", latestInfos=infos))
+    bare = EuFtSource().to_tender(_portal_topic("HORIZON-CL5-2023-D3-02-10"))
+    assert _fact(ten, "proposals_submitted").value == 15
+    assert "15 proposals" in _fact(ten, "proposals_submitted").quote
+    assert _fact(one, "proposals_submitted").value == 16
+    assert all(fact.field != "proposals_submitted" for fact in bare.facts)
+    assert all(fact.field != "latest_info" for fact in ten.facts)
+
+
+def test_eu_ft_detail_wrapped_in_topic_details_fills_text_budget_and_call():
+    class Response:
+        status_code = 200
+
+        def json(self):
+            return {
+                "TopicDetails": {
+                    "description": (
+                        '<p class="topicdescriptionkind">Expected Outcome:</p><p>More energy from waves.</p>'
+                    ),
+                    "conditions": "<h4>General conditions</h4><p>See Annex A.</p>",
+                    "budgetOverviewJSONItem": _OVERVIEW,
+                    "callIdentifier": "HORIZON-CL5-2023-D3-02",
+                    "callTitle": "Sustainable, secure and competitive energy supply",
+                    "latestInfos": [
+                        {"content": "<p>HORIZON-CL5-2023-D3-02-10 (RIA-LS): 15 proposals</p>"}
+                    ],
+                }
+            }
+
+    class Client:
+        def get(self, url, timeout=20):
+            del url, timeout
+            return Response()
+
+    row = {
+        "metadata": {
+            "identifier": ["HORIZON-CL5-2023-D3-02-10"],
+            "title": ["Wave devices"],
+            "type": ["1"],
+        }
+    }
+    _fill_detail(Client(), row)
+    item = EuFtSource().to_tender(row)
+    assert "More energy from waves" in (item.description or "")
+    assert "Annex A" in (item.description or "")
+    assert item.budget_total_eur == 8_000_000
+    assert item.call_id == "HORIZON-CL5-2023-D3-02"
+    assert _fact(item, "proposals_submitted").value == 15
+
+
+def test_call_title_changes_the_portal_hash_and_nothing_else():
+    item = EuFtSource().to_tender(_portal_topic("HORIZON-CL5-2023-D3-02-10"))
+    dumped = item.model_dump()
+    dumped["facts"] = [fact for fact in dumped["facts"] if fact["field"] != "call_title"]
+    dumped["content_hash"] = None
+    without = Opportunity(**dumped)
+    assert item.content_hash != without.content_hash
+    again = Opportunity(**{**item.model_dump(), "content_hash": None})
+    assert again.content_hash == item.content_hash

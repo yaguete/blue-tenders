@@ -221,11 +221,14 @@ class Opportunity(BaseModel):
     def compute_hash(self) -> str:
         winners = ""
         award = ""
+        call_title = ""
         for fact in self.facts:
             if fact.field == "winners":
                 winners = json.dumps(fact.value, ensure_ascii=False, sort_keys=True)
             elif fact.field == "award_value_eur":
                 award = str(fact.value)
+            elif fact.field == "call_title":
+                call_title = str(fact.value)
         parts = [
             self.title,
             self.description or "",
@@ -242,6 +245,8 @@ class Opportunity(BaseModel):
             parts.append(winners)
         if award:
             parts.append(award)
+        if call_title:
+            parts.append(call_title)
         return hashlib.sha256("\n".join(parts).encode()).hexdigest()[:16]
 
     @staticmethod

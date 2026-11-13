@@ -60,6 +60,12 @@ type Detail = {
   funder_id: string | null;
   deadline_at: string | null;
   budget_total_eur: number | null;
+  amount_min_eur: number | null;
+  amount_max_eur: number | null;
+  topic_id: string | null;
+  call_id: string | null;
+  type_of_action: string | null;
+  status: string | null;
   cofunding_min: number | null;
   cofunding_max: number | null;
   consortium_required: boolean | null;
@@ -69,7 +75,7 @@ type Detail = {
   description: string | null;
   updated_at: string | null;
   analysis: { summary: string | null; blocks: Block[]; model: string | null } | null;
-  facts: { field: string; origin: string; confidence: number; quote: string | null }[];
+  facts: { field: string; value?: string | number | null; origin: string; confidence: number; quote: string | null }[];
   documents: { url: string; name: string | null }[];
   awards: { id: string; title: string; winner: string | null; amount_eur: number | null; url: string }[];
   track_record?: TrackRecord;
@@ -98,6 +104,26 @@ export default function OpportunityPage() {
 
   const low = item.facts.some((fact) => fact.confidence < 0.75 && ["deadline_at", "cofunding_min"].includes(fact.field));
   const category = [item.kind, item.funder_id, item.programme_id].filter(Boolean).join(" · ");
+  const closed = item.status === "closed";
+  const topic = Boolean(item.topic_id);
+  const budgetValue =
+    topic && item.budget_total_eur != null
+      ? t("budgetForTopic").replace("{amount}", money(item.budget_total_eur))
+      : money(item.budget_total_eur);
+  const deadlineValue =
+    closed && item.deadline_at
+      ? `${t("closedLabel")} · ${day(item.deadline_at)}`
+      : closed
+        ? t("closedLabel")
+        : when(item.deadline_at);
+  const callLine = callHeading(item);
+  const topicCount = factNumber(item, "call_topics_count");
+  const portalNote = topic
+    ? (topicCount != null ? t("portalListsTopics") : t("portalListsTopicsUnknown")).replace(
+        "{count}",
+        String(topicCount ?? ""),
+      )
+    : null;
 
   function goBack() {
     if (window.history.length > 1) {
@@ -131,10 +157,19 @@ export default function OpportunityPage() {
           <ArrowLeft className="size-4" aria-hidden />
           {t("back")}
         </button>
+        {topic && (
+          <div className="space-y-1 text-sm">
+            <p>
+              {t("topicLabel")} {item.topic_id}
+              {item.type_of_action ? ` · ${item.type_of_action}` : ""}
+            </p>
+            {callLine && <p>{callLine}</p>}
+          </div>
+        )}
         <h1 className="text-3xl font-semibold tracking-tight">{original ? item.title : item.title_en || item.title}</h1>
         <dl className="grid gap-3 text-sm sm:grid-cols-4">
-          <Cell label="Deadline" value={when(item.deadline_at)} />
-          <Cell label="Budget" value={money(item.budget_total_eur)} />
+          <Cell label="Deadline" value={deadlineValue} />
+          <Cell label="Budget" value={budgetValue} hint={grantLine(item)} />
           <Cell
             label="Co-funding"
             value={
@@ -148,10 +183,17 @@ export default function OpportunityPage() {
             value={item.consortium_required == null ? "Not specified" : item.consortium_required ? "Required" : "Not required"}
           />
         </dl>
+        {closed && topic && (
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <p>{t("closedReference")}</p>
+            {proposalLine(item) && <p>{proposalLine(item)}</p>}
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <a href={item.url} className="inline-flex bg-primary px-3 py-1.5 text-sm text-primary-foreground">
-            Official call
+            {topic ? t("openOnPortal") : t("officialCall")}
           </a>
+          {portalNote && <p className="max-w-xl text-xs text-muted-foreground">{portalNote}</p>}
           <p className="text-sm">
             {item.documents?.find((doc) => doc.name === "Partner search") && (
               <>
@@ -161,10 +203,14 @@ export default function OpportunityPage() {
                 {" · "}
               </>
             )}
-            <a className="underline" href={`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/opportunities/${item.id}/calendar`}>
-              Add deadline to calendar
-            </a>
-            {" · "}
+            {!closed && (
+              <>
+                <a className="underline" href={`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/opportunities/${item.id}/calendar`}>
+                  Add deadline to calendar
+                </a>
+                {" · "}
+              </>
+            )}
             <button type="button" className="cursor-pointer underline" onClick={() => openCompare(item.id)}>
               {t("compare")}
             </button>
@@ -318,13 +364,74 @@ function sourceHref(block: Block): string | null {
   return null;
 }
 
-function Cell({ label, value }: { label: string; value: string }) {
+function Cell({ label, value, hint }: { label: string; value: string; hint?: string | null }) {
   return (
     <div>
       <dt className="font-mono text-xs text-muted-foreground">{label}</dt>
       <dd className="tabular">{value}</dd>
+      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
+}
+
+function factNumber(item: Detail, field: string): number | null {
+  const fact = item.facts.find((row) => row.field === field);
+  if (fact == null || fact.value == null || fact.value === "") return null;
+  const number = Number(fact.value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function factText(item: Detail, field: string): string | null {
+  const fact = item.facts.find((row) => row.field === field);
+  return typeof fact?.value === "string" && fact.value ? fact.value : null;
+}
+
+function day(iso: string): string {
+  return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(iso));
+}
+
+function callHeading(item: Detail): string | null {
+  if (!item.call_id) return null;
+  const title = factText(item, "call_title");
+  const count = factNumber(item, "call_topics_count");
+  const named = title ? ` — ${title}` : "";
+  const many = count != null ? ` (${t("topicCount").replace("{count}", String(count))})` : "";
+  return `${t("partOfCall")} ${item.call_id}${named}${many}. ${t("applyToTopic")}`;
+}
+
+function grantLine(item: Detail): string | null {
+  if (!item.topic_id) return null;
+  const grants = factNumber(item, "expected_grants");
+  const low = item.amount_min_eur;
+  const high = item.amount_max_eur;
+  const each =
+    low != null && high != null
+      ? low === high
+        ? money(low)
+        : `${money(low)}–${money(high)}`
+      : low != null
+        ? money(low)
+        : high != null
+          ? money(high)
+          : null;
+  if (grants != null && each) {
+    return t("projectsEach").replace("{count}", String(grants)).replace("{each}", each);
+  }
+  if (grants != null) return t("projectsExpected").replace("{count}", String(grants));
+  if (each) return t("contributionEach").replace("{each}", each);
+  return null;
+}
+
+function proposalLine(item: Detail): string | null {
+  const proposals = factNumber(item, "proposals_submitted");
+  if (proposals == null) return null;
+  const projects = factNumber(item, "expected_grants");
+  if (projects != null) {
+    return t("proposalsForProjects")
+      .replace("{proposals}", String(proposals))
+      .replace("{projects}", String(projects));
+  }
+  return t("proposalsSubmitted").replace("{proposals}", String(proposals));
 }
 
 function trackMessage(item: Detail): string | null {

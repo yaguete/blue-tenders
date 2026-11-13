@@ -10,7 +10,7 @@ Sustituye a [tender-schema.md](tender-schema.md). El modelo vive en `backend/app
 | `source_id` | Fila de `docs/sources.md`. |
 | `external_id` | Id en la fuente. |
 | `url` | Anuncio oficial. |
-| `content_hash` | Título, descripción, plazos e importes. Si no cambia, no se reextrae. |
+| `content_hash` | Título, descripción, plazos e importes. Si hay `call_title`, también. Si no cambia, no se reextrae. |
 
 ## Tipo
 
@@ -26,6 +26,17 @@ Derivación por defecto: `tender` → kind tender + contract_notice; `grant` →
 ## Financiador y programa
 
 `funder_id`, `programme_id`, `call_id`, `topic_id`, `type_of_action`, `mission_ocean`. El comprador de una licitación sigue en `buyer` (nombre, país, tipo).
+
+`call_id` no significa lo mismo en cada fuente. En el portal es el identificador de la call (`HORIZON-CL5-2023-D3-02`), el paquete que agrupa varios topics. En TED y en PLACSP es el procedimiento. La ficha se guarda por topic, no por call.
+
+Facts que salen del portal, todos con `origin: source`:
+
+| Fact | Qué es |
+|---|---|
+| `call_title` | Nombre de la call. Entra en `content_hash` para que una ficha ya guardada se vuelva a leer. |
+| `call_topics_count` | Topics distintos en `budgetTopicActionMap`. |
+| `proposals_submitted` | Propuestas presentadas a este topic, leídas de `latestInfos`. Lleva la línea como `quote`. Si dos líneas dan números distintos, no se guarda. |
+| `expected_grants` | Proyectos previstos, del mapa de presupuesto del topic. |
 
 ## Plazos y dinero
 
