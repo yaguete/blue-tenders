@@ -33,9 +33,13 @@ export function ThemeModeToggle({ className }: { className?: string }) {
     if (!root || !active) return;
     const rootRect = root.getBoundingClientRect();
     const rect = active.getBoundingClientRect();
+    const style = getComputedStyle(root);
+    // El indicador es absolute: su origen es el borde interior, no el exterior.
+    const borderLeft = parseFloat(style.borderLeftWidth) || 0;
+    const borderTop = parseFloat(style.borderTopWidth) || 0;
     setBox({
-      x: rect.left - rootRect.left,
-      y: rect.top - rootRect.top,
+      x: rect.left - rootRect.left - borderLeft,
+      y: rect.top - rootRect.top - borderTop,
       w: rect.width,
       h: rect.height,
     });

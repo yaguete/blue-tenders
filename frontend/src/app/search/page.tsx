@@ -467,12 +467,12 @@ function MultiFilter({
         aria-controls={listId}
         title={summary}
         onClick={() => setOpen((current) => !current)}
-        className="max-w-64 cursor-pointer truncate border border-border bg-background px-2 py-1 text-left text-sm hover:bg-muted"
+        className="max-w-64 cursor-pointer truncate border border-border bg-card px-2 py-1 text-left text-sm hover:bg-muted"
       >
         {summary}
       </button>
       {open && (
-        <div id={listId} className="absolute left-0 z-20 mt-1 min-w-full border border-border bg-background p-2 shadow-sm">
+        <div id={listId} className="absolute left-0 z-20 mt-1 min-w-full border border-border bg-card p-2 shadow-sm">
           <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap px-1 py-1">
             <input
               type="checkbox"
