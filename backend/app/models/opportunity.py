@@ -57,6 +57,7 @@ class FactOrigin(str, Enum):
     programme_rule = "programme_rule"
     llm = "llm"
     manual = "manual"
+    scraped = "scraped"
 
 
 _KIND_FROM_TYPE = {
@@ -190,7 +191,13 @@ class Opportunity(BaseModel):
     content_hash: str | None = None
     review_status: str | None = None
     listed: bool = True
+    # Identificador que otra fuente también puede traer (expediente, ocid). Vacío si no hay.
+    dedupe_key: str | None = None
+    # Cierre explícito: cancelación de la fuente, o una página que ya no lista la convocatoria.
+    closed_at: datetime | None = None
     raw: dict = Field(default_factory=dict, exclude=True)
+    # No se guarda. La ingesta lo vuelca en la cola de revisión al indexar.
+    review_items: list[dict] = Field(default_factory=list, exclude=True)
 
     @field_validator("raw", mode="before")
     @classmethod
@@ -259,6 +266,8 @@ class Opportunity(BaseModel):
 
 def compute_status(opp: Opportunity, today: date | None = None) -> OpportunityStatus:
     today = today or date.today()
+    if opp.closed_at and opp.closed_at.date() <= today:
+        return OpportunityStatus.closed
     if opp.notice == NoticeKind.award_notice:
         return OpportunityStatus.closed
     if opp.deadline_model == DeadlineModel.continuous and opp.deadline_at is None:
@@ -273,5 +282,10 @@ def compute_status(opp: Opportunity, today: date | None = None) -> OpportunitySt
     if opp.deadline_at and opp.deadline_at.date() < today:
         return OpportunityStatus.closed
     if opp.deadline_at or opp.opens_at:
+        return OpportunityStatus.open
+    # Sin plazo ni apertura: visible un tiempo si se acaba de publicar (BOE, HTML sin fecha leíble).
+    # Pasados 90 días, o si no hay ni fecha de publicación, se queda cerrada.
+    published = opp.published_at
+    if published is not None and (today - published).days <= 90:
         return OpportunityStatus.open
     return OpportunityStatus.closed

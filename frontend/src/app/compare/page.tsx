@@ -6,7 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 import { LoadingState } from "@/components/loading-state";
 import { api } from "@/lib/api";
 import { replaceCompare } from "@/lib/compare";
-import { money, shortTitle, when } from "@/lib/format";
+import { shortTitle, shownBudget, when } from "@/lib/format";
 import { t } from "@/lib/i18n";
 
 type Row = {
@@ -15,6 +15,7 @@ type Row = {
   title_en: string | null;
   deadline_at: string | null;
   budget_total_eur: number | null;
+  budget: { amount: number | null; currency: string | null } | null;
   amount_max_eur: number | null;
   kind: string | null;
   programme_id: string | null;
@@ -84,7 +85,7 @@ function CompareInner() {
 
   const fields: [string, (row: Row) => string][] = [
     ["Deadline", (row) => when(row.deadline_at)],
-    ["Budget", (row) => money(row.budget_total_eur || row.amount_max_eur)],
+    ["Budget", (row) => shownBudget(row.budget_total_eur || row.amount_max_eur, row.budget?.amount, row.budget?.currency)],
     ["Kind", (row) => row.kind || "—"],
     ["Programme", (row) => row.programme_id || "—"],
     ["Country", (row) => row.country || "—"],

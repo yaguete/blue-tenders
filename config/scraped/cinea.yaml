@@ -1,0 +1,19 @@
+id: cinea
+url: https://cinea.ec.europa.eu/funding-opportunities/calls-tenders_en
+list: html
+language: en
+timezone: Europe/Brussels
+kind: tender
+prefilter: keywords
+skip_past: true
+row: article.ecl-content-item
+fields:
+  title: .ecl-content-block__title a
+  link: .ecl-content-block__title a@href
+  deadline_text: time@datetime
+  status_text: .ecl-label
+  buyer: "label:Department"
+skip_if:
+  status_text: ["past"]
+dates:
+  - "%Y-%m-%dT%H:%M:%S%z"

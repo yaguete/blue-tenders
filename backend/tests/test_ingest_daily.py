@@ -68,3 +68,19 @@ def test_a_live_lock_skips_the_second_execution(tmp_path: Path):
     assert store.begin_ingest("placsp", datetime.now(UTC))
     assert run_one("placsp", today=date(2026, 11, 11), execute=ok, store=store) == 0
     assert calls == ["ran"]
+
+
+def test_a_term_search_with_zero_rows_does_not_page_ops(tmp_path: Path, monkeypatch):
+    store = _store(tmp_path)
+    sent = []
+    monkeypatch.setattr("app.jobs.ingest_daily.report_failure", lambda *args: sent.append(args))
+
+    def empty(source, since, vertical):
+        del source, since, vertical
+        return {"raw_count": 0, "kept": 0, "indexed": 0, "unchanged": 0}
+
+    assert run_one("bdns", today=date(2026, 11, 13), execute=empty, store=store) == 0
+    assert sent == []
+
+    assert run_one("ted", today=date(2026, 11, 13), execute=empty, store=store) == 0
+    assert sent and "volume 0" in sent[-1][1]

@@ -1,0 +1,15 @@
+id: cetpartnership
+url: https://cetpartnership.eu/calls/
+list: html
+language: en
+timezone: Europe/Brussels
+kind: grant
+prefilter: bypass
+subsectors: [offshore-wind, ocean-energy, offshore-hydrogen, green-ports]
+skip_past: true
+row: a[href*="/calls/joint-call-"]
+fields:
+  title: "."
+  link: .@href
+skip_if:
+  title: ["explore", "general", "closed", "document"]

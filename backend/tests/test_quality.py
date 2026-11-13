@@ -80,3 +80,80 @@ def test_a_title_and_boilerplate_are_thin_sources():
         "Project results are expected to improve the reliability, availability and survivability of wave energy devices operating at sea.",
         "Wave energy",
     )
+
+
+def test_an_unreadable_scraped_date_is_queued_and_not_stored():
+    from datetime import datetime
+
+    from app.quality.validate import apply_scraped_checks
+
+    item = _opp(
+        deadline_at=datetime(2026, 12, 1, tzinfo=UTC),
+        facts=[
+            Fact(
+                field="deadline_at",
+                value=None,
+                origin=FactOrigin.scraped,
+                confidence=0.85,
+                quote="un mes desde la publicación",
+            )
+        ],
+    )
+    reviews = apply_scraped_checks(item)
+    assert item.deadline_at is None
+    assert reviews[0]["reason"] == "unparseable_date"
+
+
+def test_a_past_deadline_marked_open_is_emptied():
+    from datetime import datetime
+
+    from app.quality.validate import apply_scraped_checks
+
+    item = _opp(
+        deadline_at=datetime(2020, 1, 1, tzinfo=UTC),
+        facts=[
+            Fact(field="status_text", value="open", origin=FactOrigin.scraped, confidence=0.85, quote="Open"),
+            Fact(
+                field="deadline_at",
+                value="2020-01-01",
+                origin=FactOrigin.scraped,
+                confidence=0.85,
+                quote="1 January 2020",
+            ),
+        ],
+    )
+    reviews = apply_scraped_checks(item, today=__import__("datetime").date(2026, 11, 13))
+    assert item.deadline_at is None
+    assert any(row["reason"] == "past_deadline_open" for row in reviews)
+
+
+def test_an_amount_without_currency_is_not_published():
+    from app.models.opportunity import Budget
+    from app.quality.validate import apply_scraped_checks
+
+    item = _opp(
+        budget=Budget(amount=12_000_000, currency=None),
+        facts=[Fact(field="budget", value="12 000 000", origin=FactOrigin.scraped, confidence=0.85, quote="12 000 000")],
+    )
+    reviews = apply_scraped_checks(item)
+    assert item.budget is None
+    assert reviews[0]["reason"] == "amount_without_currency"
+
+
+def test_a_scraped_value_does_not_override_a_structured_one():
+    from app.quality.validate import apply_scraped_checks
+
+    item = _opp(
+        facts=[
+            Fact(field="deadline_at", value="2026-12-01", origin=FactOrigin.source, confidence=0.95),
+            Fact(
+                field="deadline_at",
+                value="2026-11-01",
+                origin=FactOrigin.scraped,
+                confidence=0.85,
+                quote="1 November 2026",
+            ),
+        ]
+    )
+    reviews = apply_scraped_checks(item)
+    assert reviews[0]["reason"] == "scrape_conflict"

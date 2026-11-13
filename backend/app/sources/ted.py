@@ -582,5 +582,6 @@ class TedSource(Source):
             ),
             language=_LANG_A3_TO_A2.get(lang3 or ""),
             documents=_documents(pdf, raw.get("document-url-lot")),
+            dedupe_key=procedure,
             raw=raw,
         )

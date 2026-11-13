@@ -2,7 +2,16 @@ CRON_TZ=Europe/Madrid
 15 6 * * *    /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source eu-ft
 30 6 * * *    /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source bdns
 45 6,13 * * * /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source placsp
-50 6,13 * * * /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source placsp-regional
+# placsp-regional (sindicacion_1044) exige certificado de cliente: responde HTML con un 200.
+# Lo autonómico ya llega por el feed estatal.
+15 7 * * *    /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source boamp
+25 7 * * *    /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source boe
+0  12 * * 1-5 /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source fts
+# contracts-finder: misma OCDS, pero desde feb 2025 lo nuevo bajo umbral ya sale en Find a Tender.
+# La línea solo se añade si una medición de 90 días encuentra fichas del sector que fts no trae.
+35 7 * * 1-5  /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source doffin
+45 7 * * 1-5  /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source tenderned
+0  13 * * *    /srv/backend/.venv/bin/python -m app.jobs.scrape
 0  7 * * *    /srv/backend/.venv/bin/python -m app.jobs.alerts --digest daily
 5  7 * * 1    /srv/backend/.venv/bin/python -m app.jobs.alerts --digest weekly
 30 10 * * 1-5 /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source ted

@@ -1,0 +1,196 @@
+{
+  "ocid": "ocds-h6vhtk-07bbb2",
+  "id": "108016-2026",
+  "date": "2026-11-13T13:22:49Z",
+  "tag": [
+    "tender"
+  ],
+  "description": "NOTE: To register your interest in this notice and obtain any additional information please visit the Public Contracts Scotland Web Site at https://www.publiccontractsscotland.gov.uk/Search/Search_Switch.aspx?ID=842011.\nThe buyer has indicated that it will accept electronic responses to this notice via the Postbox facility. A user guide is available at https://www.publiccontractsscotland.gov.uk/sitehelp/help_guides.aspx.\nSuppliers are advised to allow adequate time for uploading documents and to dispatch the electronic response well in advance of the closing time to avoid any last minute problems.\nA sub-contract clause has been included in this contract. For more information see: http://www.publiccontractsscotland.gov.uk/info/InfoCentre.aspx?ID=2363\nCommunity benefits are included in this requirement. For more information see: https://www.gov.scot/policies/public-sector-procurement/community-benefits-in-procurement/\nA summary of the expected community benefits has been provided as follows:\nPlease see Invitation to Tender and Appendix I - Community Benefits Statement\n(SC Ref:842011)\nDownload the ESPD document here: https://www.publiccontractsscotland.gov.uk/ESPD/ESPD_Download.aspx?id=842011",
+  "initiationType": "tender",
+  "tender": {
+    "id": "AS-26-252",
+    "legalBasis": {
+      "id": "32014L0024",
+      "scheme": "CELEX"
+    },
+    "title": "Warden Call Equipment, Smoke Alarms and Automatic Doors - Maintenance, Repairs and Digital Upgrade",
+    "status": "active",
+    "classification": {
+      "scheme": "CPV",
+      "id": "50600000",
+      "description": "Repair and maintenance services of security and defence materials"
+    },
+    "mainProcurementCategory": "services",
+    "description": "Trust wishes to appoint a suitably competent contractor to deliver planned preventative maintenance, reactive repairs and associated replacement works for warden call equipment, grouped and dispersed alarm systems, domestic smoke, heat and carbon monoxide alarms, door entry systems and automatic doors across Trust developments and dwellings. The contract also includes support for system upgrades, maintenance of connected peripherals and attendance to reported faults in accordance with the Specification of Requirements.",
+    "value": {
+      "amount": 5500000,
+      "currency": "GBP"
+    },
+    "lots": [
+      {
+        "id": "1",
+        "description": "This procurement is being conducted in accordance with the Procurement Reform (Scotland) Act 2014, the Public Contracts (Scotland) Regulations 2015, and all relevant statutory guidance and procurement policy applicable to regulated procurements in Scotland.\nFull information can be found in the Invitation to Tender, Conditions of Contract and associated appendices",
+        "awardCriteria": {
+          "criteria": [
+            {
+              "name": "Quality",
+              "type": "quality",
+              "description": "60"
+            },
+            {
+              "type": "price",
+              "description": "40"
+            }
+          ]
+        },
+        "value": {
+          "amount": 5500000,
+          "currency": "GBP"
+        },
+        "contractPeriod": {
+          "durationInDays": 1080
+        },
+        "hasRenewal": true,
+        "renewal": {
+          "description": "The contract is available for additional extension periods, first of 2-years then each of one year to a total maximum contract term of 10-years (3+2+1+1+1+1+1)."
+        },
+        "submissionTerms": {
+          "variantPolicy": "notAllowed"
+        },
+        "hasOptions": false,
+        "status": "active"
+      }
+    ],
+    "items": [
+      {
+        "id": "1",
+        "additionalClassifications": [
+          {
+            "scheme": "CPV",
+            "id": "50610000",
+            "description": "Repair and maintenance services of security equipment"
+          },
+          {
+            "scheme": "CPV",
+            "id": "50330000",
+            "description": "Maintenance services of telecommunications equipment"
+          }
+        ],
+        "deliveryAddresses": [
+          {
+            "region": "UKM"
+          }
+        ],
+        "deliveryLocation": {
+          "description": "Scotland including Borders, Highlands and Islands"
+        },
+        "relatedLot": "1"
+      }
+    ],
+    "submissionMethod": [
+      "electronicSubmission"
+    ],
+    "submissionMethodDetails": "http://www.publiccontractsscotland.gov.uk",
+    "documents": [
+      {
+        "documentType": "economicSelectionCriteria",
+        "id": "economic"
+      },
+      {
+        "documentType": "technicalSelectionCriteria",
+        "id": "technical"
+      }
+    ],
+    "procurementMethod": "open",
+    "procurementMethodDetails": "Open procedure",
+    "coveredBy": [
+      "GPA"
+    ],
+    "tenderPeriod": {
+      "endDate": "2027-01-08T12:00:00Z"
+    },
+    "submissionTerms": {
+      "languages": [
+        "en"
+      ]
+    },
+    "awardPeriod": {
+      "startDate": "2027-01-08T12:00:00Z"
+    },
+    "bidOpening": {
+      "date": "2027-01-08T12:00:00Z"
+    },
+    "hasRecurrence": true,
+    "recurrence": {
+      "description": "November 2036"
+    }
+  },
+  "parties": [
+    {
+      "name": "Trust Housing Association Ltd",
+      "id": "GB-FTS-4969",
+      "identifier": {
+        "legalName": "Trust Housing Association Ltd"
+      },
+      "address": {
+        "streetAddress": "12 New Mart Road",
+        "locality": "Edinburgh",
+        "region": "UKM",
+        "postalCode": "EH14 1RL",
+        "countryName": "United Kingdom"
+      },
+      "contactPoint": {
+        "telephone": "+44 1314441200",
+        "email": "pinbox@trustha.org.uk",
+        "faxNumber": "+44 1314444949",
+        "url": "http://www.publiccontractsscotland.gov.uk"
+      },
+      "roles": [
+        "buyer"
+      ],
+      "details": {
+        "url": "http://www.trustha.org.uk",
+        "buyerProfile": "https://www.publiccontractsscotland.gov.uk/search/Search_AuthProfile.aspx?ID=AA11262",
+        "classifications": [
+          {
+            "scheme": "TED_CA_TYPE",
+            "id": "BODY_PUBLIC",
+            "description": "Body governed by public law"
+          },
+          {
+            "scheme": "COFOG",
+            "id": "06",
+            "description": "Housing and community amenities"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Sheriff Court Edinburgh",
+      "id": "GB-FTS-188367",
+      "identifier": {
+        "legalName": "Sheriff Court Edinburgh"
+      },
+      "address": {
+        "streetAddress": "27 Chambers Street",
+        "locality": "Edinburgh",
+        "postalCode": "EH1 1LB",
+        "countryName": "United Kingdom"
+      },
+      "roles": [
+        "reviewBody"
+      ]
+    }
+  ],
+  "buyer": {
+    "id": "GB-FTS-4969",
+    "name": "Trust Housing Association Ltd"
+  },
+  "links": [
+    {
+      "rel": "canonical",
+      "href": "https://api.publiccontractsscotland.gov.uk/v1/Notice?id=ocds-r6ebe6-0000842011"
+    }
+  ],
+  "language": "en"
+}

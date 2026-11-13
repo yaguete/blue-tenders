@@ -290,6 +290,47 @@ class FileStore(AssistantRecords):
             )
         return found
 
+    def by_dedupe_key(self, keys: list[str]) -> list[Opportunity]:
+        wanted = {key for key in keys if key}
+        if not wanted:
+            return []
+        return [
+            Opportunity.model_validate(row)
+            for row in self.load()["opportunities"]
+            if row.get("dedupe_key") in wanted
+        ]
+
+    def add_reviews(self, items: list[dict]) -> None:
+        if not items:
+            return
+        data = self.load()
+        existing = {
+            (row.get("opportunity_id"), row.get("reason"), row.get("field"))
+            for row in data["reviews"]
+            if not row.get("resolved")
+        }
+        for item in items:
+            key = (item.get("opportunity_id"), item.get("reason"), item.get("field"))
+            if key in existing:
+                continue
+            existing.add(key)
+            data["reviews"].append(item)
+        self.save(data)
+
+    def close_ids(self, ids: list[str], when: str) -> int:
+        wanted = set(ids)
+        if not wanted:
+            return 0
+        data = self.load()
+        closed = 0
+        for row in data["opportunities"]:
+            if row.get("id") in wanted and not row.get("closed_at"):
+                row["closed_at"] = when
+                closed += 1
+        if closed:
+            self.save(data)
+        return closed
+
     def snapshot(self, page_id: str) -> dict | None:
         for row in self.load()["watched_snapshots"]:
             if row.get("page_id") == page_id:
@@ -627,6 +668,45 @@ class SupabaseStore(AssistantRecords):
                 }
             )
         return found
+
+    def by_dedupe_key(self, keys: list[str]) -> list[Opportunity]:
+        wanted = [key for key in keys if key]
+        if not wanted:
+            return []
+        rows = self.client.table("opportunities").select("*").in_("dedupe_key", wanted).execute().data or []
+        return [Opportunity.model_validate(row) for row in rows]
+
+    def add_reviews(self, items: list[dict]) -> None:
+        if not items:
+            return
+        current = self.client.table("app_reviews").select("body").execute().data or []
+        existing = {
+            (
+                (row.get("body") or {}).get("opportunity_id"),
+                (row.get("body") or {}).get("reason"),
+                (row.get("body") or {}).get("field"),
+            )
+            for row in current
+            if not (row.get("body") or {}).get("resolved")
+        }
+        payload = []
+        for item in items:
+            key = (item.get("opportunity_id"), item.get("reason"), item.get("field"))
+            if key in existing:
+                continue
+            existing.add(key)
+            payload.append({"id": item.get("id") or uuid4().hex[:12], "body": item})
+        if payload:
+            self.client.table("app_reviews").upsert(payload).execute()
+
+    def close_ids(self, ids: list[str], when: str) -> int:
+        wanted = [item for item in ids if item]
+        if not wanted:
+            return 0
+        self.client.table("opportunities").update({"closed_at": when}).in_("id", wanted).is_(
+            "closed_at", "null"
+        ).execute()
+        return len(wanted)
 
     def snapshot(self, page_id: str) -> dict | None:
         rows = (

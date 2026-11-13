@@ -1,0 +1,18 @@
+id: mercator
+url: https://www.mercator-ocean.eu/tenders-state/open/feed/
+list: rss
+language: en
+timezone: Europe/Paris
+kind: tender
+country: FR
+prefilter: keywords
+skip_past: true
+fields:
+  title: title
+  link: link
+detail:
+  fields:
+    deadline_text: "label:Closing date"
+dates:
+  - "%d %m %Y %I:%M %p"
+  - "%d %m %Y"

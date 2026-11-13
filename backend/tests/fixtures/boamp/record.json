@@ -1,0 +1,60 @@
+{
+  "idweb": "26-106165",
+  "id": "26_106165",
+  "contractfolderid": null,
+  "objet": "TRAVAUX DE RESTAURATION DE LA FAÇADE PRINCIPALE DE L'ÉGLISE SAINT-SÉBASTIEN D'ALLAUCH",
+  "filename": "26-106165",
+  "famille": "FNS",
+  "code_departement": [
+    "13"
+  ],
+  "code_departement_prestation": null,
+  "famille_libelle": "Marchés entre 90 k€ et seuils européens",
+  "dateparution": "2026-11-02",
+  "datefindiffusion": "2026-12-04",
+  "datelimitereponse": "2026-12-04T17:00:00+00:00",
+  "nomacheteur": "Ville d'Allauch",
+  "titulaire": null,
+  "perimetre": "FNSimple",
+  "type_procedure": "OUVERT",
+  "soustype_procedure": null,
+  "procedure_libelle": "Procédure Ouverte",
+  "procedure_categorise": "OUVERT/",
+  "nature": "APPEL_OFFRE",
+  "sousnature": null,
+  "nature_libelle": "Avis de marché",
+  "sousnature_libelle": null,
+  "nature_categorise": "appeloffre/standard",
+  "nature_categorise_libelle": "Avis de marché/",
+  "criteres": null,
+  "marche_public_simplifie": null,
+  "marche_public_simplifie_label": null,
+  "etat": "INITIAL",
+  "descripteur_code": [
+    "264",
+    "299"
+  ],
+  "dc": [
+    "264",
+    "299"
+  ],
+  "descripteur_libelle": [
+    "Peinture (travaux)",
+    "Ravalement"
+  ],
+  "type_marche": [
+    "TRAVAUX"
+  ],
+  "type_marche_facette": [
+    "Travaux"
+  ],
+  "type_avis": [
+    "5",
+    "1"
+  ],
+  "annonce_lie": null,
+  "annonces_anterieures": null,
+  "source_schema": "3.2.5",
+  "gestion": "{\"REFERENCE\": {\"IDWEB\": \"26-106165\", \"TYPE_AVIS\": {\"FAMILLE\": {\"FNS\": \"\"}, \"PERIMETRE\": {\"FNSimple\": \"\"}, \"NATURE\": {\"APPEL_OFFRE\": \"\"}, \"STATUT\": {\"INITIAL\": \"\"}}}, \"INDEXATION\": {\"SCHEMA\": \"3.2.5\", \"NOMORGANISME\": \"Ville d'Allauch\", \"TYPE_PROCEDURE\": {\"OUVERT\": \"\"}, \"DATE_PUBLICATION\": \"2026-11-02\", \"DATE_LIMITE_REPONSE\": \"2026-12-04T17:00:00\", \"DATE_FIN_DIFFUSION\": \"2026-12-04\", \"DESCRIPTEURS\": {\"DESCRIPTEUR\": [{\"CODE\": \"264\", \"LIBELLE\": \"Peinture (travaux)\"}, {\"CODE\": \"299\", \"LIBELLE\": \"Ravalement\"}]}, \"NATURE_MARCHE\": {\"TRAVAUX\": \"\"}, \"DEP_PUBLICATION\": \"13\", \"RESUME_OBJET\": \"TRAVAUX DE RESTAURATION DE LA FAÇADE PRINCIPALE DE L'ÉGLISE SAINT-SÉBASTIEN D'ALLAUCH\"}}",
+  "url_avis": "https://www.boamp.fr/pages/avis/?q=idweb:26-106165"
+}

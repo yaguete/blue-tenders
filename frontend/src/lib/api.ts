@@ -11,6 +11,8 @@ export type Card = {
   country: string | null;
   deadline_at: string | null;
   budget_total_eur: number | null;
+  budget_amount?: number | null;
+  budget_currency?: string | null;
   amount_max_eur: number | null;
   cofunding_min: number | null;
   cofunding_max: number | null;

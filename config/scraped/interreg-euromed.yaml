@@ -1,0 +1,19 @@
+id: interreg-euromed
+url: https://interreg-euro-med.eu/en/get-involved/
+list: html
+language: en
+timezone: Europe/Paris
+kind: grant
+prefilter: bypass
+subsectors: [offshore-wind, ocean-energy, green-ports, fleet-decarbonisation]
+skip_past: true
+row: table tr
+fields:
+  title: a
+  link: a@href
+  status_text: td:nth-child(2)
+  deadline_text: td:nth-child(6)
+skip_if:
+  status_text: ["closed"]
+dates:
+  - "%d/%m/%Y"

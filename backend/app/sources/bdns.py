@@ -12,7 +12,6 @@ from datetime import date, datetime
 
 import httpx
 
-from app.keywords import plain
 from app.models.opportunity import (
     Budget,
     Buyer,
@@ -24,7 +23,8 @@ from app.models.opportunity import (
     OpportunityKind,
     OpportunityType,
 )
-from app.sources.base import Source
+from app.sources.base import SOURCE_SUBSECTORS, Source
+from app.sources.terms import search_pairs
 from app.vertical import Vertical
 
 SEARCH_URL = "https://www.infosubvenciones.es/bdnstrans/api/convocatorias/busqueda"
@@ -58,25 +58,20 @@ def filters_bite(filtered_total: int, unfiltered_total: int) -> None:
         raise RuntimeError("BDNS ha ignorado el filtro: el total no baja")
 
 
-def _spanish_keywords(vertical: Vertical) -> list[str]:
-    found = []
-    for subsector in vertical.active_subsectors:
-        for keyword in subsector.keywords:
-            if plain(keyword) != keyword.lower() or any(ch in keyword for ch in "ñáéíóú"):
-                found.append(keyword)
-    return found[:12]
-
-
 class BdnsSource(Source):
     id = "bdns"
     kind = "api"
+    # Busca por término: un día sin resultados no es un fallo de la fuente.
+    volume_alert = False
 
     def fetch(self, since: date, vertical: Vertical) -> Iterable[dict]:
-        keywords = _spanish_keywords(vertical) or ["eólica marina"]
-        seen: set[str] = set()
+        pairs = search_pairs(vertical, self.id)
+        if not pairs:
+            raise ValueError("BDNS: el vertical no tiene search_terms.bdns; no se baja el archivo entero.")
+        seen: dict[str, dict] = {}
         checked = False
         with httpx.Client(timeout=40, headers={"Accept": "application/json"}) as client:
-            for keyword in keywords:
+            for subsector, keyword in pairs:
                 page = 0
                 while page < 20:
                     params = {
@@ -104,13 +99,18 @@ class BdnsSource(Source):
                         break
                     for row in rows:
                         number = str(row.get("numeroConvocatoria") or row.get("codigoBDNS") or "")
-                        if not number or number in seen:
+                        if not number:
                             continue
-                        seen.add(number)
-                        yield _with_detail(client, row, number)
+                        if number in seen:
+                            _remember(seen[number], subsector)
+                            continue
+                        detailed = _with_detail(client, row, number)
+                        _remember(detailed, subsector)
+                        seen[number] = detailed
                     if len(rows) < 50:
                         break
                     page += 1
+        yield from seen.values()
 
     def to_tender(self, raw: dict) -> Opportunity:
         external = str(raw.get("codigoBDNS") or raw.get("numeroConvocatoria") or "")
@@ -206,6 +206,12 @@ def _facts(raw: dict) -> list[Fact]:
             Fact(field="deadline_time", value="unknown", origin=FactOrigin.source, confidence=0.6, quote=str(raw.get("textFin"))[:240])
         )
     return facts
+
+
+def _remember(row: dict, subsector: str) -> None:
+    found = row.setdefault(SOURCE_SUBSECTORS, [])
+    if subsector not in found:
+        found.append(subsector)
 
 
 def _with_detail(client: httpx.Client, row: dict, number: str) -> dict:

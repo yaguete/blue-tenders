@@ -9,6 +9,7 @@ from datetime import UTC, date, datetime, timedelta
 
 from app.jobs.notify import beat, report_failure
 from app.pipeline import run
+from app.sources import REGISTRY
 from app.store import get_store
 from app.vertical import load_vertical
 
@@ -28,17 +29,30 @@ def since_for(source: str, today: date, days: int | None, store=None) -> date:
     return previous - timedelta(days=OVERLAP_DAYS)
 
 
-def _default_execute(source: str, since: date, vertical):
+def _default_execute(source: str, since: date, vertical, store=None):
+    store = store or get_store()
     tenders = run.ingest(source, since, vertical)
     raw_count = len(tenders)
     if source == "curated":
-        tenders = run.dedupe(tenders)
+        tenders = run.dedupe(tenders, store)
+        skipped_eu = []
     else:
-        tenders = run.dedupe(run.prefilter(tenders, vertical))
+        filtered = run.prefilter(tenders, vertical)
+        kept_eu, skipped_eu = run.split_eu(filtered)
+        tenders = run.dedupe(kept_eu, store)
     kept = len(tenders)
     tenders = run.enrich(tenders, vertical)
     indexed = run.index(tenders)
-    return {"raw_count": raw_count, "kept": kept, "indexed": indexed, "unchanged": raw_count - kept}
+    closures = list(getattr(REGISTRY.get(source), "closures", []) or [])
+    if closures:
+        store.close_ids(closures, datetime.now(UTC).isoformat())
+    return {
+        "raw_count": raw_count,
+        "kept": kept,
+        "indexed": indexed,
+        "unchanged": raw_count - kept,
+        "skipped_eu": len(skipped_eu),
+    }
 
 
 def run_one(source: str, days: int | None = None, *, today: date | None = None, execute=None, store=None) -> int:
@@ -54,8 +68,9 @@ def run_one(source: str, days: int | None = None, *, today: date | None = None, 
         return 0
     start = since_for(source, today, days, store)
     previous_raw = store.last_ok_raw(source)
+    runner = execute or (lambda src, since, vertical: _default_execute(src, since, vertical, store))
     try:
-        stats = (execute or _default_execute)(source, start, load_vertical(None))
+        stats = runner(source, start, load_vertical(None))
     except Exception as exc:  # noqa: BLE001  el registro tiene que quedar aunque la fuente rompa
         store.finish_ingest(
             run_id,
@@ -77,7 +92,8 @@ def run_one(source: str, days: int | None = None, *, today: date | None = None, 
         message=None,
     )
     raw = int(stats.get("raw_count") or 0)
-    if raw == 0 or (previous_raw and raw < previous_raw * 0.5):
+    alerts = getattr(REGISTRY.get(source), "volume_alert", True)
+    if alerts and (raw == 0 or (previous_raw and raw < previous_raw * 0.5)):
         report_failure(source, f"volume {raw}, previous {previous_raw}")
     beat()
     print(f"[{source}] {stats.get('indexed', 0)} indexados desde {start}")

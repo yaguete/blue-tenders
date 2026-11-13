@@ -38,11 +38,12 @@ Sin `SUPABASE_URL`, la API lee y escribe `backend/data/opportunities.json`.
 
 Un plazo o un requisito de elegibilidad inventado le cuesta una convocatoria al usuario.
 
-- Nunca rellenar un plazo, un importe o una elegibilidad que la fuente no traiga.
-- Cada dato derivado lleva un `Fact` (`origin`, `confidence`, y cita si viene de un texto).
-- Orden de verdad: campo estructurado de la fuente, regla de programa, extracción con LLM, vacío.
+- Una página oficial es una fuente. Un plazo leído de ella con un selector determinista es un dato extraído, con su `Fact` (origin `scraped`, URL de la página, texto original citado y confianza).
+- Lo scrapeado se publica solo. No pasa por revisión manual salvo que falle una validación: fecha que no se puede interpretar, plazo en el pasado para algo marcado como abierto, importe sin moneda, o choque con un campo estructurado de otra fuente. Solo eso va a `review_queue`.
+- Sigue prohibido inventar: una frase como «un mes desde la publicación» no se convierte en fecha, y un campo que no está en la página se queda vacío.
+- Orden de verdad: campo estructurado de API, HTML oficial con selector, regla de programa, extracción con LLM, vacío.
 - El LLM no pisa un plazo estructurado. Si chocan, el caso va a `review_queue`.
-- Lo generado se marca `generated`. Lo copiado del documento, `extracted`.
+- Lo generado se marca `generated`. Lo copiado del documento, `extracted`. Las páginas vigiladas que hoy solo dejan un borrador pasan a publicar con estas mismas reglas.
 
 ## LLM
 

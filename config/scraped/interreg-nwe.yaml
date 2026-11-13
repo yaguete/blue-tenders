@@ -1,0 +1,21 @@
+id: interreg-nwe
+url: https://www.nweurope.eu/calls-for-projects
+list: html
+language: en
+timezone: Europe/Brussels
+kind: grant
+prefilter: bypass
+subsectors: [offshore-wind, ocean-energy, green-ports, fleet-decarbonisation]
+skip_past: true
+only_if:
+  title: ["call"]
+row: .card-body
+fields:
+  title: h3.card-title
+  link: a@href
+  description: p
+  status_text: h3.card-title
+skip_if:
+  status_text: ["closed"]
+dates:
+  - "%d %B %Y"

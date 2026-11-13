@@ -1,7 +1,9 @@
 from app.models.opportunity import Fact, FactOrigin, NoticeKind, Opportunity, OpportunityType
-from app.sources.boamp import BoampSource
-from app.sources.boe import BoeSource
+from app.sources.boamp import BoampSource, boamp_decision
+from app.sources.boe import BoeSource, items
+from app.sources.contracts_finder import ContractsFinderSource
 from app.sources.fts import FtsSource
+from app.sources.ocds import keep_release, release_action
 from app.sources.watched import visible_text
 from app.store import FileStore
 
@@ -51,3 +53,44 @@ def test_new_sources_map_a_record_without_inventing_a_deadline():
     fr = BoampSource().to_tender({"idweb": "26-1", "objet": "Éolien en mer"})
     assert fr.country == "FR"
     assert fr.deadline_at is None
+
+
+def test_real_fixtures_keep_currency_deadline_and_skip_awards():
+    import json
+    from pathlib import Path
+
+    fixture = Path(__file__).parent / "fixtures"
+    release = json.loads((fixture / "fts" / "release.json").read_text())
+    assert keep_release(release)
+    assert not keep_release({"tag": ["award", "contract"], "ocid": "x"})
+    assert release_action({"tag": ["tenderCancellation"], "ocid": "ocds-1"}) == "cancel"
+    same = FtsSource().to_tender({"ocid": "ocds-1", "tag": ["tender"], "tender": {"title": "Cable"}})
+    again = FtsSource().to_tender({"ocid": "ocds-1", "tag": ["tenderUpdate"], "tender": {"title": "Cable"}})
+    assert same.id == again.id
+    uk = FtsSource().to_tender(release)
+    assert uk.budget is not None
+    assert uk.budget.currency == "GBP"
+    assert uk.budget.amount_eur is None
+    assert uk.deadline_at is not None and uk.deadline_at.year == 2027
+    assert uk.dedupe_key == release["ocid"]
+    assert uk.published_at is not None
+    cf = ContractsFinderSource().to_tender(
+        json.loads((fixture / "contracts_finder" / "release.json").read_text())
+    )
+    assert cf.source_id == "contracts-finder"
+    assert cf.country == "GB"
+
+    record = json.loads((fixture / "boamp" / "record.json").read_text())
+    assert boamp_decision(record) == "keep"
+    assert boamp_decision({**record, "famille": "JOUE"}) == "eu"
+    assert boamp_decision({**record, "nature": "ATTRIBUTION"}) == "skip"
+    fr = BoampSource().to_tender(record)
+    assert fr.deadline_at is not None and fr.deadline_at.day == 4
+    assert fr.published_at is not None
+
+    found = items(json.loads((fixture / "boe" / "summary.json").read_text()))
+    assert [row["identificador"] for row in found] == ["BOE-B-2026-1"]
+    notice = BoeSource().to_tender({**found[0], "published_at": "2026-11-13"})
+    assert notice.published_at is not None
+    assert notice.published_at.isoformat() == "2026-11-13"
+    assert notice.deadline_at is None

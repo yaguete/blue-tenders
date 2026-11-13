@@ -1,0 +1,15 @@
+# Quién gana cuando dos fuentes traen el mismo expediente o el mismo ocid.
+# Un número más alto se queda. Sin clave compartida no se descarta nada.
+priority:
+  ted: 100
+  eu-ft: 90
+  placsp: 80
+  placsp-regional: 70
+  fts: 60
+  contracts-finder: 50
+  boamp: 40
+  doffin: 40
+  tenderned: 40
+  bdns: 40
+  boe: 20
+  curated: 10

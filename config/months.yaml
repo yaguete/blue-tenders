@@ -1,0 +1,11 @@
+# Nombres de mes para leer un plazo sin depender del idioma del contenedor.
+# El número es el mes (1–12). Se aplican antes de strptime.
+en: [january, february, march, april, may, june, july, august, september, october, november, december]
+es: [enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre, diciembre]
+fr: [janvier, février, mars, avril, mai, juin, juillet, août, septembre, octobre, novembre, décembre]
+pt: [janeiro, fevereiro, março, abril, maio, junho, julho, agosto, setembro, outubro, novembro, dezembro]
+de: [januar, februar, märz, april, mai, juni, juli, august, september, oktober, november, dezember]
+nl: [januari, februari, maart, april, mei, juni, juli, augustus, september, oktober, november, december]
+no: [januar, februar, mars, april, mai, juni, juli, august, september, oktober, november, desember]
+da: [januar, februar, marts, april, maj, juni, juli, august, september, oktober, november, december]
+abbr: [jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec]

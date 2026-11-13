@@ -1,8 +1,10 @@
-"""BOAMP. Los datos abiertos de la DILA se publican con Licence Ouverte 2.0.
+"""BOAMP. Los datos abiertos de la DILA se publican con Licence Ouverte 2.0 (Etalab).
 
-Fuera del cron hasta confirmar en la ficha del dataset que esa es la licencia de
-este recurso concreto. La búsqueda del API no es de frase exacta: el prefiltro
-sigue haciendo falta.
+La ficha del dataset no declara licencia propia: vale la del sitio
+(«sauf mention contraire»). La búsqueda no es de frase exacta.
+
+Se piden avisos de licitación. `famille = JOUE` ya está en TED: no se ingiere
+y se cuenta en `skipped_eu`.
 """
 
 from collections.abc import Iterable
@@ -10,27 +12,77 @@ from datetime import date, datetime
 
 import httpx
 
-from app.models.opportunity import Opportunity, OpportunityType
-from app.sources.base import Source
+from app.models.opportunity import Buyer, NoticeKind, Opportunity, OpportunityType
+from app.sources.base import SOURCE_SUBSECTORS, Source
+from app.sources.terms import search_pairs
 from app.vertical import Vertical
 
 SEARCH_URL = "https://www.boamp.fr/api/explore/v2.1/catalog/datasets/boamp/records"
+_KEEP = {"APPEL_OFFRE", "RECTIFICATIF", "PRE-INFORMATION", "PERIODIQUE"}
+_PAGE = 100
+
+
+def boamp_decision(raw: dict) -> str:
+    """`keep`, `eu` (ya va a TED) o `skip` (adjudicación u otro aviso)."""
+    if raw.get("famille") == "JOUE":
+        return "eu"
+    if raw.get("nature") not in _KEEP:
+        return "skip"
+    return "keep"
+
+
+def _where(since: date, term: str) -> str:
+    safe = term.replace('"', " ").strip()
+    natures = ", ".join(f'"{nature}"' for nature in sorted(_KEEP))
+    return (
+        f"dateparution >= date'{since.isoformat()}' "
+        f"AND nature in ({natures}) "
+        f'AND search(objet, "{safe}")'
+    )
 
 
 class BoampSource(Source):
     id = "boamp"
     kind = "api"
+    volume_alert = False
 
     def fetch(self, since: date, vertical: Vertical) -> Iterable[dict]:
-        del vertical
-        with httpx.Client(timeout=40) as client:
-            response = client.get(
-                SEARCH_URL,
-                params={"where": f"dateparution >= date'{since.isoformat()}'", "limit": 100},
-            )
-            response.raise_for_status()
-            payload = response.json()
-        yield from payload.get("results") or []
+        pairs = search_pairs(vertical, self.id)
+        if not pairs:
+            raise ValueError("BOAMP: el vertical no tiene search_terms.boamp; no se baja el archivo entero.")
+        self.skipped_eu = 0
+        seen: dict[str, dict] = {}
+        with httpx.Client(timeout=40, headers={"User-Agent": "blue-tender/1.0"}) as client:
+            for subsector, term in pairs:
+                offset = 0
+                while offset < 5000:
+                    response = client.get(
+                        SEARCH_URL,
+                        params={"where": _where(since, term), "limit": _PAGE, "offset": offset},
+                    )
+                    response.raise_for_status()
+                    payload = response.json()
+                    rows = payload.get("results") or []
+                    for row in rows:
+                        decision = boamp_decision(row)
+                        ident = str(row.get("idweb") or "")
+                        if decision == "skip" or not ident:
+                            continue
+                        if ident in seen:
+                            found = seen[ident].setdefault(SOURCE_SUBSECTORS, [])
+                            if subsector not in found:
+                                found.append(subsector)
+                            continue
+                        row = dict(row)
+                        if decision == "eu":
+                            row["_skip_eu"] = True
+                        row[SOURCE_SUBSECTORS] = [subsector]
+                        seen[ident] = row
+                    total = int(payload.get("total_count") or 0)
+                    offset += _PAGE
+                    if not rows or offset >= total:
+                        break
+        yield from seen.values()
 
     def to_tender(self, raw: dict) -> Opportunity:
         ident = str(raw.get("idweb") or raw.get("filename") or "")
@@ -44,16 +96,29 @@ class BoampSource(Source):
                 deadline = datetime.fromisoformat(str(end))
             except ValueError:
                 deadline = None
+        published = str(raw.get("dateparution") or "")[:10]
+        notice = NoticeKind.pin if raw.get("nature") == "PRE-INFORMATION" else None
+        kind = (
+            OpportunityType.prior_information_notice
+            if raw.get("nature") == "PRE-INFORMATION"
+            else OpportunityType.tender
+        )
+        buyer = raw.get("nomacheteur")
+        folder = raw.get("contractfolderid")
         return Opportunity(
             id=Opportunity.make_id(self.id, ident),
             source_id=self.id,
             external_id=ident,
             url=raw.get("url_avis") or f"https://www.boamp.fr/avis/detail/{ident}",
-            type=OpportunityType.tender,
+            type=kind,
+            notice=notice,
             title=str(title),
             description=raw.get("objet"),
+            buyer=Buyer(name=str(buyer), country="FR") if buyer else None,
             country="FR",
             language="fr",
+            published_at=date.fromisoformat(published) if published else None,
             deadline_at=deadline,
+            dedupe_key=str(folder) if folder else None,
             raw=raw,
         )

@@ -1,0 +1,36 @@
+{
+  "data": {
+    "sumario": {
+      "diario": [
+        {
+          "seccion": [
+            {
+              "codigo": "5A",
+              "departamento": [
+                {
+                  "codigo": "5140",
+                  "nombre": "Ministerio para la Transición Ecológica",
+                  "item": [
+                    {
+                      "identificador": "BOE-B-2026-1",
+                      "titulo": "Anuncio de la Autoridad Portuaria de Vigo sobre suministro eléctrico a buques"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "codigo": "T",
+              "nombre": "Tribunal Constitucional",
+              "departamento": {
+                "codigo": "T",
+                "nombre": "Tribunal Constitucional",
+                "texto": "Índice"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

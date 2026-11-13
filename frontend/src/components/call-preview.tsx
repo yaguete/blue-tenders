@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { LoadingState } from "@/components/loading-state";
 import { api } from "@/lib/api";
 import { addCompare, COMPARE_LIMIT, comparePath, useCompareIds } from "@/lib/compare";
-import { metaLine, money, shortTitle, when } from "@/lib/format";
+import { metaLine, shortTitle, shownBudget, when } from "@/lib/format";
 import { t } from "@/lib/i18n";
 
 type Block = {
@@ -25,6 +25,7 @@ type Detail = {
   funder_id: string | null;
   deadline_at: string | null;
   budget_total_eur: number | null;
+  budget: { amount: number | null; currency: string | null } | null;
   cofunding_min: number | null;
   cofunding_max: number | null;
   consortium_required: boolean | null;
@@ -127,7 +128,10 @@ export function CallPreview({ id, onClose }: { id: string; onClose: () => void }
                 </h2>
                 <dl className="grid gap-3 text-sm sm:grid-cols-2">
                   <Fact label="Deadline" value={when(item.deadline_at)} />
-                  <Fact label="Budget" value={money(item.budget_total_eur)} />
+                  <Fact
+                    label="Budget"
+                    value={shownBudget(item.budget_total_eur, item.budget?.amount, item.budget?.currency)}
+                  />
                   <Fact label="Co-funding" value={cofunding} />
                   <Fact
                     label="Consortium"

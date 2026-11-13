@@ -97,6 +97,8 @@
   "sourcePlacsp": "Plataforma de Contratación del Sector Público",
   "sourceBdns": "BDNS / SNPSAP",
   "sourceCurated": "Official call, checked by hand",
+  "scrapedDeadline": "Deadline read from the official page",
+  "scrapedBudget": "Budget read from the official page",
   "attributionCordis": "CORDIS — European Commission (data.europa.eu), loaded {date}",
   "attributionTed": "TED contract award notices — Publications Office of the EU",
   "signIn": "Sign in is not configured in this demo. Set ALLOW_DEMO_AUTH=1 on the API and a name in the profile page.",

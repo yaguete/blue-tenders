@@ -1,0 +1,109 @@
+{
+  "ocid": "ocds-b5fd17-878ed281-6a75-4a83-ae1f-a67d68ac7f6f",
+  "id": "e22d5d91-9b44-4aa7-9bbb-97d3e4e7efad-921534",
+  "language": "en",
+  "date": "2026-11-13T12:42:13Z",
+  "tag": [
+    "tender"
+  ],
+  "initiationType": "tender",
+  "tender": {
+    "id": "53cef8b3-b102-4e28-a377-c1b55eaf8cd2",
+    "title": "CA18682 - RFQ 2026/47 - Kilcurry Subcatchment Targeted River & Catchment Assessment",
+    "description": "NMDDC wishes to appoint a suitably qualified environmental consultancy to undertake a targeted assessment of the Forkhill River and Cully River within the Northern Ireland section of the Kilcurry Subcatchment.\r\n\r\nTo access this competition: \r\n\r\nRegistered:\r\nLogin to https://suppliers.multiquote.com and view the opportunity CA18682.\r\n\r\nNot registered:\r\nVisit https://suppliers.multiquote.com then register and quote CA18682 as the reason for registration. \r\n\r\n Any queries please contact MultiQuote on 020 3920 8054.",
+    "datePublished": "2026-11-13T12:42:13Z",
+    "status": "active",
+    "classification": {
+      "scheme": "CPV",
+      "id": "90700000",
+      "description": "Environmental services"
+    },
+    "items": [
+      {
+        "id": "1",
+        "deliveryAddresses": [
+          {
+            "postalCode": "BT34 2QU"
+          },
+          {
+            "countryName": "British Oversea Territories"
+          },
+          {
+            "countryName": "Channel Islands"
+          },
+          {
+            "countryName": "Europe"
+          },
+          {
+            "countryName": "Isle of Man"
+          },
+          {
+            "countryName": "Rest of the World"
+          },
+          {
+            "countryName": "United Kingdom"
+          }
+        ]
+      }
+    ],
+    "value": {
+      "amount": 19550,
+      "currency": "GBP"
+    },
+    "procurementMethod": "open",
+    "procurementMethodDetails": "Open procedure",
+    "tenderPeriod": {
+      "endDate": "2026-11-28T12:00:00Z"
+    },
+    "contractPeriod": {
+      "startDate": "2026-12-07T00:00:00Z",
+      "endDate": "2027-04-05T23:59:59+01:00"
+    },
+    "suitability": {
+      "sme": true,
+      "vcse": false
+    },
+    "mainProcurementCategory": "services",
+    "documents": [
+      {
+        "id": "1",
+        "documentType": "tenderNotice",
+        "description": "Opportunity notice on Contracts Finder",
+        "url": "https://www.contractsfinder.service.gov.uk/Notice/e22d5d91-9b44-4aa7-9bbb-97d3e4e7efad",
+        "datePublished": "2026-11-13T12:42:13Z",
+        "format": "text/html",
+        "language": "en"
+      }
+    ]
+  },
+  "parties": [
+    {
+      "id": "GB-CFS-333373",
+      "name": "Newry, Mourne and Down District Council (NMD)",
+      "identifier": {
+        "legalName": "Newry, Mourne and Down District Council (NMD)"
+      },
+      "address": {
+        "streetAddress": "Unit 19 Rampart Road, Greenbank Industrial Estate",
+        "locality": "Newry",
+        "postalCode": "BT34 2QU",
+        "countryName": "England"
+      },
+      "contactPoint": {
+        "name": "Seamus McGeoghegan",
+        "email": "support@multiquote.com",
+        "telephone": "0151 482 9230"
+      },
+      "details": {
+        "url": "https://suppliers.multiquote.com"
+      },
+      "roles": [
+        "buyer"
+      ]
+    }
+  ],
+  "buyer": {
+    "id": "GB-CFS-333373",
+    "name": "Newry, Mourne and Down District Council (NMD)"
+  }
+}

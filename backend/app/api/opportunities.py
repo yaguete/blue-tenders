@@ -212,6 +212,8 @@ def _card(item: Opportunity) -> dict:
         "country": item.country,
         "deadline_at": item.deadline_at.isoformat() if item.deadline_at else None,
         "budget_total_eur": item.budget_total_eur,
+        "budget_amount": item.budget.amount if item.budget else None,
+        "budget_currency": item.budget.currency if item.budget else None,
         "amount_min_eur": item.amount_min_eur,
         "amount_max_eur": item.amount_max_eur,
         "cofunding_min": item.cofunding_min,

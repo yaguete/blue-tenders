@@ -38,6 +38,20 @@ def _find_text(node: ET.Element, name: str) -> str | None:
     return None
 
 
+def feed_root(content: bytes) -> ET.Element:
+    """El feed es ATOM. Un HTML con 200 (certificado de cliente) no es un feed vacío."""
+    head = content.lstrip()[:300].lower()
+    if head.startswith(b"<html") or b"<html" in head:
+        raise RuntimeError(
+            "PLACSP ha devuelto HTML en lugar del feed ATOM: "
+            "el feed exige certificado de cliente o la URL ha cambiado"
+        )
+    try:
+        return ET.fromstring(content)
+    except ET.ParseError as exc:
+        raise RuntimeError(f"PLACSP: el feed no es ATOM ({exc})") from exc
+
+
 def _published(entry: ET.Element) -> date | None:
     parsed = _parse_dt(_find_text(entry, "IssueDate")) or _parse_dt(_find_text(entry, "updated"))
     return parsed.date() if parsed else None
@@ -67,7 +81,7 @@ class PlacspSource(Source):
             while url and pages < 40:
                 response = client.get(url)
                 response.raise_for_status()
-                root = ET.fromstring(response.content)
+                root = feed_root(response.content)
                 oldest = None
                 for entry in root.iter():
                     if _local(entry.tag) != "entry":
@@ -140,7 +154,8 @@ class PlacspSource(Source):
             published_at=_published(entry),
             documents=_documents(entry, link),
             call_id=external,
-            raw={"external_id": external, "procedure": external},
+            dedupe_key=external,
+            raw={"external_id": external, "procedure": external, "procedure-identifier": external},
         )
 
 

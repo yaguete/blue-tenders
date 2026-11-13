@@ -36,6 +36,9 @@ class Vertical(BaseModel):
     geographies: dict = {}
     opportunity_types: list[str] = []
     languages: list[str] = []
+    # Términos con los que una fuente sabe buscar, por subsector. El prefiltro no los lee:
+    # el adaptador marca `_source_subsectors` cuando casa uno.
+    search_terms: dict[str, dict[str, list[str]]] = {}
     track_record: TrackRecordConfig = TrackRecordConfig()
 
     @property

@@ -1,11 +1,16 @@
 import json
+import xml.etree.ElementTree as ET
 from pathlib import Path
+
+import pytest
 
 from app.models.opportunity import Opportunity, OpportunityKind
 from app.sources.bdns import BdnsSource
 from app.sources.curated import CuratedSource
 from app.sources.eu_ft import EuFtSource, _fill_detail
-from app.sources.placsp import PlacspSource
+from app.sources.placsp import PlacspSource, _cpv_ok, feed_root
+from app.sources.terms import search_pairs
+from app.vertical import load_vertical
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -20,6 +25,36 @@ def test_eu_ft_maps_a_topic_without_inventing_a_second_deadline():
     assert item.deadline_at is not None
     assert item.deadline_at.hour == 17
     assert len(item.deadlines) == 1
+
+
+def test_placsp_html_error_is_not_parsed_as_an_empty_feed():
+    html = (FIXTURES / "placsp" / "html_error.html").read_bytes()
+    with pytest.raises(RuntimeError, match="HTML"):
+        feed_root(html)
+
+
+def test_placsp_cpv_keeps_a_real_energy_code_and_drops_the_rest():
+    vertical = load_vertical()
+    entry = ET.fromstring((FIXTURES / "placsp" / "cpv_fragment.xml").read_text())
+    assert _cpv_ok(entry, vertical.cpv)
+    noise = ET.fromstring(
+        "<entry><ItemClassificationCode>92000000</ItemClassificationCode></entry>"
+    )
+    assert not _cpv_ok(noise, vertical.cpv)
+    bare = ET.fromstring("<entry><ContractFolderID>sin-cpv</ContractFolderID></entry>")
+    assert _cpv_ok(bare, vertical.cpv)
+
+
+def test_bdns_searches_the_terms_configured_for_it():
+    pairs = search_pairs(load_vertical(), "bdns")
+    assert ("offshore-wind", "eólico") in pairs
+    assert ("green-ports", "puerto") in pairs
+    assert all("marina" not in term for _, term in pairs)
+    row = json.loads((FIXTURES / "bdns" / "search.json").read_text())["content"][0]
+    item = BdnsSource().to_tender(row)
+    assert item.external_id == "936328"
+    assert item.published_at is not None
+    assert item.published_at.isoformat() == "2026-10-20"
 
 
 def test_placsp_reads_codice_fields():

@@ -1,0 +1,30 @@
+{
+  "publicatieId": "446314",
+  "publicatieDatum": "2026-10-28",
+  "typePublicatie": {
+    "code": "AAO",
+    "omschrijving": "Aankondiging opdracht"
+  },
+  "aanbestedingNaam": "Telemetrieonderzoek ruige dwergvleermuis In relatie tot offshore windparken",
+  "opdrachtgeverNaam": "Rijkswaterstaat Water, Verkeer en Leefomgeving",
+  "sluitingsDatum": "2027-01-05T09:00:00",
+  "procedure": {
+    "code": "OPE",
+    "omschrijving": "Openbaar"
+  },
+  "typeOpdracht": {
+    "code": "D",
+    "omschrijving": "Diensten"
+  },
+  "europees": true,
+  "publicatiecode": {
+    "code": "EF16",
+    "omschrijving": "Aankondiging van een opdracht - algemene richtlijn, standaardregeling"
+  },
+  "opdrachtBeschrijving": "Het doel van deze opdracht is om meer inzicht te krijgen in de migratieroutes, het trekgedrag en het gebruik van het Noordzeegebied door de ruige dwergvleermuis. Hiervoor worden vleermuizen gezenderd en gevolgd via het MOTUS-netwerk, aangevuld met DNA-onderzoek. De resultaten moeten bijdragen aan een betere beoordeling van de effecten van windparken op zee op populatieniveau.\n\nDaarnaast moeten de gegevens inzicht geven in vliegroutes, vlieghoogtes en trekmomenten, zodat mitigerende maatregelen, zoals het tijdelijk stilzetten van windturbines, effectiever kunnen worden ingezet. Ook is ruimte voor aanvullende analyses en innovatieve onderzoekstechnieken, mits deze aantoonbaar bijdragen aan het verkleinen van bestaande kennisleemten. 4 jaar + 2 x 1 jaar optie tot verlenging",
+  "kenmerk": 616050,
+  "link": {
+    "href": "https://www.tenderned.nl/aankondigingen/overzicht/446314",
+    "title": "self"
+  }
+}

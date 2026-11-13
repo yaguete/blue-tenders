@@ -1,0 +1,17 @@
+id: ukri
+url: https://www.ukri.org/opportunity/feed/
+list: rss
+language: en
+timezone: Europe/London
+kind: grant
+country: GB
+prefilter: keywords
+skip_past: true
+fields:
+  title: title
+  link: link
+detail:
+  fields:
+    deadline_text: "label:Closing date:"
+dates:
+  - "%Y-%m-%dT%H:%M:%S"

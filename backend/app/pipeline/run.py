@@ -9,6 +9,7 @@ from app.keywords import tokens as _tokens
 from app.models.tender import Tender
 from app.sources import REGISTRY
 from app.sources.base import source_subsectors
+from app.sources.priority import source_priority
 from app.vertical import Vertical
 
 
@@ -46,11 +47,26 @@ def prefilter(tenders: list[Tender], vertical: Vertical) -> list[Tender]:
     return kept
 
 
-def dedupe(tenders: list[Tender]) -> list[Tender]:
-    """Por id de fuente y, entre TED y PLACSP, por expediente si los dos lo traen.
+def split_eu(tenders: list[Tender]) -> tuple[list[Tender], list[Tender]]:
+    """La marca europea se aplica después del prefiltro: solo cuenta lo que sería ficha."""
+    kept, skipped = [], []
+    for tender in tenders:
+        if (tender.raw or {}).get("_skip_eu"):
+            print(f"[{tender.source_id}] skipped_eu {tender.external_id} {tender.title[:120]}")
+            skipped.append(tender)
+        else:
+            kept.append(tender)
+    return kept, skipped
+
+
+def dedupe(tenders: list[Tender], store=None) -> list[Tender]:
+    """Por id de fuente y, si hay clave compartida, entre fuentes.
 
     Una licitación y su adjudicación son el mismo expediente y las dos se quedan: si no,
     «Who won» no tiene con qué cruzar. Solo se descarta el duplicado entre fuentes distintas.
+    La clave se compara también con lo ya indexado: cada fuente corre en su propia ejecución.
+    Gana la de mayor prioridad en config/sources.yaml. La perdedora que ya estaba guardada
+    vuelve con `listed=False` para que deje de salir en la búsqueda; no se borra.
     """
     by_id: dict[str, Tender] = {}
     for tender in tenders:
@@ -58,7 +74,7 @@ def dedupe(tenders: list[Tender]) -> list[Tender]:
     seen_procedure: dict[str, str] = {}
     dropped = set()
     for tender in by_id.values():
-        procedure = str((tender.raw or {}).get("procedure-identifier") or "")
+        procedure = str((tender.raw or {}).get("procedure-identifier") or tender.dedupe_key or "")
         if not procedure:
             continue
         key = procedure.strip().lower()
@@ -72,12 +88,59 @@ def dedupe(tenders: list[Tender]) -> list[Tender]:
                 dropped.add(previous_id)
                 seen_procedure[key] = tender.id
             continue
-        # Se queda el de TED si uno de los dos lo es: el anuncio europeo es el canónico.
-        keep_ted = previous.source_id == "ted" or tender.source_id != "ted"
-        dropped.add(tender.id if keep_ted else previous_id)
-        if not keep_ted:
+        winner = _preferred(previous, tender)
+        dropped.add(previous.id if winner is tender else tender.id)
+        if winner is tender:
             seen_procedure[key] = tender.id
-    return [tender for tender in by_id.values() if tender.id not in dropped]
+    kept = [tender for tender in by_id.values() if tender.id not in dropped]
+    if store is None:
+        return kept
+    keys = list({tender.dedupe_key for tender in kept if tender.dedupe_key})
+    if not keys:
+        return kept
+    known = {
+        item.id: item
+        for item in store.by_dedupe_key(keys)
+        if item.dedupe_key and item.id not in by_id
+    }
+    unlist: dict[str, Tender] = {}
+    still = []
+    for tender in kept:
+        if not tender.dedupe_key:
+            still.append(tender)
+            continue
+        rivals = [
+            item
+            for item in known.values()
+            if item.dedupe_key == tender.dedupe_key and item.source_id != tender.source_id
+        ]
+        if not rivals:
+            still.append(tender)
+            continue
+        beaten = []
+        lost = False
+        for rival in rivals:
+            if _preferred(tender, rival) is tender:
+                beaten.append(rival)
+            else:
+                lost = True
+                break
+        if lost:
+            continue
+        for rival in beaten:
+            rival.listed = False
+            unlist[rival.id] = rival
+        still.append(tender)
+    still.extend(unlist.values())
+    return still
+
+
+def _preferred(left: Tender, right: Tender) -> Tender:
+    """La fuente con más prioridad. A igualdad se queda la de la izquierda (la que ya estaba)."""
+    rank = source_priority()
+    if rank.get(right.source_id, 0) > rank.get(left.source_id, 0):
+        return right
+    return left
 
 
 def enrich(tenders: list[Tender], vertical: Vertical) -> list[Tender]:
@@ -88,7 +151,7 @@ def enrich(tenders: list[Tender], vertical: Vertical) -> list[Tender]:
     from app.enrich.rules import apply_programme_rules, apply_sea_basins
     from app.enrich.translate import translate
     from app.models.opportunity import NoticeKind
-    from app.quality.validate import validate_opportunity
+    from app.quality.validate import apply_scraped_checks, review_item, validate_opportunity
 
     known = {}
     try:
@@ -100,6 +163,9 @@ def enrich(tenders: list[Tender], vertical: Vertical) -> list[Tender]:
     kept = []
     for tender in tenders:
         if known.get(tender.id) == tender.content_hash:
+            if tender.listed:
+                continue
+            kept.append(tender)
             continue
         if tender.notice == NoticeKind.award_notice:
             # Una adjudicación no tiene ficha: clasificar por reglas y no gastar el modelo.
@@ -117,10 +183,12 @@ def enrich(tenders: list[Tender], vertical: Vertical) -> list[Tender]:
         apply_sea_basins(tender)
         translate(tender)
         analyse(tender)
+        tender.review_items.extend(apply_scraped_checks(tender))
         tender.content_hash = tender.compute_hash()
         errors = validate_opportunity(tender)
         if errors:
             tender.review_status = "invalid:" + "; ".join(errors)
+            tender.review_items.append(review_item(tender, "invalid", None, "; ".join(errors)))
         elif before != tender.content_hash:
             tender.review_status = tender.review_status or "changed"
         fetch_documents(tender)
@@ -134,5 +202,8 @@ def index(tenders: list[Tender]) -> int:
 
     store = get_store()
     saved = store.upsert_opportunities(tenders)
+    reviews = [item for tender in tenders for item in tender.review_items]
+    if reviews:
+        store.add_reviews(reviews)
     refresh_opportunities(tenders, store)
     return saved

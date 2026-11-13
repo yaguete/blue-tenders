@@ -23,6 +23,8 @@ class Source(ABC):
 
     id: str
     kind: str  # api | rss | html | pdf
+    # False en las que buscan por término: un cero es un día sin sector, no una fuente caída.
+    volume_alert: bool = True
 
     @abstractmethod
     def fetch(self, since: date, vertical: Vertical) -> Iterable[dict]:

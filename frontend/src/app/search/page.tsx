@@ -8,7 +8,7 @@ import { LoadingState } from "@/components/loading-state";
 import { StatBox } from "@/components/stat-box";
 import { api, type Card, type SearchResponse, type Stats } from "@/lib/api";
 import { comparePath, toggleCompare, useCompareIds } from "@/lib/compare";
-import { checkedAt, daysLeft, metaLine, money, moneyCompact, shortTitle, when } from "@/lib/format";
+import { checkedAt, daysLeft, metaLine, moneyCompact, shortTitle, shownBudget, when } from "@/lib/format";
 import { t } from "@/lib/i18n";
 
 const KINDS = [
@@ -589,7 +589,9 @@ function Row({ item, picking, onOpen }: { item: Card; picking: boolean; onOpen: 
           {left || item.status}
         </p>
         <p className="tabular font-mono text-xs text-muted-foreground">{when(item.deadline_at)}</p>
-        <p className="tabular mt-2 font-mono text-sm">{money(item.budget_total_eur || item.amount_max_eur)}</p>
+        <p className="tabular mt-2 font-mono text-sm">
+          {shownBudget(item.budget_total_eur || item.amount_max_eur, item.budget_amount, item.budget_currency)}
+        </p>
       </div>
     </li>
   );

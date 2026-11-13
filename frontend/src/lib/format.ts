@@ -1,10 +1,31 @@
 export function money(value: number | null | undefined): string {
   if (value == null) return "—";
-  return new Intl.NumberFormat("en", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-  }).format(value);
+  return moneyOf(value, "EUR");
+}
+
+export function moneyOf(amount: number | null | undefined, currency: string | null | undefined): string {
+  if (amount == null) return "—";
+  const code = (currency || "EUR").toUpperCase();
+  try {
+    return new Intl.NumberFormat("en", {
+      style: "currency",
+      currency: code,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch {
+    return `${code} ${Math.round(amount).toLocaleString("en")}`;
+  }
+}
+
+export function shownBudget(
+  eur: number | null | undefined,
+  amount?: number | null,
+  currency?: string | null,
+): string {
+  if (eur != null) return money(eur);
+  if (amount != null && currency && currency.toUpperCase() !== "EUR") return moneyOf(amount, currency);
+  if (amount != null) return moneyOf(amount, currency || "EUR");
+  return "—";
 }
 
 export function when(iso: string | null | undefined): string {

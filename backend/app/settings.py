@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     ops_email: str = ""
     heartbeat_url: str = ""
     admin_token: str = ""
+    # Clave del portal de desarrolladores de Doffin. Sin ella se usa la API interna de su web.
+    doffin_api_key: str = ""
     enrich_documents: bool = False
     classify_model: str = "claude-haiku-5-5"
     extract_model: str = "claude-haiku-5-5"

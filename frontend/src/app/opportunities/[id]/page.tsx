@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { LoadingState } from "@/components/loading-state";
 import { api } from "@/lib/api";
 import { addCompare, comparePath, useCompareIds } from "@/lib/compare";
-import { money, shortTitle, when } from "@/lib/format";
+import { money, shortTitle, shownBudget, when } from "@/lib/format";
 import { t } from "@/lib/i18n";
 
 type Block = {
@@ -60,6 +60,7 @@ type Detail = {
   funder_id: string | null;
   deadline_at: string | null;
   budget_total_eur: number | null;
+  budget: { amount: number | null; currency: string | null; amount_eur: number | null } | null;
   amount_min_eur: number | null;
   amount_max_eur: number | null;
   topic_id: string | null;
@@ -75,7 +76,14 @@ type Detail = {
   description: string | null;
   updated_at: string | null;
   analysis: { summary: string | null; blocks: Block[]; model: string | null } | null;
-  facts: { field: string; value?: string | number | null; origin: string; confidence: number; quote: string | null }[];
+  facts: {
+    field: string;
+    value?: string | number | null;
+    origin: string;
+    confidence: number;
+    quote: string | null;
+    document_url?: string | null;
+  }[];
   documents: { url: string; name: string | null; kind?: string | null; access?: string | null }[];
   awards: { id: string; title: string; winner: string | null; amount_eur: number | null; url: string }[];
   track_record?: TrackRecord;
@@ -109,7 +117,7 @@ export default function OpportunityPage() {
   const budgetValue =
     topic && item.budget_total_eur != null
       ? t("budgetForTopic").replace("{amount}", money(item.budget_total_eur))
-      : money(item.budget_total_eur);
+      : shownBudget(item.budget_total_eur, item.budget?.amount, item.budget?.currency);
   const starred = topic && item.budget_total_eur != null;
   const files = item.documents.filter((doc) => isFile(doc, item.url));
   const deadlineValue =
@@ -187,6 +195,7 @@ export default function OpportunityPage() {
             value={item.consortium_required == null ? "Not specified" : item.consortium_required ? "Required" : "Not required"}
           />
         </dl>
+        <ScrapedFrom item={item} />
         {closed && topic && (
           <div className="space-y-1 text-sm text-muted-foreground">
             <p>{t("closedReference")}</p>
@@ -495,6 +504,31 @@ function grantLine(item: Detail): string | null {
   if (grants != null) return t("projectsExpected").replace("{count}", String(grants));
   if (each) return t("contributionEach").replace("{each}", each);
   return null;
+}
+
+function ScrapedFrom({ item }: { item: Detail }) {
+  const notes = [
+    ["deadline_at", t("scrapedDeadline")],
+    ["budget", t("scrapedBudget")],
+  ] as const;
+  const lines = notes.flatMap(([field, label]) => {
+    const fact = item.facts.find((row) => row.field === field && row.origin === "scraped" && row.quote);
+    if (!fact) return [];
+    const href = fact.document_url || item.url;
+    return [{ label, href, quote: fact.quote }];
+  });
+  if (!lines.length) return null;
+  return (
+    <ul className="space-y-1 text-sm text-muted-foreground">
+      {lines.map((line) => (
+        <li key={line.label}>
+          <a href={line.href} title={line.quote ?? undefined} className="underline">
+            {line.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 function proposalLine(item: Detail): string | null {

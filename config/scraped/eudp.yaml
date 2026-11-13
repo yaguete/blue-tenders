@@ -1,0 +1,16 @@
+id: eudp
+url: https://www.eudp.dk/soeg-tilskud/indkaldelse-til-eudp
+list: html
+language: da
+timezone: Europe/Copenhagen
+kind: grant
+country: DK
+prefilter: bypass
+subsectors: [offshore-wind, ocean-energy, offshore-hydrogen, fleet-decarbonisation]
+skip_past: true
+row: article
+fields:
+  title: h1
+  deadline_text: "contains:Ansøgningsfristen"
+dates:
+  - "%d. %B %Y"

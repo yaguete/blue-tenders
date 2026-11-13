@@ -1,0 +1,28 @@
+{
+  "id": "2022-621509",
+  "buyer": [
+    {
+      "id": "d1f37a191a09013cf0ce9cc801aeb281",
+      "organizationId": "926 718 304",
+      "name": "Eksportfinansiering Norge"
+    }
+  ],
+  "heading": "Markedsinformasjon: Havindustri sørvis og havvind",
+  "description": "Eksfin har stor eksponering mot energimarkedet. Offshore olje og gass har vært den dominerende sektoren i lang tid. Shipping, cruise samt fiske er også viktige sektorer innenfor Eksfins portefølje Eksfins eksponering er i endring og det er nå en økning innen fornybar energi og relaterte markedssegment. Eksfin krever markedsinformasjon innenfor disse sektorene.Først og fremst krever Eksfin en abonnementstjeneste med tilgang til global markedsintelligens innen olje- og gassområdet til havs og havvindområdet, og viktige makrodrivere innenfor det totale energimarkedet med et spesielt fokus på det grønne skiftet.Eksfin krever også en abonnementstjeneste med tilgang til global markedsinformasjon innen skipsfart, og er positiv til markedsinformasjon som kan gis på cruise så vel som fiskerisektorer. Denne informasjonen vil være hovedkilden for Eksfins egne analyser og benchmarking analyse.",
+  "locationId": [
+    "NO081"
+  ],
+  "estimatedValue": null,
+  "type": "ANNOUNCEMENT_OF_CONCLUSION_OF_CONTRACT",
+  "allTypes": [
+    "ANNOUNCEMENT_OF_CONCLUSION_OF_CONTRACT",
+    "RESULT"
+  ],
+  "status": null,
+  "issueDate": "2022-12-09T10:00:00Z",
+  "deadline": null,
+  "sentToTed": true,
+  "publicationDate": "2022-12-09",
+  "placeOfPerformance": [],
+  "procurementStrategicLabels": []
+}
