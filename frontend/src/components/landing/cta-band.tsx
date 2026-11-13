@@ -15,13 +15,15 @@ export function CtaBand({ stats }: { stats: LoadState<Stats> }) {
       : (total === 1 ? t("landingCtaCountOne") : t("landingCtaCount")).replace("{count}", landingCount(total));
 
   return (
-    <section className="bg-brand-pale px-6 py-16 sm:px-12">
-      <h2 className="max-w-[18ch] text-3xl font-semibold tracking-[-0.03em] text-balance">{heading}</h2>
-      <p className="mt-4 max-w-md text-foreground/80">{t("landingCtaNote")}</p>
+    <section className="flex flex-col bg-brand-pale px-6 py-16 sm:flex-row sm:items-end sm:justify-between sm:gap-10 sm:px-12">
+      <div>
+        <h2 className="max-w-[18ch] text-3xl font-semibold tracking-[-0.03em] text-balance">{heading}</h2>
+        <p className="mt-4 max-w-md text-foreground/80">{t("landingCtaNote")}</p>
+      </div>
       <Link
         href="/search"
         onClick={() => clearCompare()}
-        className="mt-8 inline-flex h-[54px] items-center bg-primary px-6 text-sm text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        className="mt-8 inline-flex h-[54px] shrink-0 items-center bg-primary px-6 text-sm text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:mt-0"
       >
         {t("landingSearchButton")}
       </Link>

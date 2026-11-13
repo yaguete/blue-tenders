@@ -34,7 +34,9 @@ def test_an_award_with_the_same_procedure_shows_the_winner(tmp_path):
         type=OpportunityType.award,
         notice=NoticeKind.award_notice,
         call_id="proc-1",
-        facts=[Fact(field="winner_name", value="Grid Co", origin=FactOrigin.source, confidence=0.9)],
+        facts=[
+            Fact(field="winner_name", value="Grid Co", origin=FactOrigin.source, confidence=0.9)
+        ],
     )
     store.upsert_opportunities([call, award])
     found = store.awards_for("proc-1")
@@ -47,7 +49,9 @@ def test_new_sources_map_a_record_without_inventing_a_deadline():
     )
     assert uk.country == "GB"
     assert uk.deadline_at is None
-    boe = BoeSource().to_tender({"identificador": "BOE-A-2026-1", "titulo": "Bases de eólica marina"})
+    boe = BoeSource().to_tender(
+        {"identificador": "BOE-A-2026-1", "titulo": "Bases de eólica marina"}
+    )
     assert boe.notice.value == "pin"
     assert boe.deadline_at is None
     fr = BoampSource().to_tender({"idweb": "26-1", "objet": "Éolien en mer"})
@@ -64,8 +68,12 @@ def test_real_fixtures_keep_currency_deadline_and_skip_awards():
     assert keep_release(release)
     assert not keep_release({"tag": ["award", "contract"], "ocid": "x"})
     assert release_action({"tag": ["tenderCancellation"], "ocid": "ocds-1"}) == "cancel"
-    same = FtsSource().to_tender({"ocid": "ocds-1", "tag": ["tender"], "tender": {"title": "Cable"}})
-    again = FtsSource().to_tender({"ocid": "ocds-1", "tag": ["tenderUpdate"], "tender": {"title": "Cable"}})
+    same = FtsSource().to_tender(
+        {"ocid": "ocds-1", "tag": ["tender"], "tender": {"title": "Cable"}}
+    )
+    again = FtsSource().to_tender(
+        {"ocid": "ocds-1", "tag": ["tenderUpdate"], "tender": {"title": "Cable"}}
+    )
     assert same.id == again.id
     uk = FtsSource().to_tender(release)
     assert uk.budget is not None
@@ -86,7 +94,35 @@ def test_real_fixtures_keep_currency_deadline_and_skip_awards():
     assert boamp_decision({**record, "nature": "ATTRIBUTION"}) == "skip"
     fr = BoampSource().to_tender(record)
     assert fr.deadline_at is not None and fr.deadline_at.day == 4
+    assert any(doc.url.endswith("/2026/11/26-106165.pdf") for doc in fr.documents)
     assert fr.published_at is not None
+
+    long = {
+        "idweb": "26-92026",
+        "objet": "Etude de faisabilité pour un navire hydrogène",
+        "dateparution": "2026-09-23",
+        "source_schema": "3.2.5",
+        "donnees": json.dumps(
+            {
+                "FNSimple": {
+                    "initial": {
+                        "communication": {"urlDocConsul": "https://marches.example/consultation/1"},
+                        "natureMarche": {
+                            "description": "Les objectifs principaux sont de concevoir le navire et la recharge en hydrogène.",
+                        },
+                    }
+                }
+            }
+        ),
+    }
+    detailed = BoampSource().to_tender(long)
+    assert "recharge en hydrogène" in (detailed.description or "")
+    assert detailed.title.startswith("Etude de faisabilité")
+    assert any(
+        doc.name == "Notice (PDF)" and doc.url.endswith("/2026/09/26-92026.pdf")
+        for doc in detailed.documents
+    )
+    assert any(doc.kind == "portal" and doc.access == "link_only" for doc in detailed.documents)
 
     found = items(json.loads((fixture / "boe" / "summary.json").read_text()))
     assert [row["identificador"] for row in found] == ["BOE-B-2026-1"]

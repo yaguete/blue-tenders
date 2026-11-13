@@ -7,12 +7,13 @@ Se piden avisos de licitación. `famille = JOUE` ya está en TED: no se ingiere
 y se cuenta en `skipped_eu`.
 """
 
+import json
 from collections.abc import Iterable
 from datetime import date, datetime
 
 import httpx
 
-from app.models.opportunity import Buyer, NoticeKind, Opportunity, OpportunityType
+from app.models.opportunity import Buyer, Document, NoticeKind, Opportunity, OpportunityType
 from app.sources.base import SOURCE_SUBSECTORS, Source
 from app.sources.terms import search_pairs
 from app.vertical import Vertical
@@ -29,6 +30,64 @@ def boamp_decision(raw: dict) -> str:
     if raw.get("nature") not in _KEEP:
         return "skip"
     return "keep"
+
+
+def notice_body(raw: dict) -> dict:
+    """Texto largo y enlaces que viven en `donnees`, no en el título `objet`."""
+    blob = raw.get("donnees")
+    if isinstance(blob, str):
+        try:
+            blob = json.loads(blob)
+        except json.JSONDecodeError:
+            blob = None
+    found: dict[str, str] = {}
+    if isinstance(blob, dict):
+        _read_notice(blob, found)
+    return found
+
+
+def pdf_url(raw: dict) -> str | None:
+    """La ficha de BOAMP arma el PDF así: esquema 3 usa FILES/PDF/año/mes."""
+    ident = str(raw.get("idweb") or "")
+    published = str(raw.get("dateparution") or "")
+    if not ident or len(published) < 7:
+        return None
+    year, month = published[:4], published[5:7]
+    if str(raw.get("source_schema") or "").startswith("3"):
+        return f"https://www.boamp.fr/telechargements/FILES/PDF/{year}/{month}/{ident}.pdf"
+    filename = str(raw.get("filename") or ident)
+    return f"https://www.boamp.fr/telechargements/PDF/{year}/{filename}/{ident}.pdf"
+
+
+def _read_notice(node: dict, found: dict[str, str]) -> None:
+    market = node.get("natureMarche")
+    if isinstance(market, dict):
+        text = market.get("description")
+        if isinstance(text, str) and text.strip():
+            found["description"] = " ".join(text.split())
+    communication = node.get("communication")
+    if isinstance(communication, dict):
+        url = communication.get("urlDocConsul")
+        if isinstance(url, str) and url.startswith("http"):
+            found["consultation"] = url
+    for value in node.values():
+        if isinstance(value, dict):
+            _read_notice(value, found)
+
+
+def _documents(raw: dict, body: dict) -> list[Document]:
+    documents = []
+    pdf = pdf_url(raw)
+    if pdf:
+        documents.append(Document(url=pdf, name="Notice (PDF)", kind="notice", access="fetch"))
+    consultation = body.get("consultation")
+    if consultation:
+        documents.append(
+            Document(
+                url=consultation, name="Consultation documents", kind="portal", access="link_only"
+            )
+        )
+    return documents
 
 
 def _where(since: date, term: str) -> str:
@@ -49,7 +108,9 @@ class BoampSource(Source):
     def fetch(self, since: date, vertical: Vertical) -> Iterable[dict]:
         pairs = search_pairs(vertical, self.id)
         if not pairs:
-            raise ValueError("BOAMP: el vertical no tiene search_terms.boamp; no se baja el archivo entero.")
+            raise ValueError(
+                "BOAMP: el vertical no tiene search_terms.boamp; no se baja el archivo entero."
+            )
         self.skipped_eu = 0
         seen: dict[str, dict] = {}
         with httpx.Client(timeout=40, headers={"User-Agent": "blue-tender/1.0"}) as client:
@@ -105,6 +166,7 @@ class BoampSource(Source):
         )
         buyer = raw.get("nomacheteur")
         folder = raw.get("contractfolderid")
+        body = notice_body(raw)
         return Opportunity(
             id=Opportunity.make_id(self.id, ident),
             source_id=self.id,
@@ -113,7 +175,8 @@ class BoampSource(Source):
             type=kind,
             notice=notice,
             title=str(title),
-            description=raw.get("objet"),
+            description=body.get("description") or raw.get("objet"),
+            documents=_documents(raw, body),
             buyer=Buyer(name=str(buyer), country="FR") if buyer else None,
             country="FR",
             language="fr",

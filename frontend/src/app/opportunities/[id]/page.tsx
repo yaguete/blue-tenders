@@ -439,7 +439,8 @@ function SourceLink({ href }: { href: string }) {
 
 function isFile(doc: Detail["documents"][number], pageUrl: string): boolean {
   // The topic text is already on this page and portal links open the same official page.
-  if (doc.kind === "topic_text" || doc.access === "link_only") return false;
+  if (doc.kind === "topic_text") return false;
+  if (doc.access === "link_only" && doc.kind !== "portal") return false;
   return doc.url.split("#")[0] !== pageUrl.split("#")[0];
 }
 
