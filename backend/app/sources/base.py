@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from datetime import date
 
+from app.keywords import keyword_words, mentions, tokens
 from app.models.tender import Tender
 from app.vertical import Vertical
 
@@ -16,6 +17,17 @@ def source_subsectors(raw: dict | None) -> list[str]:
     """Subsectores que la fuente encontró en el texto completo del registro (o lista vacía)."""
     value = (raw or {}).get(SOURCE_SUBSECTORS)
     return [str(v) for v in value] if isinstance(value, list) else []
+
+
+def search_term_in(text: str, term: str) -> bool:
+    """Si el término que la fuente buscó aparece de verdad en el texto del registro.
+
+    El buscador de algunas fuentes casa palabra a palabra: en TenderNed, "wind op zee" trae
+    cualquier texto con "op" o "zee" (Zeeland, Scheveningen). La marca de subsector solo
+    puede fiarse del buscador si el término está aquí, con las mismas reglas de palabras
+    completas y cercanía que el prefiltro.
+    """
+    return mentions(tokens(text), keyword_words(term))
 
 
 class Source(ABC):

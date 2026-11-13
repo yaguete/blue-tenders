@@ -14,7 +14,7 @@ import httpx
 
 from app.models.opportunity import Budget, Buyer, Opportunity, OpportunityType
 from app.settings import settings
-from app.sources.base import SOURCE_SUBSECTORS, Source
+from app.sources.base import SOURCE_SUBSECTORS, Source, search_term_in
 from app.sources.terms import search_pairs
 from app.vertical import Vertical
 
@@ -62,7 +62,9 @@ def doffin_keep(raw: dict) -> str:
     return "keep"
 
 
-def _public_get(client: httpx.Client, url: str, params: list[tuple[str, str | int]]) -> httpx.Response:
+def _public_get(
+    client: httpx.Client, url: str, params: list[tuple[str, str | int]]
+) -> httpx.Response:
     """30 peticiones por minuto. Un 429 espera lo que diga Retry-After."""
     last = "sin respuesta"
     for attempt in range(4):
@@ -136,17 +138,22 @@ class DoffinSource(Source):
                         ident = str(hit.get("id") or "")
                         if decision == "skip" or not ident:
                             continue
+                        # Como en TenderNed: la marca solo si el término aparece en el texto.
+                        text = f"{hit.get('heading') or ''} | {hit.get('description') or ''}"
+                        found_here = search_term_in(text, term)
                         if ident in seen:
-                            found = seen[ident].setdefault(SOURCE_SUBSECTORS, [])
-                            if subsector not in found:
-                                found.append(subsector)
+                            if found_here:
+                                found = seen[ident].setdefault(SOURCE_SUBSECTORS, [])
+                                if subsector not in found:
+                                    found.append(subsector)
                             continue
                         hit = dict(hit)
                         if decision == "eu":
                             hit["_skip_eu"] = True
                         if decision == "pin":
                             hit["_pin"] = True
-                        hit[SOURCE_SUBSECTORS] = [subsector]
+                        if found_here:
+                            hit[SOURCE_SUBSECTORS] = [subsector]
                         seen[ident] = hit
                     total = int(payload.get("numHitsTotal") or payload.get("totalElements") or 0)
                     if not hits or page * 100 >= total:
@@ -177,7 +184,9 @@ class DoffinSource(Source):
             source_id=self.id,
             external_id=ident,
             url=f"https://www.doffin.no/notices/{ident}",
-            type=OpportunityType.prior_information_notice if raw.get("_pin") else OpportunityType.tender,
+            type=OpportunityType.prior_information_notice
+            if raw.get("_pin")
+            else OpportunityType.tender,
             title=str(title),
             description=raw.get("description"),
             buyer=Buyer(name=str(buyer_name), country="NO") if buyer_name else None,

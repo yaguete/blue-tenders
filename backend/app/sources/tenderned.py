@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 import httpx
 
 from app.models.opportunity import Buyer, Opportunity, OpportunityType
-from app.sources.base import SOURCE_SUBSECTORS, Source
+from app.sources.base import SOURCE_SUBSECTORS, Source, search_term_in
 from app.sources.terms import search_pairs
 from app.vertical import Vertical
 
@@ -57,7 +57,9 @@ class TendernedSource(Source):
             raise ValueError("TenderNed: el vertical no tiene search_terms.tenderned.")
         self.skipped_eu = 0
         seen: dict[str, dict] = {}
-        with httpx.Client(timeout=40, headers={"User-Agent": "blue-tender/1.0", "Accept": "application/json"}) as client:
+        with httpx.Client(
+            timeout=40, headers={"User-Agent": "blue-tender/1.0", "Accept": "application/json"}
+        ) as client:
             for subsector, term in pairs:
                 page = 0
                 while page < 30:
@@ -81,17 +83,25 @@ class TendernedSource(Source):
                         ident = str(row.get("publicatieId") or "")
                         if decision == "skip" or not ident:
                             continue
+                        # La búsqueda de TenderNed casa palabras sueltas y trae avisos que
+                        # no nombran el término (Zeeland por "zee"). Solo se marca el
+                        # subsector si el término está en el texto; sin marca, decide el
+                        # prefiltro.
+                        text = f"{row.get('aanbestedingNaam') or ''} | {row.get('opdrachtBeschrijving') or ''}"
+                        found_here = search_term_in(text, term)
                         if ident in seen:
-                            found = seen[ident].setdefault(SOURCE_SUBSECTORS, [])
-                            if subsector not in found:
-                                found.append(subsector)
+                            if found_here:
+                                found = seen[ident].setdefault(SOURCE_SUBSECTORS, [])
+                                if subsector not in found:
+                                    found.append(subsector)
                             continue
                         row = dict(row)
                         if decision == "eu":
                             row["_skip_eu"] = True
                         if decision == "pin":
                             row["_pin"] = True
-                        row[SOURCE_SUBSECTORS] = [subsector]
+                        if found_here:
+                            row[SOURCE_SUBSECTORS] = [subsector]
                         seen[ident] = row
                     if payload.get("last") or not rows:
                         break
@@ -112,7 +122,9 @@ class TendernedSource(Source):
             source_id=self.id,
             external_id=ident,
             url=url or f"https://www.tenderned.nl/aankondigingen/overzicht/{ident}",
-            type=OpportunityType.prior_information_notice if raw.get("_pin") else OpportunityType.tender,
+            type=OpportunityType.prior_information_notice
+            if raw.get("_pin")
+            else OpportunityType.tender,
             title=str(title),
             description=raw.get("opdrachtBeschrijving"),
             buyer=Buyer(name=str(buyer), country="NL") if buyer else None,

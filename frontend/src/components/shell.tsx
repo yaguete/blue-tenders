@@ -119,7 +119,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <button
           type="button"
           aria-label="Close menu"
-          className="fixed inset-0 z-20 bg-foreground/10 sm:hidden"
+          className="fixed inset-0 z-20 bg-foreground/10 backdrop-blur sm:hidden dark:bg-black/40"
           onClick={() => setMenuOpen(false)}
         />
       )}

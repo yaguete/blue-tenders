@@ -9,19 +9,44 @@ import { useAssistantChat } from "@/lib/assistant-chat";
 import { Panel } from "./panel";
 import { shown } from "./chips";
 
-function suggestionsFor(pathname: string | null): string[] {
-  if (pathname?.startsWith("/opportunities/")) {
-    return [
-      "What is the deadline?",
-      "Who can apply, according to the text?",
-      "What is the co-funding rate?",
-      "Where is the official call?",
-    ];
+const CALL_SUGGESTIONS = [
+  "What is the deadline?",
+  "Who can apply, according to the text?",
+  "What is the co-funding rate?",
+  "Where is the official call?",
+];
+
+const GENERAL_SUGGESTIONS = [
+  "What is a consortium in Horizon Europe?",
+  "What calls close in the next two months?",
+  "What does the EIB fund?",
+  "Which funders offer loans?",
+  "What is a co-funding rate?",
+  "What does TRL mean?",
+  "What is a prior information notice?",
+  "What calls mention floating wind?",
+  "Who funds BlueInvest?",
+  "What is EMFAF?",
+  "Which calls mention hydrogen?",
+  "What funding is there for ports?",
+];
+
+const GENERAL_COUNT = 4;
+
+function pickGeneral(): string[] {
+  const pool = [...GENERAL_SUGGESTIONS];
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const swap = pool[i];
+    pool[i] = pool[j];
+    pool[j] = swap;
   }
-  if (pathname?.startsWith("/funders")) {
-    return ["What does the EIB fund?", "Which funders offer loans?"];
-  }
-  return ["What is a consortium in Horizon Europe?", "What calls close in the next two months?"];
+  return pool.slice(0, GENERAL_COUNT);
+}
+
+function suggestionsFor(pathname: string | null, general: string[]): string[] {
+  if (pathname?.startsWith("/opportunities/")) return CALL_SUGGESTIONS;
+  return general;
 }
 
 export function Assistant() {
@@ -32,6 +57,17 @@ export function Assistant() {
   const [pageTitle, setPageTitle] = useState<string | null>(null);
   const chat = useAssistantChat(opportunityId, pageTitle);
   const { open, setOpen } = chat;
+  const [generalSuggestions, setGeneralSuggestions] = useState(pickGeneral);
+  const [shuffledWhileOpen, setShuffledWhileOpen] = useState(false);
+  const onCall = pathname?.startsWith("/opportunities/") ?? false;
+  if (open && !onCall) {
+    if (!shuffledWhileOpen) {
+      setShuffledWhileOpen(true);
+      setGeneralSuggestions(pickGeneral());
+    }
+  } else if (shuffledWhileOpen) {
+    setShuffledWhileOpen(false);
+  }
   const pillRef = useRef<HTMLButtonElement>(null);
   const returnFocus = useCallback(() => pillRef.current?.focus(), []);
 
@@ -71,6 +107,41 @@ export function Assistant() {
   }, [setOpen]);
 
   useEffect(() => {
+    if (!open) return;
+    const root = document.documentElement;
+    const body = document.body;
+    const y = window.scrollY;
+    const previous = {
+      rootOverflow: root.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+    };
+    root.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${y}px`;
+    body.style.width = "100%";
+
+    function blockPageScroll(event: Event) {
+      const dialog = document.querySelector("[role='dialog']");
+      if (dialog && event.target instanceof Node && dialog.contains(event.target)) return;
+      event.preventDefault();
+    }
+    window.addEventListener("wheel", blockPageScroll, { passive: false });
+    window.addEventListener("touchmove", blockPageScroll, { passive: false });
+
+    return () => {
+      window.removeEventListener("wheel", blockPageScroll);
+      window.removeEventListener("touchmove", blockPageScroll);
+      root.style.overflow = previous.rootOverflow;
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.width = previous.width;
+      window.scrollTo(0, y);
+    };
+  }, [open]);
+
+  useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key !== "a" || event.metaKey || event.ctrlKey || event.altKey || open) return;
       const tag = (event.target as HTMLElement | null)?.tagName;
@@ -96,12 +167,12 @@ export function Assistant() {
         <button
           type="button"
           aria-label={t("assistantClose")}
-          className="fixed inset-0 z-40 bg-foreground/10"
+          className="fixed inset-0 z-40 bg-foreground/10 backdrop-blur dark:bg-black/40"
           onClick={() => chat.setOpen(false)}
         />
       )}
       {chat.open && (
-        <div className="fixed inset-0 z-50 sm:inset-auto sm:bottom-20 sm:left-1/2 sm:h-[min(680px,82vh)] sm:w-[420px] sm:-translate-x-1/2 sm:shadow-xl sm:shadow-foreground/20">
+        <div className="fixed inset-0 z-50 sm:inset-auto sm:bottom-20 sm:left-1/2 sm:h-[min(760px,86vh)] sm:w-[480px] sm:-translate-x-1/2 sm:shadow-xl sm:shadow-foreground/20">
           <Panel
             messages={chat.messages}
             documents={chat.documents}
@@ -115,7 +186,7 @@ export function Assistant() {
             mismatch={chat.mismatch}
             subject={chat.subject}
             previousTitle={chat.previousTitle}
-            suggestions={suggestionsFor(pathname)}
+            suggestions={suggestionsFor(pathname, generalSuggestions)}
             onDraft={chat.setDraft}
             onSend={chat.send}
             onStop={chat.stop}

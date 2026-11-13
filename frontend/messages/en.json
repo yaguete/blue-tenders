@@ -168,7 +168,7 @@
   "landingClosingError": "The index isn't answering. The calls that close first aren't listed.",
   "landingComingKicker": "What's coming",
   "landingComingTitle": "See it before the call opens.",
-  "landingComingNote": "An official page changed, or a buyer asked the market first. The date is when it was seen. If the notice gives no deadline, none is shown.",
+  "landingComingNote": "An official page changed, or a buyer asked the market first. The date is when it was seen.",
   "landingComingEmpty": "Nothing has been announced ahead of a call.",
   "landingComingError": "The index isn't answering. What is coming is not listed.",
   "landingComingSeeAllOne": "See the {count} upcoming notice →",

@@ -177,7 +177,7 @@ export function Panel({
       </div>
       <div
         data-assistant-scroll
-        className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3"
+        className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-y-contain px-4 py-3"
         onScroll={(event) => {
           const node = event.currentTarget;
           stickRef.current = node.scrollHeight - node.scrollTop - node.clientHeight < 48;

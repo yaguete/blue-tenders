@@ -1,0 +1,44 @@
+{
+  "publicatieId": "444232",
+  "publicatieDatum": "2026-10-13",
+  "typePublicatie": {
+    "code": "MAC",
+    "omschrijving": "Marktconsultatie"
+  },
+  "aanbestedingNaam": "Marktconsultatie : Enterprise wachtwoordmanager",
+  "opdrachtgeverNaam": "Gemeente Bergen op Zoom",
+  "sluitingsDatum": "2026-11-24T23:59:59",
+  "sluitingsDatumMarktconsultatie": "2026-11-24",
+  "aantalDagenTotSluitingsDatum": 11,
+  "procedure": {
+    "code": "MAC",
+    "omschrijving": "Marktconsultatie"
+  },
+  "typeOpdracht": {
+    "code": "D",
+    "omschrijving": "Diensten"
+  },
+  "digitaal": true,
+  "europees": false,
+  "publicatiecode": {
+    "code": "EFE1",
+    "omschrijving": "Vrijwillige aankondiging van voorafgaande marktconsultatie"
+  },
+  "publicatiestatus": {
+    "code": "PUB",
+    "omschrijving": "Gepubliceerd"
+  },
+  "isVroegtijdigeBeeindiging": false,
+  "looptijd": {
+    "code": "BKN",
+    "omschrijving": "Bekend"
+  },
+  "opdrachtBeschrijving": "Als gemeente beheren we een groot aantal accounts, systemen en applicaties. Op dit moment worden wachtwoorden op verschillende manieren beheerd, waaronder met KeePass en browsergebaseerde wachtwoordmanagers. De gemeente wil onderzoeken welke enterprise wachtwoordmanagers beschikbaar zijn in de markt en in welke mate deze aansluiten op de behoeften van de organisatie.\n\nDe marktconsultatie is bedoeld om inzicht te krijgen in:\n•\tDe beschikbare oplossingen: inzicht in welke enterprise wachtwoordmanagers momenteel op de markt beschikbaar zijn en in hoeverre deze aansluiten op de behoeften en voorgenomen eisen van de gemeente;\n•\tDe implementatie: inzicht in de verwachte doorlooptijd, de benodigde capaciteit van zowel de leverancier als de gemeente en de belangrijkste activiteiten en aandachtspunten tijdens de implementatie;\n•\tEen indicatie van de kosten: globaal inzicht in de eenmalige implementatiekosten en de structurele jaarlijkse kosten, inclusief licenties en eventuele aanvullende kosten.\n\nDe uitkomsten van de marktconsultatie worden gebruikt om de marktconformiteit, haalbaarheid en financiële consequenties van een gemeentebrede implementatie beter te kunnen beoordelen en vormen input voor een eventueel toekomstig Programma van Eisen.\n\nGraag nodigt de gemeente partijen uit om informatie met de gemeente te delen. Op voorhand spreekt de gemeente haar dank uit voor uw bereidheid om hieraan mee te werken. Vanzelfsprekend worden de beginselen van transparantie, gelijkheid en non-discriminatie bij deze marktconsultatie in acht genomen. nvt",
+  "isEformsWijziging": false,
+  "score": 59.40531,
+  "kenmerk": 615550,
+  "link": {
+    "href": "https://www.tenderned.nl/aankondigingen/overzicht/444232",
+    "title": "self"
+  }
+}

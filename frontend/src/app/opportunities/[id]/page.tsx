@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ChevronDown, FileText, Globe, SquareArrowOutUpRight } from "lucide-react";
+import { ArrowLeft, Calendar, ChevronDown, Columns2, FileText, Globe, SquareArrowOutUpRight } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LoadingState } from "@/components/loading-state";
@@ -222,24 +222,25 @@ export default function OpportunityPage() {
           >
             {item.notice === "pin" ? t("officialPage") : topic ? t("openOnPortal") : t("officialCall")}
           </a>
-          <p className="text-sm">
-            {!closed && item.deadline_at && (
-              <>
-                <a
-                  className="underline"
-                  href={`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/opportunities/${item.id}/calendar`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Add deadline to calendar
-                </a>
-                {" · "}
-              </>
-            )}
-            <button type="button" className="cursor-pointer underline" onClick={() => openCompare(item.id)}>
-              {t("compare")}
-            </button>
-          </p>
+          {!closed && item.deadline_at && (
+            <a
+              className="inline-flex items-center gap-1.5 text-sm underline"
+              href={`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/opportunities/${item.id}/calendar`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Calendar className="size-4 shrink-0" aria-hidden />
+              Add deadline to calendar
+            </a>
+          )}
+          <button
+            type="button"
+            className="inline-flex cursor-pointer items-center gap-1.5 text-sm underline"
+            onClick={() => openCompare(item.id)}
+          >
+            <Columns2 className="size-4 shrink-0" aria-hidden />
+            {t("compare")}
+          </button>
           {files.length > 0 && (
             <ul className="flex flex-wrap items-center gap-x-4 gap-y-2">
               {files.map((doc) => (
