@@ -37,6 +37,7 @@ type Stored = {
 };
 
 const STORAGE_KEY = "blue-tender-assistant";
+const REVEAL_MS = 48;
 const GUEST_KEY = "assistant-guest";
 
 function guestId(): string {
@@ -53,6 +54,10 @@ function authHeaders(): Headers {
   if (demo) value.set("X-Demo-User", demo);
   value.set("X-Assistant-Guest", guestId());
   return value;
+}
+
+function aborted(err: unknown): boolean {
+  return typeof err === "object" && err !== null && "name" in err && (err as { name: string }).name === "AbortError";
 }
 
 function deviceToday(): { today: string; timezone: string } {
@@ -113,8 +118,100 @@ export function useAssistantChat(opportunityId: string | null, pageTitle: string
   const [uploads, setUploads] = useState<DocChip[]>([]);
   const [documents, setDocuments] = useState<DocChip[]>([]);
   const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  const [revealing, setRevealing] = useState(false);
+  const [announced, setAnnounced] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const abortRef = useRef<AbortController | null>(null);
+  const stopRef = useRef(false);
+  const busyRef = useRef(false);
+  const timerRef = useRef<number | null>(null);
+  const targetRef = useRef<Record<string, string>>({});
+  const shownRef = useRef<Record<string, string>>({});
+  const pumpRef = useRef<() => void>(() => {});
+
+  useEffect(
+    () => () => {
+      if (timerRef.current != null) window.clearTimeout(timerRef.current);
+    },
+    [],
+  );
+
+  pumpRef.current = () => {
+    if (stopRef.current) {
+      setRevealing(false);
+      return;
+    }
+    const updates: Record<string, string> = {};
+    let still = false;
+    for (const [id, target] of Object.entries(targetRef.current)) {
+      const shown = shownRef.current[id] ?? "";
+      if (shown === target) continue;
+      if (!target.startsWith(shown)) {
+        shownRef.current[id] = target;
+        updates[id] = target;
+        continue;
+      }
+      const lag = target.length - shown.length;
+      const step = lag > 120 ? 2 : 1;
+      const next = target.slice(0, shown.length + step);
+      shownRef.current[id] = next;
+      updates[id] = next;
+      if (next.length < target.length) still = true;
+    }
+    if (Object.keys(updates).length) {
+      setMessages((current) =>
+        current.map((item) => (updates[item.id] != null ? { ...item, text: updates[item.id] } : item)),
+      );
+    }
+    if (still && !stopRef.current) {
+      setRevealing(true);
+      timerRef.current = window.setTimeout(() => {
+        timerRef.current = null;
+        pumpRef.current();
+      }, REVEAL_MS);
+      return;
+    }
+    setRevealing(false);
+    if (!busyRef.current) {
+      const ids = Object.keys(targetRef.current);
+      const last = ids[ids.length - 1];
+      if (last) setAnnounced(targetRef.current[last] ?? "");
+    }
+  };
+
+  const scheduleReveal = useCallback(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced || stopRef.current || timerRef.current != null) return;
+    setRevealing(true);
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null;
+      pumpRef.current();
+    }, REVEAL_MS);
+  }, []);
+
+  const pushText = useCallback(
+    (id: string, extra: string) => {
+      if (stopRef.current) return;
+      const target = (targetRef.current[id] ?? "") + extra;
+      targetRef.current[id] = target;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        shownRef.current[id] = target;
+        setMessages((current) => current.map((item) => (item.id === id ? { ...item, text: target } : item)));
+        return;
+      }
+      if (shownRef.current[id] == null) shownRef.current[id] = "";
+      scheduleReveal();
+    },
+    [scheduleReveal],
+  );
+
+  const clearText = useCallback((id: string) => {
+    targetRef.current[id] = "";
+    shownRef.current[id] = "";
+    setMessages((current) => current.map((item) => (item.id === id ? { ...item, text: "" } : item)));
+  }, []);
 
   useEffect(() => {
     const stored = load();
@@ -190,10 +287,18 @@ export function useAssistantChat(opportunityId: string | null, pageTitle: string
       if (!question || busy) return;
       setError(null);
       setDraft("");
+      setStatus(null);
+      setAnnounced("");
+      stopRef.current = false;
       const mine: ChatMessage = { id: crypto.randomUUID(), role: "user", text: question };
       const reply: ChatMessage = { id: crypto.randomUUID(), role: "assistant", text: "", citations: [] };
+      targetRef.current[reply.id] = "";
+      shownRef.current[reply.id] = "";
       setMessages((current) => [...current, mine, reply]);
+      busyRef.current = true;
       setBusy(true);
+      const controller = new AbortController();
+      abortRef.current = controller;
       if (!boundOpportunity) {
         setBoundOpportunity(opportunityId);
         setBoundTitle(pageTitle);
@@ -202,6 +307,7 @@ export function useAssistantChat(opportunityId: string | null, pageTitle: string
         const response = await fetch(`${API_URL}/assistant`, {
           method: "POST",
           headers: headers(),
+          signal: controller.signal,
           body: JSON.stringify({
             message: question,
             conversation_id: conversationId,
@@ -237,7 +343,12 @@ export function useAssistantChat(opportunityId: string | null, pageTitle: string
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
+        let halted = false;
         for (;;) {
+          if (stopRef.current) {
+            halted = true;
+            break;
+          }
           const step = await reader.read();
           if (step.done) break;
           buffer += decoder.decode(step.value, { stream: true });
@@ -251,6 +362,7 @@ export function useAssistantChat(opportunityId: string | null, pageTitle: string
             const event = JSON.parse(data) as {
               type: string;
               text?: string;
+              key?: string;
               conversation_id?: string;
               citations?: Citation[];
               url?: string;
@@ -258,11 +370,16 @@ export function useAssistantChat(opportunityId: string | null, pageTitle: string
               page?: number;
               heading?: string;
             };
+            if (stopRef.current) {
+              halted = true;
+              break;
+            }
             if (event.type === "delta" && event.text) {
-              const extra = event.text;
-              setMessages((current) =>
-                current.map((item) => (item.id === reply.id ? { ...item, text: item.text + extra } : item)),
-              );
+              pushText(reply.id, event.text);
+            } else if (event.type === "reset") {
+              clearText(reply.id);
+            } else if (event.type === "status") {
+              setStatus(event.key ?? null);
             } else if (event.type === "citation") {
               const citation = {
                 url: event.url,
@@ -279,15 +396,54 @@ export function useAssistantChat(opportunityId: string | null, pageTitle: string
               setConversationId(event.conversation_id);
             }
           }
+          if (halted) break;
         }
-      } catch {
+        if (halted) await reader.cancel();
+      } catch (err) {
+        if (aborted(err)) {
+          const shown = shownRef.current[reply.id] ?? "";
+          targetRef.current[reply.id] = shown;
+          if (!shown) {
+            setMessages((current) => current.filter((item) => item.id !== reply.id));
+          }
+          setAnnounced(shown);
+          return;
+        }
         setError("error");
       } finally {
+        busyRef.current = false;
         setBusy(false);
+        abortRef.current = null;
+        const target = targetRef.current[reply.id] ?? "";
+        const shown = shownRef.current[reply.id] ?? "";
+        if (shown === target) {
+          setRevealing(false);
+          if (target) setAnnounced(target);
+        } else {
+          scheduleReveal();
+        }
       }
     },
-    [boundOpportunity, busy, conversationId, opportunityId, pageTitle, uploads],
+    [boundOpportunity, busy, clearText, conversationId, opportunityId, pageTitle, pushText, scheduleReveal, uploads],
   );
+
+  const stop = useCallback(() => {
+    stopRef.current = true;
+    if (timerRef.current != null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    const ids = Object.keys(targetRef.current);
+    const id = ids[ids.length - 1];
+    if (id) {
+      const shown = shownRef.current[id] ?? "";
+      targetRef.current[id] = shown;
+      setMessages((current) => current.map((item) => (item.id === id ? { ...item, text: shown } : item)));
+      setAnnounced(shown);
+    }
+    setRevealing(false);
+    abortRef.current?.abort();
+  }, []);
 
   const mismatch = Boolean(boundOpportunity && opportunityId && boundOpportunity !== opportunityId);
 
@@ -366,6 +522,10 @@ export function useAssistantChat(opportunityId: string | null, pageTitle: string
     documents,
     uploads,
     busy,
+    status,
+    revealing,
+    announced,
+    stop,
     error,
     draft,
     setDraft,

@@ -37,6 +37,9 @@ SYSTEM_GENERAL = (
     + """Use the tools to find calls. Do not say that you use them.
 When you mention a call, link to its Blue Tender page (`/opportunities/<id>`) as well as the official page.
 If a tool result is not enough for a detailed question, summarise what it does contain and point to that page.
+Calls are stored in English. Write every tool query in English, as short keywords, even when the user writes in another language.
+If a search returns nothing, try broader words or a synonym before saying there is no call.
+If the user's sector is not marine, search for its marine form among the areas covered.
 """
 )
 
@@ -196,6 +199,16 @@ def _day(raw: str | None) -> date | None:
         return None
 
 
+def covered_areas() -> str:
+    """Nombres de los subsectores activos. Salen del YAML del vertical, no de una lista en código."""
+    from app.vertical import load_vertical
+
+    names = [subsector.name for subsector in load_vertical().active_subsectors if subsector.name]
+    if not names:
+        return ""
+    return "Areas covered: " + "; ".join(names) + "."
+
+
 def build_request(
     opp,
     question: str,
@@ -234,6 +247,10 @@ def build_request(
                 ),
             }
         )
+    if opp is None:
+        areas = covered_areas()
+        if areas:
+            content.append({"type": "text", "text": areas})
     if history_text:
         content.append({"type": "text", "text": "Conversation so far:\n" + history_text[-8000:]})
     content.append({"type": "text", "text": today or today_note(None)})

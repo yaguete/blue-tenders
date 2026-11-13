@@ -107,6 +107,9 @@ export function Assistant() {
             documents={chat.documents}
             uploads={chat.uploads}
             busy={chat.busy}
+            status={chat.status}
+            revealing={chat.revealing}
+            announced={chat.announced}
             error={chat.error}
             draft={chat.draft}
             mismatch={chat.mismatch}
@@ -115,6 +118,7 @@ export function Assistant() {
             suggestions={suggestionsFor(pathname)}
             onDraft={chat.setDraft}
             onSend={chat.send}
+            onStop={chat.stop}
             onClose={() => chat.setOpen(false)}
             onReset={chat.reset}
             onRestore={chat.restore}

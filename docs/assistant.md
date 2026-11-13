@@ -14,7 +14,7 @@ El documento va entero al modelo. Con Anthropic, como bloques de texto por pági
 
 `POST /assistant` recibe `message`, `conversation_id` (opcional), `opportunity_id` (opcional) y `upload_ids`. El servidor guarda el historial. El cliente no lo reenvía. Una conversación está atada a una convocatoria: si llega otra, responde 409.
 
-SSE: `delta` (texto), `citation` (documento y página), `done` (modelo, citas, coste) y `[DONE]`.
+SSE: `delta` (una frase en cuanto está escrita, no al terminar el modelo), `status` (`searching`, `reading`, `glossary`, `funders`, `documents`, `web`), `reset` (descarta el texto previo a una herramienta), `citation` (documento y página), `done` (modelo, citas, coste) y `[DONE]`. Si las rondas de herramientas se agotan sin texto, una última llamada sin herramientas escribe la respuesta con lo ya encontrado.
 
 Sin `ANTHROPIC_API_KEY` no hay modelo: el modo ficha cita la página si el texto ya está, y el modo general usa el glosario y los títulos del índice. Las adjudicaciones no salen en el modo general.
 
@@ -24,11 +24,13 @@ Solo en el modo general, y `search_documents` cuando un documento no cabe entero
 
 | Nombre | Cuándo |
 |---|---|
-| `search_opportunities` | Índice. Sin avisos de adjudicación. |
+| `search_opportunities` | Índice, con keywords cortos en inglés. Sin avisos de adjudicación. Si la frase no casa, se reintenta palabra a palabra. |
 | `get_opportunity` | Ficha de un id que la herramienta pueda devolver. |
 | `search_knowledge` | `config/knowledge/`. |
 | `list_funders` | Directorio. |
 | `search_documents` | Páginas de un documento que no cupo en el prompt. |
+
+En el modo general el prompt pide las búsquedas en inglés y, si no hay resultados, un reintento más amplio. También lista las áreas activas del vertical.
 
 ## Subidas
 

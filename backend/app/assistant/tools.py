@@ -9,7 +9,7 @@ from datetime import date, datetime
 from app.assistant.prompt import call_facts
 from app.catalog import funder_profiles, read_yaml_list
 from app.models.opportunity import Opportunity
-from app.search.query import SearchFilters, search_opportunities
+from app.search.query import SearchFilters, search_opportunities, significant_words
 from app.settings import settings
 
 MAX_ROUNDS = 4
@@ -19,7 +19,10 @@ def tool_specs(include_documents: bool) -> list[dict]:
     specs = [
         {
             "name": "search_opportunities",
-            "description": "Search open calls in the index. Award notices are excluded.",
+            "description": (
+                "Search open calls. The query must be short English keywords, not a full sentence. "
+                "Award notices are excluded."
+            ),
             "input_schema": {
                 "type": "object",
                 "properties": {
@@ -68,11 +71,33 @@ def tool_specs(include_documents: bool) -> list[dict]:
 
 
 def search_calls(items: list[Opportunity], question: str, before: str | None = None) -> list[dict]:
-    filters = SearchFilters(q=question or None, limit=8)
-    found = search_opportunities([item for item in items if item.searchable()], filters)
+    """Busca en el índice. Si varias palabras no casan juntas, reintenta con cada una."""
+    pool = [item for item in items if item.searchable()]
     day = _day(before)
+    found = search_opportunities(pool, SearchFilters(q=question or None, limit=8))
+    rows = _call_rows(found["items"], day)
+    if rows or not question:
+        return rows
+    words = significant_words(question)
+    if len(words) < 2:
+        return rows
+    seen: list[Opportunity] = []
+    ids: set[str] = set()
+    for word in words:
+        extra = search_opportunities(pool, SearchFilters(q=word, limit=8))
+        for item in extra["items"]:
+            if item.id in ids:
+                continue
+            ids.add(item.id)
+            seen.append(item)
+            if len(seen) >= 8:
+                return _call_rows(seen, day)
+    return _call_rows(seen, day)
+
+
+def _call_rows(items: list[Opportunity], day: date | None) -> list[dict]:
     rows = []
-    for item in found["items"]:
+    for item in items:
         if day and item.deadline_at and item.deadline_at.date() >= day:
             continue
         row = {

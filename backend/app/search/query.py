@@ -121,6 +121,11 @@ def _haystack(item: Opportunity) -> str:
     return " ".join([item.title, item.title_en or "", item.summary_en or "", item.description or ""])
 
 
+def significant_words(q: str) -> list[str]:
+    """Palabras de una búsqueda que dicen algo. Sin acentos y sin stopwords."""
+    return _significant(_query_words(q))
+
+
 def _significant(words: list[str]) -> list[str]:
     return [word for word in words if len(word) >= 3 and word not in _STOP]
 

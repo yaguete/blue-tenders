@@ -1,6 +1,7 @@
 """Asistente: documentos, citas, subidas, herramientas y techos. Sin red."""
 
 from datetime import UTC, date, datetime, timedelta
+from types import SimpleNamespace
 
 import httpx
 import pytest
@@ -23,7 +24,7 @@ from app.assistant.prompt import (
     for_provider,
     today_note,
 )
-from app.assistant.tools import search_calls
+from app.assistant.tools import search_calls, tool_specs
 from app.main import app
 from app.models.opportunity import Document, Opportunity, OpportunityKind, OpportunityType
 from app.settings import settings
@@ -522,6 +523,189 @@ def test_search_calls_add_a_summary_only_when_the_text_is_not_the_title():
     rows = {row["id"]: row for row in search_calls([rich, thin], "")}
     assert "summary" in rows["rich"]
     assert "summary" not in rows["thin"]
+
+
+def _text_event(text: str):
+    return SimpleNamespace(type="content_block_delta", delta=SimpleNamespace(type="text_delta", text=text))
+
+
+def _tool_event(name: str):
+    return SimpleNamespace(
+        type="content_block_start",
+        content_block=SimpleNamespace(type="tool_use", id="tool-1", name=name),
+    )
+
+
+def _text_block(text: str):
+    return SimpleNamespace(type="text", text=text, citations=None)
+
+
+def _tool_block(name: str, payload: dict):
+    return SimpleNamespace(type="tool_use", id="tool-1", name=name, input=payload, text=None)
+
+
+def _final_message(blocks):
+    return SimpleNamespace(content=blocks, usage=None)
+
+
+class _Script:
+    def __init__(self, events, final):
+        self._events = events
+        self._final = final
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+    def __iter__(self):
+        return iter(self._events)
+
+    def get_final_message(self):
+        return self._final
+
+
+class _Client:
+    def __init__(self, rounds):
+        self.rounds = list(rounds)
+        self.messages = self
+        self.created = []
+
+    def stream(self, **kwargs):
+        if not self.rounds:
+            raise RuntimeError("no stream")
+        nxt = self.rounds.pop(0)
+        if isinstance(nxt, Exception):
+            raise nxt
+        return nxt
+
+    def create(self, **kwargs):
+        self.created.append(kwargs)
+        return _final_message([_text_block("The budget is EUR 5.")])
+
+
+def test_the_first_sentence_streams_before_the_model_finishes(tmp_path, monkeypatch):
+    state = {"sent": 0}
+
+    def chunks():
+        state["sent"] += 1
+        yield _text_event("The deadline is 17 September 2026. ")
+        state["sent"] += 1
+        yield _text_event("The scope is offshore wind. ")
+
+    monkeypatch.setattr("app.assistant.chat.has_model", lambda: True)
+    monkeypatch.setattr(
+        "app.assistant.chat.assistant_client",
+        lambda: _Client([_Script(chunks(), _final_message([_text_block("unused")]))]),
+    )
+    store = FileStore(tmp_path / "stream.json")
+    store.upsert_opportunities([_opp()])
+    turn = prepare_turn(store, "ada", {"message": "When is the deadline?", "opportunity_id": "call-1"})
+    produced = iter_events(store, turn)
+    first = next(produced)
+    assert first["type"] == "delta"
+    assert "17 September 2026" in first["text"]
+    assert state["sent"] == 1
+    produced.close()
+
+
+def test_a_tool_round_resets_the_preamble_and_reports_status(tmp_path, monkeypatch):
+    rounds = [
+        _Script(
+            [_text_event("I'll look that up. "), _tool_event("search_opportunities")],
+            _final_message([_tool_block("search_opportunities", {"q": "solar"})]),
+        ),
+        _Script(
+            [_text_event("One call covers floating solar. ")],
+            _final_message([_text_block("One call covers floating solar. ")]),
+        ),
+    ]
+    monkeypatch.setattr("app.assistant.chat.has_model", lambda: True)
+    monkeypatch.setattr("app.assistant.chat.assistant_client", lambda: _Client(rounds))
+    store = FileStore(tmp_path / "tools.json")
+    store.upsert_opportunities([_opp(id="solar", external_id="solar", title="Floating solar")])
+    turn = prepare_turn(store, "ada", {"message": "anything about solar?"})
+    events = list(iter_events(store, turn))
+    assert any(event["type"] == "reset" for event in events)
+    assert any(event["type"] == "status" and event["key"] == "searching" for event in events)
+    saved = next(row for row in store.messages_for(turn["conversation_id"]) if row["role"] == "assistant")
+    assert "look that up" not in saved["text"].lower()
+    assert "floating solar" in saved["text"].lower()
+
+
+def test_tool_rounds_still_end_with_a_written_answer(tmp_path, monkeypatch):
+    rounds = [
+        _Script(
+            [_tool_event("search_opportunities")],
+            _final_message([_tool_block("search_opportunities", {"q": "solar"})]),
+        ),
+        _Script(
+            [_text_event("Floating solar is open. ")],
+            _final_message([_text_block("Floating solar is open. ")]),
+        ),
+    ]
+    monkeypatch.setattr("app.assistant.chat.MAX_ROUNDS", 1)
+    monkeypatch.setattr("app.assistant.chat.has_model", lambda: True)
+    monkeypatch.setattr("app.assistant.chat.assistant_client", lambda: _Client(rounds))
+    store = FileStore(tmp_path / "closing.json")
+    store.upsert_opportunities([_opp(id="solar", external_id="solar", title="Floating solar")])
+    turn = prepare_turn(store, "ada", {"message": "anything about solar?"})
+    events = list(iter_events(store, turn))
+    text = "".join(event.get("text") or "" for event in events if event["type"] == "delta")
+    assert "Floating solar is open." in text
+    assert "didn't find a call" not in text
+
+
+def test_a_failed_stream_falls_back_to_a_full_message(tmp_path, monkeypatch):
+    client = _Client([RuntimeError("no stream"), RuntimeError("still no stream")])
+    monkeypatch.setattr("app.assistant.chat.has_model", lambda: True)
+    monkeypatch.setattr("app.assistant.chat.assistant_client", lambda: client)
+    store = FileStore(tmp_path / "fallback.json")
+    store.upsert_opportunities([_opp()])
+    turn = prepare_turn(store, "ada", {"message": "What is the budget?", "opportunity_id": "call-1"})
+    text = "".join(event.get("text") or "" for event in iter_events(store, turn) if event["type"] == "delta")
+    assert "EUR 5" in text
+    assert client.created
+
+
+def test_the_general_prompt_asks_for_english_keywords_and_a_retry():
+    lowered = SYSTEM_GENERAL.lower()
+    assert "english" in lowered
+    assert "synonym" in lowered
+    assert "broader" in lowered
+
+
+def test_a_general_request_names_the_areas_from_the_vertical():
+    request = build_request(None, "solar energy", [], [], [])
+    blob = " ".join(block.get("text") or "" for block in request["messages"][0]["content"])
+    assert "Areas covered:" in blob
+    assert "Offshore wind" in blob
+    assert "About this call" not in blob
+
+
+def test_search_tool_asks_for_short_english_keywords():
+    spec = next(item for item in tool_specs(False) if item["name"] == "search_opportunities")
+    assert "English" in spec["description"]
+
+
+def test_a_spanish_query_falls_back_to_each_word():
+    solar = _opp(
+        id="solar",
+        external_id="solar",
+        title="Floating solar",
+        summary_en="floating solar",
+        description="Floating solar at sea.",
+    )
+    wind = _opp(
+        id="wind",
+        external_id="wind",
+        title="Port retrofit",
+        summary_en="shore power",
+        description="Shore power for the port.",
+    )
+    found = search_calls([solar, wind], "energía solar")
+    assert [row["id"] for row in found] == ["solar"]
 
 
 def test_a_fetching_document_is_not_prefixed_on_the_answer(tmp_path, monkeypatch):

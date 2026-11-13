@@ -118,7 +118,7 @@ function href(citation: Citation): string | undefined {
   return citation.url;
 }
 
-export function Message({ message }: { message: ChatMessage }) {
+export function Message({ message, live = false }: { message: ChatMessage; live?: boolean }) {
   if (message.role === "user") {
     return (
       <div className="flex justify-end">
@@ -130,7 +130,7 @@ export function Message({ message }: { message: ChatMessage }) {
   return (
     <div className="max-w-[95%] text-sm leading-6">
       {message.text && (
-        <div className={MARKDOWN}>
+        <div className={live ? `${MARKDOWN} assistant-live` : MARKDOWN}>
           <Markdown
             remarkPlugins={[remarkGfm]}
             components={{
