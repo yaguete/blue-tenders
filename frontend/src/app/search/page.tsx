@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useId, useRef, useState } from "react";
 import { CallPreview } from "@/components/call-preview";
+import { LoadingState } from "@/components/loading-state";
 import { api, type Card, type SearchResponse } from "@/lib/api";
 import { comparePath, toggleCompare, useCompareIds } from "@/lib/compare";
 import { daysLeft, money, when } from "@/lib/format";
@@ -220,7 +221,7 @@ function SearchScreen() {
           }))}
         />
       </div>
-      {loading && <p className="mt-6 text-sm text-muted-foreground">{t("loading")}</p>}
+      {loading && <LoadingState label={t("loading")} className="mt-6" />}
       {error && <p className="mt-6 text-sm text-status-urgent">{t("error")}</p>}
       {!loading && matches.length === 0 && (
         <p className="mt-6 text-sm">{selected.length === 0 || deadlines.length === 0 ? t("empty") : data?.suggestion || t("empty")}</p>
@@ -384,7 +385,7 @@ function SelectedToCompare({ ids }: { ids: string[] }) {
                 </p>
               )}
               <Link href={`/opportunities/${card.id}`} className="mt-1 block font-medium hover:underline">
-                {card.title_en || card.title || t("loading")}
+                {card.title_en || card.title || t("loadingCall")}
               </Link>
             </div>
             {ids.length > 1 && (
@@ -440,7 +441,7 @@ function Row({ item, picking, onOpen }: { item: Card; picking: boolean; onOpen: 
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<p className="mt-6 text-sm text-muted-foreground">{t("loading")}</p>}>
+    <Suspense fallback={<LoadingState label={t("loading")} className="mt-6" />}>
       <SearchScreen />
     </Suspense>
   );

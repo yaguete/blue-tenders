@@ -288,6 +288,58 @@ def test_context_starts_fetching_and_a_failure_waits_a_day(client, monkeypatch):
     assert calls["n"] == 2
 
 
+def test_a_blocked_ted_pdf_is_read_from_the_search_api(client, monkeypatch):
+    api, store = client
+
+    class FakeResponse:
+        status_code = 429
+        content = b""
+
+        def raise_for_status(self):
+            raise httpx.HTTPStatusError(
+                "Client error '429 Too Many Requests'", request=None, response=self
+            )
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def get(self, url):
+            return FakeResponse()
+
+    monkeypatch.setattr(httpx, "Client", FakeClient)
+    monkeypatch.setattr(
+        "app.sources.ted.notice_pages",
+        lambda url: [{"page": 1, "heading": "Description", "text": "Cuxhaven concept."}],
+    )
+    store.upsert_opportunities(
+        [
+            _opp(
+                id="ted-pdf",
+                source_id="ted",
+                documents=[
+                    Document(
+                        url="https://ted.europa.eu/en/notice/694406-2026/pdf",
+                        name="Notice (PDF)",
+                        kind="notice",
+                        access="fetch",
+                    )
+                ],
+            )
+        ]
+    )
+    body = api.get("/assistant/context", params={"opportunity_id": "ted-pdf"}).json()
+    notice = next(doc for doc in body["documents"] if doc["name"] == "Notice (PDF)")
+    assert notice["status"] == "ok"
+    assert notice["pages"] == 1
+
+
 def test_an_old_eu_ft_row_still_gets_topic_text_from_the_description(client):
     api, store = client
     store.upsert_opportunities(

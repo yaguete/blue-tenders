@@ -1,6 +1,7 @@
 """Descarga un documento de convocatoria una vez, al abrir el chat.
 
 Guarda texto por página. Un fallo no se reintenta hasta pasadas 24 horas.
+Un 429 se reintenta a los 2 minutos: en TED suele ser la IP del servidor, no el PDF.
 Los anexos generales de Horizon se cargan una vez, no en cada topic.
 """
 
@@ -17,6 +18,8 @@ from app.settings import settings
 
 SCAN_PAGE_CAP = 40
 RETRY_AFTER = timedelta(hours=24)
+# Un 429 de TED es el bloqueo de CloudFront a la IP del servidor, no un PDF roto.
+RATE_LIMIT_RETRY = timedelta(minutes=2)
 _LOCKS: dict[str, threading.Lock] = {}
 _LOCKS_GUARD = threading.Lock()
 _BYTES: dict[str, bytes] = {}
@@ -161,7 +164,8 @@ def _fresh(row: dict) -> bool:
     stamp = datetime.fromisoformat(fetched)
     if stamp.tzinfo is None:
         stamp = stamp.replace(tzinfo=UTC)
-    return datetime.now(UTC) - stamp < RETRY_AFTER
+    window = RATE_LIMIT_RETRY if "429" in (row.get("error") or "") else RETRY_AFTER
+    return datetime.now(UTC) - stamp < window
 
 
 def _save(store, opportunity_id: str, doc: Document, status: str, pages: list[dict], error: str | None = None, version: str = "") -> dict:
@@ -197,6 +201,10 @@ def _download(store, ident: str, doc: Document) -> None:
                 response = client.get(doc.url)
                 response.raise_for_status()
         except httpx.HTTPError as exc:
+            pages = _notice_fallback(doc)
+            if pages:
+                _mark(store, ident, "ok", pages=pages)
+                return
             _mark(store, ident, "failed", error=str(exc)[:300])
             return
         content = response.content
@@ -218,6 +226,13 @@ def _download(store, ident: str, doc: Document) -> None:
             return
         _BYTES[ident] = content
         _mark(store, ident, "scanned", pages=[{"page": 1, "heading": "Scanned PDF", "text": ""}])
+
+
+def _notice_fallback(doc: Document) -> list[dict]:
+    """TED bloquea el PDF desde Fly. La API de búsqueda sigue devolviendo el texto del anuncio."""
+    from app.sources.ted import notice_pages
+
+    return notice_pages(doc.url)
 
 
 def cached_bytes(file_id_value: str) -> bytes | None:

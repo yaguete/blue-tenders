@@ -6,7 +6,7 @@ La única superficie es el panel flotante. `/assistant` redirige a la portada co
 
 ## Contexto
 
-`GET /assistant/context?opportunity_id=` devuelve los documentos de esa convocatoria y, si es Horizon Europe, los anexos generales. Estados: `fetching`, `ok`, `failed`, `link_only`, `too_large`, `scanned`. Un fallo no se reintenta hasta pasadas 24 horas. Abrir el panel dispara la descarga; cargar la ficha, no.
+`GET /assistant/context?opportunity_id=` devuelve los documentos de esa convocatoria y, si es Horizon Europe, los anexos generales. Estados: `fetching`, `ok`, `failed`, `link_only`, `too_large`, `scanned`. Un fallo no se reintenta hasta pasadas 24 horas. Un 429 se reintenta a los 2 minutos. Si el PDF de TED responde 429, el texto sale de la API de búsqueda. Abrir el panel dispara la descarga; cargar la ficha, no.
 
 El documento va entero al modelo. Con Anthropic, como bloques de texto por página (o por sección, en un topic) con citas nativas y caché de prompt. Con `DEEPSEEK_API_KEY`, el mismo texto va en el mensaje: su API compatible no acepta el bloque `document`, así que la cita de página la escribe el modelo. El orden del prefijo sigue siendo instrucciones, anexos, documentos de la convocatoria, historial y pregunta. Si no caben unos 150.000 tokens, lo que sobre se consulta con `search_documents`.
 

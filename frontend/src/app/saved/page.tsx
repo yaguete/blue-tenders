@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LoadingState } from "@/components/loading-state";
 import { api } from "@/lib/api";
 import { t } from "@/lib/i18n";
 
@@ -14,7 +15,7 @@ export default function SavedPage() {
       .catch((err: Error) => setError(err.message));
   }, []);
   if (error) return <p className="text-sm">{t("signIn")}</p>;
-  if (!rows) return <p className="text-sm text-muted-foreground">{t("loading")}</p>;
+  if (!rows) return <LoadingState label={t("loading")} />;
   if (rows.length === 0) return <p className="text-sm">{t("empty")}</p>;
   return (
     <ul className="space-y-2 text-sm">

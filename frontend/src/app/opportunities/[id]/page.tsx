@@ -3,6 +3,7 @@
 import { ArrowLeft, ChevronDown, SquareArrowOutUpRight } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { LoadingState } from "@/components/loading-state";
 import { api } from "@/lib/api";
 import { addCompare, comparePath, useCompareIds } from "@/lib/compare";
 import { money, when } from "@/lib/format";
@@ -93,7 +94,7 @@ export default function OpportunityPage() {
   }, [params.id]);
 
   if (error) return <p className="text-sm text-status-urgent">{t("error")}</p>;
-  if (!item) return <p className="text-sm text-muted-foreground">{t("loading")}</p>;
+  if (!item) return <LoadingState label={t("loadingCall")} />;
 
   const low = item.facts.some((fact) => fact.confidence < 0.75 && ["deadline_at", "cofunding_min"].includes(fact.field));
   const category = [item.kind, item.funder_id, item.programme_id].filter(Boolean).join(" · ");

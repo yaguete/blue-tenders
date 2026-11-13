@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { LoadingState } from "@/components/loading-state";
 import { api } from "@/lib/api";
 import { addCompare, COMPARE_LIMIT, comparePath, useCompareIds } from "@/lib/compare";
 import { money, when } from "@/lib/format";
@@ -114,7 +115,7 @@ export function CallPreview({ id, onClose }: { id: string; onClose: () => void }
         </div>
         <div className="overflow-y-auto px-6 py-5">
           {error && <p className="text-sm text-status-urgent">{t("error")}</p>}
-          {!item && !error && <p className="text-sm text-muted-foreground">{t("loading")}</p>}
+          {!item && !error && <LoadingState label={t("loadingCall")} />}
           {item && (
             <article className="space-y-6">
               <header className="space-y-3">

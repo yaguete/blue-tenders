@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { LoadingState } from "@/components/loading-state";
 import { api } from "@/lib/api";
 import { replaceCompare } from "@/lib/compare";
 import { money, when } from "@/lib/format";
@@ -79,7 +80,7 @@ function CompareInner() {
     );
   }
   if (error) return <p className="text-sm">{t("error")}</p>;
-  if (rows.length < 2) return <p className="text-sm text-muted-foreground">{t("loading")}</p>;
+  if (rows.length < 2) return <LoadingState label={t("loading")} />;
 
   const fields: [string, (row: Row) => string][] = [
     ["Deadline", (row) => when(row.deadline_at)],
@@ -134,7 +135,7 @@ function CompareInner() {
 
 export default function ComparePage() {
   return (
-    <Suspense fallback={<p className="text-sm">Reading the indexed calls…</p>}>
+    <Suspense fallback={<LoadingState label={t("loading")} />}>
       <CompareInner />
     </Suspense>
   );

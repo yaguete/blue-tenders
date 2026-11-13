@@ -172,49 +172,49 @@ export function Panel({
       >
         <Chips documents={documents} uploads={uploads} onRemove={onRemove} />
         <div className="border border-border px-1.5 py-1">
-          <div className="flex items-start gap-1">
-            <textarea
-              ref={inputRef}
-              value={draft}
-              onChange={(event) => onDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-                  onSend(draft);
-                }
+          <textarea
+            ref={inputRef}
+            value={draft}
+            onChange={(event) => onDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                onSend(draft);
+              }
+            }}
+            rows={1}
+            placeholder={t("assistantPlaceholder")}
+            className="max-h-32 min-h-8 w-full resize-none overflow-y-auto bg-transparent px-1 py-1.5 text-sm leading-5 outline-none"
+          />
+          <div className="flex items-center justify-between gap-1">
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".pdf,.txt,.md,application/pdf,text/plain"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) onUpload(file);
+                event.target.value = "";
               }}
-              rows={1}
-              placeholder={t("assistantPlaceholder")}
-              className="max-h-32 min-h-8 w-full resize-none overflow-y-auto bg-transparent px-1 py-1.5 text-sm leading-5 outline-none"
             />
+            <button
+              type="button"
+              className="flex cursor-pointer items-center gap-1 px-1 py-1 text-xs font-normal leading-4 text-muted-foreground hover:text-foreground"
+              onClick={() => fileRef.current?.click()}
+            >
+              <Plus className="h-3 w-3" />
+              {t("assistantUpload")}
+            </button>
             <button
               type="submit"
               disabled={busy || !draft.trim()}
               aria-label={t("assistantSend")}
-              className="mt-0.5 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center bg-primary text-primary-foreground disabled:cursor-default disabled:opacity-40"
+              className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center bg-primary text-primary-foreground disabled:cursor-default disabled:opacity-40"
             >
               <ArrowUp className="h-4 w-4" />
             </button>
           </div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".pdf,.txt,.md,application/pdf,text/plain"
-            className="hidden"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) onUpload(file);
-              event.target.value = "";
-            }}
-          />
-          <button
-            type="button"
-            className="flex cursor-pointer items-center gap-1 px-1 py-1 text-xs font-normal leading-4 text-muted-foreground hover:text-foreground"
-            onClick={() => fileRef.current?.click()}
-          >
-            <Plus className="h-3 w-3" />
-            {t("assistantUpload")}
-          </button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">{t("assistantUploadNotice")}</p>
       </form>

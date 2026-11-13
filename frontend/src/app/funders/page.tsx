@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LoadingState } from "@/components/loading-state";
 import { api } from "@/lib/api";
 import { t } from "@/lib/i18n";
 
@@ -22,7 +23,7 @@ export default function FundersPage() {
     api<Funder[]>("/funders").then(setRows).catch(() => setError(true));
   }, []);
   if (error) return <p className="text-sm">{t("error")}</p>;
-  if (!rows) return <p className="text-sm text-muted-foreground">{t("loading")}</p>;
+  if (!rows) return <LoadingState label={t("loadingFunders")} />;
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold tracking-tight">Funders without a deadline</h1>

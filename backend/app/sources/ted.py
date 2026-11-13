@@ -38,6 +38,33 @@ from app.sources.base import SOURCE_SUBSECTORS, Source
 from app.vertical import Vertical
 
 SEARCH_URL = "https://api.ted.europa.eu/v3/notices/search"
+# El PDF de ted.europa.eu responde 429 desde un centro de datos. Estos campos son el texto que la API sí devuelve.
+_NOTICE_TEXT_FIELDS = [
+    "notice-title",
+    "description-proc",
+    "description-lot",
+    "selection-criterion-description-lot",
+    "award-criterion-description-lot",
+    "contract-conditions-description-lot",
+    "buyer-name",
+    "place-of-performance",
+    "deadline-receipt-tender-date-lot",
+    "estimated-value-proc",
+    "official-language",
+]
+_NOTICE_LABELS = {
+    "notice-title": "Title",
+    "description-proc": "Description",
+    "description-lot": "Lot",
+    "selection-criterion-description-lot": "Selection criteria",
+    "award-criterion-description-lot": "Award criteria",
+    "contract-conditions-description-lot": "Contract conditions",
+    "buyer-name": "Buyer",
+    "place-of-performance": "Place of performance",
+    "deadline-receipt-tender-date-lot": "Deadline",
+    "estimated-value-proc": "Estimated value",
+}
+_NOTICE_ID = re.compile(r"ted\.europa\.eu/.+?/notice/(?:-/(?:detail/)?)?(\d+-\d{4})")
 PAGE_SIZE = 250  # máximo que acepta la API
 MAX_PAGES = 400  # tope de seguridad: 100.000 anuncios por ejecución
 
@@ -138,6 +165,65 @@ def build_fulltext_query(since: date, keywords: list[str]) -> str | None:
         return None
     # Cada término lleva su propia cláusula: `FT ~ ("a" OR "b")` devuelve 0 sin dar error.
     return f"({' OR '.join(clauses)}) AND publication-date>={since:%Y%m%d}"
+
+
+def publication_number_from_url(url: str) -> str | None:
+    match = _NOTICE_ID.search(url or "")
+    return match.group(1) if match else None
+
+
+def notice_pages(url: str) -> list[dict]:
+    """Texto del anuncio vía la API de búsqueda, cuando el PDF de la web no se puede bajar."""
+    number = publication_number_from_url(url)
+    if not number:
+        return []
+    try:
+        with httpx.Client(timeout=30) as client:
+            response = client.post(
+                SEARCH_URL,
+                json={
+                    "query": f"publication-number={number}",
+                    "fields": _NOTICE_TEXT_FIELDS,
+                    "limit": 1,
+                    "scope": "ALL",
+                    "paginationMode": "PAGE_NUMBER",
+                },
+            )
+            response.raise_for_status()
+        notices = response.json().get("notices") or []
+    except (httpx.HTTPError, ValueError):
+        return []
+    if not notices:
+        return []
+    record = notices[0]
+    lang = (_first(record.get("official-language")) or "").lower() or None
+    pages = []
+    for field, heading in _NOTICE_LABELS.items():
+        text = _all_in_language(record.get(field), lang)
+        if text:
+            pages.append({"page": len(pages) + 1, "heading": heading, "text": text})
+    return pages
+
+
+def _all_in_language(value, lang: str | None) -> str:
+    if value in (None, "", [], {}):
+        return ""
+    if isinstance(value, list):
+        parts = [_all_in_language(item, lang) for item in value]
+        return "\n".join(part for part in parts if part)
+    if isinstance(value, dict):
+        if value and all(isinstance(key, str) and len(key) == 3 for key in value):
+            chosen = None
+            for key in (lang, "eng"):
+                if key and key in value:
+                    chosen = value[key]
+                    break
+            if chosen is None:
+                chosen = next(iter(value.values()))
+            return _all_in_language(chosen, lang)
+        parts = [_all_in_language(item, lang) for item in value.values()]
+        return "\n".join(part for part in parts if part)
+    return str(value).strip()
 
 
 def _first(value) -> str | None:
