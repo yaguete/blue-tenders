@@ -11,45 +11,56 @@ from fastapi.responses import PlainTextResponse
 
 from app.matching.fit import explain_fit
 from app.models.opportunity import Opportunity, OpportunityKind, compute_status
-from app.partners.track_record import ending_soon_for, track_record_for
+from app.partners.track_record import ending_soon_for, track_record_for, wrapping_up_counts
 from app.quality.text import plain_text
 from app.search.query import SearchFilters, match_reason, search_opportunities, suggest_relaxation
 from app.search.stats import platform_stats
 from app.vertical import load_vertical
 
 _CACHE: dict = {"at": 0.0, "items": None}
+_ENDINGS_CACHE: dict = {"at": 0.0, "rows": None}
 _STATS_CACHE: dict = {"at": 0.0, "body": None}
 _CACHE_TTL = 300
 _RETRY_AFTER = 30
 _LOAD_LOCK = threading.Lock()
+_ENDINGS_LOCK = threading.Lock()
 
 
-def cached_opportunities():
-    """Una sola lectura de la tabla a la vez.
+def _cached(slot: dict, lock: threading.Lock, key: str, load):
+    """Una sola lectura a la vez. Con copia previa, el resto no espera y un fallo no la tira.
 
-    Con varias a la vez, Postgres corta cada una a los 8 s (`statement_timeout` del rol de la
-    API) y el caché no se llena nunca. Mientras una recarga, el resto sirve la copia anterior.
+    Con varias lecturas de `opportunities` a la vez, Postgres corta cada una a los 8 s
+    (`statement_timeout` del rol de la API) y el caché no se llena nunca.
     """
-    stale = _CACHE["items"]
-    if stale is not None and time.monotonic() - _CACHE["at"] < _CACHE_TTL:
+    stale = slot[key]
+    if stale is not None and time.monotonic() - slot["at"] < _CACHE_TTL:
         return stale
-    if not _LOAD_LOCK.acquire(blocking=stale is None):
+    if not lock.acquire(blocking=stale is None):
         return stale
     try:
-        if _CACHE["items"] is not None and time.monotonic() - _CACHE["at"] < _CACHE_TTL:
-            return _CACHE["items"]
+        if slot[key] is not None and time.monotonic() - slot["at"] < _CACHE_TTL:
+            return slot[key]
         try:
-            items = get_store().opportunities()
+            value = load()
         except Exception:
             if stale is None:
                 raise
-            _CACHE["at"] = time.monotonic() - _CACHE_TTL + _RETRY_AFTER
+            slot["at"] = time.monotonic() - _CACHE_TTL + _RETRY_AFTER
             return stale
-        _CACHE["at"] = time.monotonic()
-        _CACHE["items"] = items
-        return items
+        slot["at"] = time.monotonic()
+        slot[key] = value
+        return value
     finally:
-        _LOAD_LOCK.release()
+        lock.release()
+
+
+def cached_opportunities():
+    return _cached(_CACHE, _LOAD_LOCK, "items", lambda: get_store().opportunities())
+
+
+def cached_endings():
+    """Socios relevantes que acaban, por convocatoria. Unas 100 filas pequeñas, no la tabla."""
+    return _cached(_ENDINGS_CACHE, _ENDINGS_LOCK, "rows", lambda: get_store().ending_relevance())
 
 
 def cached_stats() -> dict:
@@ -131,6 +142,7 @@ def search(
     closing_within_days: int | None = None,
     deadline: Annotated[list[str] | None, Query()] = None,
     exclude_unknown: bool = False,
+    wrapping_up: bool = False,
     limit: Annotated[int, Query(le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
     profile_subsector: Annotated[list[str] | None, Query()] = None,
@@ -139,6 +151,17 @@ def search(
     profile_trl: int | None = None,
 ) -> dict:
     items = cached_opportunities()
+    # El aviso de la tarjeta se calcula siempre. El interruptor deja solo las subvenciones
+    # con socios del historial relevante que acaban en la ventana: el subsector solo no distingue.
+    counts_by_id = wrapping_up_counts(
+        cached_endings(), date.today(), load_vertical().track_record.ending_window_months
+    )
+    if wrapping_up:
+        items = [
+            item
+            for item in items
+            if item.kind == OpportunityKind.grant and counts_by_id.get(item.id)
+        ]
     filters = _filters(
         q, kind or [], status or [], subsector or [], programme_id or [], country or [], entity_type,
         consortium_required, mission_ocean, amount_min, amount_max, cofunding_min, sea_basin or [],
@@ -155,7 +178,7 @@ def search(
         }
     rows = []
     for item in found["items"]:
-        row = _card(item)
+        row = _card(item, counts_by_id.get(item.id))
         if q:
             row["why"] = match_reason(item, q)
         fit = explain_fit(item, profile)
@@ -210,7 +233,7 @@ def detail(opportunity_id: str) -> dict:
     payload["track_record"] = record
     payload["partners"] = record["items"]
     if item.kind != OpportunityKind.tender:
-        payload["ending_soon"] = ending_soon_for(item, store, vertical)
+        payload["ending_soon"] = ending_soon_for(item, store, vertical, track=record)
     payload["awards"] = store.awards_for(item.call_id)
     payload["updated_at"] = item.analysis.updated_at.isoformat() if item.analysis and item.analysis.updated_at else None
     return payload
@@ -224,8 +247,8 @@ def calendar(opportunity_id: str) -> str:
     return _ics(item)
 
 
-def _card(item: Opportunity) -> dict:
-    return {
+def _card(item: Opportunity, wrapping_up: int | None = None) -> dict:
+    row = {
         "id": item.id,
         "title": unescape(item.title) if item.title else item.title,
         "title_en": unescape(item.title_en) if item.title_en else item.title_en,
@@ -250,6 +273,9 @@ def _card(item: Opportunity) -> dict:
         "url": item.url,
         "language": item.language,
     }
+    if item.kind == OpportunityKind.grant and wrapping_up:
+        row["wrapping_up"] = wrapping_up
+    return row
 
 
 def _ics(item: Opportunity) -> str:

@@ -9,7 +9,7 @@ cd frontend && npm run dev
 
 Si `backend/data/opportunities.json` no existe, el API carga el fixture de TED que pasa el prefiltro y la call curada de SBEP. Para regenerarlo: borrar ese archivo y reiniciar, o `uv run python -m app.jobs.seed_demo`.
 
-El historial de organizaciones no va en ese JSON. En local: `uv run python -m app.jobs.cordis` y `uv run python -m app.jobs.ted_awards --days 365`. Escriben `backend/data/partners.json` y, las adjudicaciones, el mismo `opportunities.json`. En producción las migraciones se aplican a mano, en orden. `0013_ending_soon.sql` (la columna `ending` del historial) ya está aplicada: se aplicó el 13 nov 2026. Si cambias `track_record` en el YAML del vertical, recalcula con `uv run python -m app.jobs.track_record --all`; si no, cada ficha abierta se calcula en vivo al abrirla.
+El historial de organizaciones no va en ese JSON. En local: `uv run python -m app.jobs.cordis` y `uv run python -m app.jobs.ted_awards --days 365`. Escriben `backend/data/partners.json` y, las adjudicaciones, el mismo `opportunities.json`. En producción las migraciones se aplican a mano, en orden. `0013_ending_soon.sql` (la columna `ending` del historial) ya está aplicada: se aplicó el 13 nov 2026. Si cambias `track_record` en el YAML del vertical, recalcula con `uv run python -m app.jobs.track_record --all`; si no, cada ficha abierta se calcula en vivo al abrirla. El cron diario (`app.jobs.track_record`, sin `--all`) procesa los pendientes. Tras desplegar un cambio de la forma de `ending`, hay que lanzar `--all` a mano: si no, cada ficha tira del volcado de CORDIS. El frontend que lee `consortia` se despliega antes que ese backend.
 
 `ALLOW_DEMO_AUTH=1` deja usar la cabecera `X-Demo-User` sin Supabase. No lo actives en un servidor público.
 

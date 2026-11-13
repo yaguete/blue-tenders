@@ -3,7 +3,8 @@
 Subvenciones: proyectos de CORDIS. Licitaciones: adjudicaciones de TED. Las dos con umbral.
 El texto de cada proyecto se trocea una vez por volcado, no en cada ficha.
 
-Quién acaba se calcula aparte, al abrir la ficha: la ventana es relativa a hoy.
+Quién acaba se guarda con el historial, por proyecto y sin tope, con un trimestre
+de margen. La ficha recorta la ventana al abrirse.
 """
 
 import calendar
@@ -42,15 +43,18 @@ def track_record_for(item, store, vertical, *, live: bool = False) -> dict:
     return record
 
 
-def ending_soon_for(item, store, vertical, *, today: date | None = None, live: bool = False) -> dict:
-    """Proyectos del mismo subsector que terminan dentro de la ventana.
+def ending_soon_for(
+    item, store, vertical, *, track: dict | None = None, today: date | None = None, live: bool = False
+) -> dict:
+    """Consorcios del mismo subsector que terminan dentro de la ventana.
 
     La fecha es la del registro. Sin fecha no se estima. No mide parecido de texto:
     un proyecto entra por subsector, así que no hace falta que la ficha esté en inglés.
+    Un socio es relevante si además sale en el historial de la convocatoria (`track`).
 
-    Los candidatos se guardan con el historial (con un trimestre de margen) y la ficha
-    solo recorta la ventana al abrirse: la lista guardada caduca con el volcado, no con
-    el calendario. Sin registro válido, se calcula en vivo y queda pendiente.
+    Los candidatos se guardan por proyecto, sin tope y con un trimestre de margen.
+    La ficha recorta la ventana al abrirse. Un registro sin `consortia` (la forma
+    anterior, cortada a 30 organizaciones) no vale: se calcula en vivo y queda pendiente.
     """
     window = vertical.track_record.ending_window_months
     today = today or date.today()
@@ -58,22 +62,30 @@ def ending_soon_for(item, store, vertical, *, today: date | None = None, live: b
         saved = store.saved_track_record(item.id)
         from app.partners.precompute import inputs_hash
 
+        ending = (saved or {}).get("ending") or {}
         if (
             saved
-            and saved.get("ending")
+            and ending.get("consortia") is not None
             and saved.get("inputs_hash") == inputs_hash(item, store, vertical)
             and _ending_fresh(saved, today)
         ):
-            return _ending_view(saved["ending"], today, window, vertical.track_record.limit)
+            return _ending_view(ending, today, window)
         store.mark_track_record_pending(item.id)
-    stored = _ending_collect(item, store, today, window, vertical.track_record.limit)
+    stored = _ending_collect(item, store, today, window, track)
     if live:
         return stored
-    return _ending_view(stored, today, window, vertical.track_record.limit)
+    return _ending_view(stored, today, window)
 
 
-def _ending_collect(item, store, today: date, window: int, cap: int) -> dict:
-    """Candidatos que terminan entre hoy y la ventana más un trimestre de margen."""
+def _relevant_keys(track: dict | None) -> set[str]:
+    """La misma clave que `rank_track_record`: pic, o el nombre si no hay pic."""
+    if not track or track.get("status") != "ok":
+        return set()
+    return {org.get("pic") or org.get("org_name") for org in track.get("items") or []}
+
+
+def _ending_collect(item, store, today: date, window: int, track: dict | None = None) -> dict:
+    """Consorcios que terminan entre hoy y la ventana más un trimestre de margen."""
     sources = store.track_record_sources()
     loaded = [sources[name] for name in _CORDIS if sources.get(name, {}).get("loaded_at")]
     if not loaded:
@@ -81,22 +93,35 @@ def _ending_collect(item, store, today: date, window: int, cap: int) -> dict:
     stamp = max(row.get("loaded_at") or "" for row in loaded)
     horizon = _add_months(today, window) + timedelta(days=_ENDING_MARGIN_DAYS)
     wanted = set(item.subsectors or [])
+    relevant = _relevant_keys(track)
     rows, _corpus = _cordis(store)
     seen = set()
-    by_org: dict[str, dict] = {}
+    by_project: dict[str, dict] = {}
     for row in rows:
         end = _as_date(row.get("end_date"))
         if end is None or end < today or end > horizon:
             continue
         if not wanted.intersection(row.get("subsectors") or []):
             continue
-        project_key = (row.get("pic") or row.get("org_name"), row.get("project_id") or row.get("url"))
-        if project_key in seen:
+        org_key = row.get("pic") or row.get("org_name")
+        project_id = row.get("project_id") or row.get("url") or row.get("acronym")
+        pair = (org_key, project_id)
+        if not project_id or pair in seen:
             continue
-        seen.add(project_key)
-        key = row.get("pic") or row.get("org_name")
-        bucket = by_org.setdefault(
-            key,
+        seen.add(pair)
+        bucket = by_project.setdefault(
+            project_id,
+            {
+                "id": project_id,
+                "acronym": row.get("acronym"),
+                "title": row.get("title"),
+                "url": row.get("url"),
+                "programme_id": row.get("programme_id"),
+                "end_date": end.isoformat(),
+                "partners": [],
+            },
+        )
+        bucket["partners"].append(
             {
                 "org_name": row.get("org_name"),
                 "country": row.get("country"),
@@ -104,60 +129,94 @@ def _ending_collect(item, store, today: date, window: int, cap: int) -> dict:
                 "pic": row.get("pic"),
                 "sme": row.get("sme"),
                 "demo": bool(row.get("demo")),
-                "projects": [],
-            },
-        )
-        bucket["projects"].append(
-            {
-                "id": row.get("project_id") or row.get("url") or row.get("acronym"),
-                "acronym": row.get("acronym"),
-                "title": row.get("title"),
-                "url": row.get("url"),
                 "role": row.get("role"),
-                "programme_id": row.get("programme_id"),
-                "end_year": row.get("end_year"),
-                "end_date": end.isoformat(),
+                "relevant": org_key in relevant,
             }
         )
-    ranked = []
-    for bucket in by_org.values():
-        bucket["projects"].sort(key=lambda project: (project["end_date"], project.get("title") or ""))
-        ranked.append(bucket)
-    ranked.sort(key=lambda bucket: (bucket["projects"][0]["end_date"], bucket.get("org_name") or ""))
-    return _ending_payload(
-        "ok" if ranked else "no_match",
-        window,
-        items=ranked[:cap],
-        total=len(ranked),
-        loaded_at=stamp,
-    )
+    consortia = sorted(by_project.values(), key=lambda consortium: (consortium["end_date"], consortium.get("title") or ""))
+    pairs = [
+        [partner.get("pic") or partner.get("org_name"), consortium["end_date"]]
+        for consortium in consortia
+        for partner in consortium["partners"]
+        if partner["relevant"]
+    ]
+    return _ending_stored("ok" if consortia else "no_match", window, consortia, pairs, track, stamp)
 
 
-def _ending_view(stored: dict, today: date, window: int, cap: int) -> dict:
-    """Recorta los candidatos guardados a la ventana de hoy."""
+def _ending_view(stored: dict, today: date, window: int) -> dict:
+    """Recorta los consorcios guardados a la ventana de hoy. `relevant` no sale."""
     if stored.get("status") == "not_loaded":
         return _ending_payload("not_loaded", window)
     horizon = _add_months(today, window).isoformat()
     floor = today.isoformat()
-    buckets = []
-    for bucket in stored.get("items") or []:
-        projects = [
-            project
-            for project in bucket.get("projects") or []
-            if floor <= str(project.get("end_date") or "") <= horizon
-        ]
-        if not projects:
-            continue
-        projects.sort(key=lambda project: (project.get("end_date") or "", project.get("title") or ""))
-        buckets.append({**bucket, "projects": projects})
-    buckets.sort(key=lambda bucket: (bucket["projects"][0]["end_date"], bucket.get("org_name") or ""))
+    consortia = [
+        consortium
+        for consortium in stored.get("consortia") or []
+        if floor <= str(consortium.get("end_date") or "") <= horizon
+    ]
+    consortia.sort(key=lambda consortium: (consortium.get("end_date") or "", consortium.get("title") or ""))
     return _ending_payload(
-        "ok" if buckets else "no_match",
+        "ok" if consortia else "no_match",
         window,
-        items=buckets[:cap],
-        total=len(buckets),
+        consortia=consortia,
+        total=_org_count(consortia),
+        consortia_total=len(consortia),
+        relevant_total=_relevant_count(consortia) if stored.get("track_ok") else None,
         loaded_at=stored.get("loaded_at"),
     )
+
+
+def wrapping_up_counts(rows: dict[str, dict], today: date, window: int) -> dict[str, int]:
+    """Organizaciones relevantes distintas que acaban dentro de la ventana, por convocatoria.
+
+    `rows` es lo que devuelve `ending_relevance`: computed_at y la lista `relevant`.
+    Sin esa lista, o con el registro caducado, la convocatoria no entra. No se estima.
+    """
+    horizon = _add_months(today, window).isoformat()
+    floor = today.isoformat()
+    counts: dict[str, int] = {}
+    for opportunity_id, row in rows.items():
+        if not _ending_fresh(row, today):
+            continue
+        orgs = {
+            pair[0]
+            for pair in row.get("relevant") or []
+            if isinstance(pair, (list, tuple)) and len(pair) >= 2 and floor <= str(pair[1] or "") <= horizon
+        }
+        if orgs:
+            counts[opportunity_id] = len(orgs)
+    return counts
+
+
+def _org_count(consortia: list[dict]) -> int:
+    return len({partner.get("pic") or partner.get("org_name") for consortium in consortia for partner in consortium.get("partners") or []})
+
+
+def _relevant_count(consortia: list[dict]) -> int:
+    return len(
+        {
+            partner.get("pic") or partner.get("org_name")
+            for consortium in consortia
+            for partner in consortium.get("partners") or []
+            if partner.get("relevant")
+        }
+    )
+
+
+def _ending_stored(status: str, window: int, consortia: list[dict], pairs: list, track, loaded_at) -> dict:
+    track_ok = bool(track) and track.get("status") == "ok"
+    body = _ending_payload(
+        status,
+        window,
+        consortia=consortia,
+        total=_org_count(consortia),
+        consortia_total=len(consortia),
+        relevant_total=_relevant_count(consortia) if track_ok else None,
+        loaded_at=loaded_at,
+    )
+    body["relevant"] = pairs
+    body["track_ok"] = track_ok
+    return body
 
 
 def _ending_fresh(saved: dict, today: date) -> bool:
@@ -236,14 +295,25 @@ def _needs_english(item) -> bool:
     return not (item.title_en and item.title_en != item.title)
 
 
-def _ending_payload(status: str, window: int, *, items=None, total: int = 0, loaded_at=None) -> dict:
+def _ending_payload(
+    status: str,
+    window: int,
+    *,
+    consortia=None,
+    total: int = 0,
+    consortia_total: int = 0,
+    relevant_total: int | None = None,
+    loaded_at=None,
+) -> dict:
     return {
         "status": status,
         "source": "cordis",
         "window_months": window,
         "total": total,
+        "consortia_total": consortia_total,
+        "relevant_total": relevant_total,
         "loaded_at": loaded_at,
-        "items": items or [],
+        "consortia": consortia or [],
     }
 
 

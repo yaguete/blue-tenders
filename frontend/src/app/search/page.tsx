@@ -89,12 +89,19 @@ function writeCountries(params: URLSearchParams, countries: string[] | null) {
   for (const id of [...countries].sort()) params.append("country", id);
 }
 
-function searchQuery(q: string, kinds: string[], deadlines: string[], countries: string[] | null): string {
+function searchQuery(
+  q: string,
+  kinds: string[],
+  deadlines: string[],
+  countries: string[] | null,
+  wrappingUp: boolean,
+): string {
   const params = new URLSearchParams();
   if (q) params.set("q", q);
   writeList(params, "kind", kinds, KIND_IDS);
   writeDeadlines(params, deadlines);
   writeCountries(params, countries);
+  if (wrappingUp) params.set("wrapping_up", "1");
   return params.toString();
 }
 
@@ -105,9 +112,17 @@ function sameList(left: string[], right: string[]): boolean {
   return a.every((value, index) => value === b[index]);
 }
 
-function resultQuery(offset: number, query: string, kindsKey: string, placesKey: string, datesKey: string): string {
+function resultQuery(
+  offset: number,
+  query: string,
+  kindsKey: string,
+  placesKey: string,
+  datesKey: string,
+  wrappingUp: boolean,
+): string {
   const params = new URLSearchParams();
   if (query) params.set("q", query);
+  if (wrappingUp) params.set("wrapping_up", "true");
   if (placesKey !== "*" && placesKey !== "") {
     placesKey.split(",").forEach((value) => params.append("country", value));
   }
@@ -147,6 +162,7 @@ function SearchScreen() {
   const [statsFailed, setStatsFailed] = useState(false);
   const [countries, setCountries] = useState<string[] | null>(() => readCountries(params));
   const [deadlines, setDeadlines] = useState<string[]>(() => readDeadlines(params));
+  const [wrappingUp, setWrappingUp] = useState(() => params.get("wrapping_up") === "1");
   const [seen, setSeen] = useState(queryString);
   const selectionKey = [...selected].sort().join(",");
   const countryKey = countries === null ? "*" : [...countries].sort().join(",");
@@ -163,25 +179,35 @@ function SearchScreen() {
     const nextKinds = readList(incoming, "kind", KIND_IDS);
     const nextDeadlines = readDeadlines(incoming);
     const nextCountries = readCountries(incoming);
+    const nextWrap = incoming.get("wrapping_up") === "1";
     setSeen(queryString);
     if (nextQ !== q) setQ(nextQ);
     if (!sameList(nextKinds, selected)) setSelected(nextKinds);
     if (!sameList(nextDeadlines, deadlines)) setDeadlines(nextDeadlines);
     if (!sameCountries(nextCountries, countries)) setCountries(nextCountries);
+    if (nextWrap !== wrappingUp) setWrappingUp(nextWrap);
   } else if (seen !== queryString) {
     setSeen(queryString);
   }
 
-  function commit(next: { q?: string; selected?: string[]; deadlines?: string[]; countries?: string[] | null }) {
+  function commit(next: {
+    q?: string;
+    selected?: string[];
+    deadlines?: string[];
+    countries?: string[] | null;
+    wrappingUp?: boolean;
+  }) {
     const query = next.q ?? q;
     const kinds = next.selected ?? selected;
     const dates = next.deadlines ?? deadlines;
     const places = next.countries === undefined ? countries : next.countries;
+    const wrap = next.wrappingUp ?? wrappingUp;
     if (next.q !== undefined) setQ(next.q);
     if (next.selected) setSelected(next.selected);
     if (next.deadlines) setDeadlines(next.deadlines);
     if (next.countries !== undefined) setCountries(next.countries);
-    const serialized = searchQuery(query, kinds, dates, places);
+    if (next.wrappingUp !== undefined) setWrappingUp(next.wrappingUp);
+    const serialized = searchQuery(query, kinds, dates, places, wrap);
     if (serialized === queryString) return;
     skipUrl.current = serialized;
     router.replace(serialized ? `/search?${serialized}` : "/search", { scroll: false });
@@ -189,7 +215,7 @@ function SearchScreen() {
 
   useEffect(() => {
     const id = ++request.current;
-    const query = resultQuery(0, q, selectionKey, countryKey, deadlineKey);
+    const query = resultQuery(0, q, selectionKey, countryKey, deadlineKey, wrappingUp);
     const handle = setTimeout(() => {
       setLoading(true);
       setRows([]);
@@ -214,7 +240,7 @@ function SearchScreen() {
         });
     }, 200);
     return () => clearTimeout(handle);
-  }, [q, selectionKey, countryKey, deadlineKey]);
+  }, [q, selectionKey, countryKey, deadlineKey, wrappingUp]);
 
   useEffect(() => {
     api<Stats>("/opportunities/stats")
@@ -235,7 +261,7 @@ function SearchScreen() {
     const id = request.current;
     const offset = rows.length;
     setLoadingMore(true);
-    api<SearchResponse>(`/opportunities?${resultQuery(offset, q, selectionKey, countryKey, deadlineKey)}`)
+    api<SearchResponse>(`/opportunities?${resultQuery(offset, q, selectionKey, countryKey, deadlineKey, wrappingUp)}`)
       .then((body) => {
         if (request.current !== id) return;
         setRows((current) => {
@@ -364,6 +390,15 @@ function SearchScreen() {
             count: counts?.deadline?.[id] || 0,
           })).filter((option) => option.count > 0)}
         />
+        <button
+          type="button"
+          aria-pressed={wrappingUp}
+          title={t("wrappingUpHint")}
+          onClick={() => commit({ wrappingUp: !wrappingUp })}
+          className={`cursor-pointer border border-border px-2 py-1 text-sm ${wrappingUp ? "bg-accent-wash" : "bg-card"}`}
+        >
+          {t("wrappingUpFilter")}
+        </button>
       </div>
       {loading && <LoadingState label={t("loading")} className="mt-6" />}
       {error && <p className="mt-6 text-sm text-status-urgent">{t("error")}</p>}
@@ -375,7 +410,9 @@ function SearchScreen() {
         </p>
       )}
       {!loading && matches.length === 0 && (
-        <p className="mt-6 text-sm">{blocked ? t("empty") : suggestion || t("empty")}</p>
+        <p className="mt-6 text-sm">
+          {blocked ? t("empty") : suggestion || (wrappingUp ? t("wrappingUpEmpty") : t("empty"))}
+        </p>
       )}
       <ul ref={listRef} className="mt-3 divide-y divide-border">
         {items?.map((item) => (
@@ -593,6 +630,14 @@ function Row({ item, picking, onOpen }: { item: Card; picking: boolean; onOpen: 
           </Link>
         )}
         {item.summary_en && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{item.summary_en}</p>}
+        {item.wrapping_up != null && item.wrapping_up > 0 && (
+          <p className="mt-1 font-mono text-xs text-accent-ink">
+            {(item.wrapping_up === 1 ? t("wrappingUpChipOne") : t("wrappingUpChip")).replace(
+              "{count}",
+              String(item.wrapping_up),
+            )}
+          </p>
+        )}
         {item.why && <p className="mt-1 text-xs text-muted-foreground">{item.why}</p>}
         {item.fit && <p className="mt-2 text-sm">{item.fit.line}</p>}
       </div>

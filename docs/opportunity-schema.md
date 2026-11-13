@@ -64,4 +64,4 @@ Facts que salen del portal, todos con `origin: source`:
 
 ## Qué no va en la fila
 
-Partners, perfiles y conversaciones son tablas aparte. Ver migraciones `0003`–`0005`. `ending_soon` no se guarda: la ficha lo calcula al leer, con la fecha de fin del registro y la ventana del YAML.
+Partners, perfiles y conversaciones son tablas aparte. Ver migraciones `0003`–`0005`. `ending_soon` de la ficha sale de `opportunity_track_record.ending`: consorcios (`consortia[]`, cada uno con `partners[]`) del mismo subsector que acaban en la ventana, más `total`, `consortia_total` y `relevant_total`. La lista guardada lleva un trimestre de margen y la lectura recorta a hoy. La tarjeta de búsqueda añade `wrapping_up` (organizaciones del historial relevante que acaban en la ventana) solo si es mayor que cero.

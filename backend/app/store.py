@@ -482,6 +482,16 @@ class FileStore(AssistantRecords):
         data["config_hash"] = value
         self._save_track(data)
 
+    def ending_relevance(self) -> dict[str, dict]:
+        """computed_at y socios relevantes por convocatoria. Sin la lista entera de consorcios."""
+        found = {}
+        for opportunity_id, record in self._track()["records"].items():
+            relevant = (record.get("ending") or {}).get("relevant")
+            if not relevant:
+                continue
+            found[opportunity_id] = {"computed_at": record.get("computed_at"), "relevant": relevant}
+        return found
+
 
 class SupabaseStore(AssistantRecords):
     """Oportunidades y estado de cuenta en Postgres. El cron y el API comparten esas tablas."""
@@ -824,6 +834,17 @@ class SupabaseStore(AssistantRecords):
             or []
         )
         return [row["opportunity_id"] for row in rows]
+
+    def ending_relevance(self) -> dict[str, dict]:
+        """Solo la lista de socios relevantes. `ending` entero pesa ~110 KB en un subsector grande."""
+        found = {}
+        columns = "opportunity_id,computed_at,relevant:ending->relevant"
+        for row in self._pages("opportunity_track_record", columns):
+            relevant = row.get("relevant")
+            if not relevant:
+                continue
+            found[row["opportunity_id"]] = {"computed_at": row.get("computed_at"), "relevant": relevant}
+        return found
 
     def track_record_config_hash(self) -> str | None:
         row = self.track_record_sources().get("track-record-config") or {}

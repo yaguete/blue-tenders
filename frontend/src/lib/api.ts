@@ -21,6 +21,7 @@ export type Card = {
   subsectors: string[];
   url: string;
   language: string | null;
+  wrapping_up?: number | null;
   why?: string | null;
   fit?: { level: string; line: string };
 };

@@ -65,7 +65,7 @@ def test_without_a_dump_the_window_is_not_loaded(tmp_path):
     body = ending_soon_for(_grant(), store, load_vertical(), today=TODAY)
     assert body["status"] == "not_loaded"
     assert body["window_months"] == 9
-    assert body["items"] == []
+    assert body["consortia"] == []
 
 
 def test_only_a_registered_end_date_inside_the_window_is_kept(tmp_path):
@@ -78,11 +78,12 @@ def test_only_a_registered_end_date_inside_the_window_is_kept(tmp_path):
     today = _project("h2020:5", TODAY.isoformat(), acronym="TODAY")
     _load(store, [inside, later, past, edge, today])
     body = ending_soon_for(_grant(), store, load_vertical(), today=TODAY)
-    acronyms = [project["acronym"] for org in body["items"] for project in org["projects"]]
+    acronyms = [consortium["acronym"] for consortium in body["consortia"]]
     assert body["status"] == "ok"
     assert acronyms == ["TODAY", "WIND", "EDGE"]
-    assert body["items"][0]["projects"][0]["end_date"] == "2026-11-13"
-    assert body["items"][0]["org_name"] == "Wind Lab"
+    assert body["consortia"][0]["end_date"] == "2026-11-13"
+    assert body["consortia"][0]["partners"][0]["org_name"] == "Wind Lab"
+    assert body["relevant_total"] is None
 
 
 def test_a_missing_date_is_not_guessed_from_the_year(tmp_path):
@@ -91,7 +92,7 @@ def test_a_missing_date_is_not_guessed_from_the_year(tmp_path):
     _load(store, [_project("h2020:9", None, end_year=2027)])
     body = ending_soon_for(_grant(), store, load_vertical(), today=TODAY)
     assert body["status"] == "no_match"
-    assert body["items"] == []
+    assert body["consortia"] == []
 
 
 def test_another_subsector_stays_out(tmp_path):
@@ -115,8 +116,8 @@ def test_a_life_row_in_the_dump_uses_the_same_window(tmp_path):
     )
     _load(store, [life], source_id="life")
     body = ending_soon_for(_grant(), store, load_vertical(), today=TODAY)
-    assert body["items"][0]["projects"][0]["programme_id"] == "life"
-    assert body["items"][0]["projects"][0]["end_date"] == "2027-04-30"
+    assert body["consortia"][0]["programme_id"] == "life"
+    assert body["consortia"][0]["end_date"] == "2027-04-30"
 
 
 def test_detail_sends_the_window_on_a_grant_and_not_on_a_tender(tmp_path, monkeypatch):
@@ -139,7 +140,7 @@ def test_detail_sends_the_window_on_a_grant_and_not_on_a_tender(tmp_path, monkey
     grant_body = detail("grant-call")
     assert grant_body["ending_soon"]["status"] == "ok"
     assert grant_body["ending_soon"]["window_months"] == 9
-    assert grant_body["ending_soon"]["items"][0]["projects"][0]["end_date"] == "2027-05-01"
+    assert grant_body["ending_soon"]["consortia"][0]["end_date"] == "2027-05-01"
     assert "ending_soon" not in detail("tender-call")
 
 
@@ -155,11 +156,11 @@ def test_a_saved_ending_is_trimmed_to_the_window_without_pulling_the_dump(tmp_pa
     compute_and_save(grant, store, load_vertical())
     saved = store.saved_track_record("warm-call")
     assert saved["ending"]["status"] == "ok"
-    stored = [p["acronym"] for org in saved["ending"]["items"] for p in org["projects"]]
+    stored = [consortium["acronym"] for consortium in saved["ending"]["consortia"]]
     assert stored == ["WIND", "MARGIN"]  # el margen de un trimestre se guarda, la ventana no
     clear_track_record_cache()
     body = ending_soon_for(grant, store, load_vertical(), today=TODAY)
-    acronyms = [p["acronym"] for org in body["items"] for p in org["projects"]]
+    acronyms = [consortium["acronym"] for consortium in body["consortia"]]
     assert acronyms == ["WIND"]
     assert store.pending_track_records() == []
 
@@ -200,3 +201,86 @@ def test_a_tender_record_is_saved_without_ending(tmp_path):
     store.upsert_opportunities([tender])
     compute_and_save(tender, store, load_vertical())
     assert "ending" not in (store.saved_track_record("tender-call") or {})
+
+
+def test_a_consortium_keeps_every_partner(tmp_path):
+    clear_track_record_cache()
+    store = FileStore(tmp_path / "opportunities.json")
+    project = _project("h2020:1", "2027-05-01")
+    orgs = [
+        {"id": str(index), "pic": str(index), "name": f"Org {index}", "country": "ES", "activity_type": "REC", "sme": False}
+        for index in range(31)
+    ]
+    parts = [{"org_id": str(index), "project_id": project["id"], "role": "participant"} for index in range(31)]
+    store.replace_cordis(
+        "cordis-h2020",
+        orgs,
+        [project],
+        parts,
+        {"loaded_at": "2026-11-11T00:00:00+00:00", "projects": 1},
+    )
+    body = ending_soon_for(_grant(), store, load_vertical(), today=TODAY)
+    assert body["consortia_total"] == 1
+    assert len(body["consortia"][0]["partners"]) == 31
+    assert body["total"] == 31
+
+
+def test_two_partners_of_one_project_share_a_consortium(tmp_path):
+    clear_track_record_cache()
+    store = FileStore(tmp_path / "opportunities.json")
+    project = _project("h2020:1", "2027-05-01")
+    orgs = [
+        {"id": "111", "pic": "111", "name": "Wind Lab", "country": "ES", "activity_type": "REC", "sme": False},
+        {"id": "222", "pic": "222", "name": "Blade Co", "country": "NL", "activity_type": "PRC", "sme": True},
+    ]
+    parts = [
+        {"org_id": "111", "project_id": project["id"], "role": "coordinator"},
+        {"org_id": "222", "project_id": project["id"], "role": "participant"},
+    ]
+    store.replace_cordis(
+        "cordis-h2020",
+        orgs,
+        [project],
+        parts,
+        {"loaded_at": "2026-11-11T00:00:00+00:00", "projects": 1},
+    )
+    track = {"status": "ok", "items": [{"pic": "111", "org_name": "Wind Lab"}]}
+    body = ending_soon_for(_grant(), store, load_vertical(), track=track, today=TODAY)
+    partners = {partner["org_name"]: partner["relevant"] for partner in body["consortia"][0]["partners"]}
+    assert partners == {"Wind Lab": True, "Blade Co": False}
+    assert body["relevant_total"] == 1
+    unmarked = ending_soon_for(_grant(), store, load_vertical(), today=TODAY)
+    assert unmarked["relevant_total"] is None
+    assert all(partner["relevant"] is False for partner in unmarked["consortia"][0]["partners"])
+
+
+def test_a_saved_ending_without_consortia_is_recomputed(tmp_path):
+    from app.partners.precompute import compute_and_save
+
+    clear_track_record_cache()
+    store = FileStore(tmp_path / "opportunities.json")
+    grant = _grant(id="old-shape", deadline_at=datetime(2027, 1, 31, tzinfo=UTC))
+    store.upsert_opportunities([grant])
+    _load(store, [_project("h2020:1", "2027-05-01")])
+    compute_and_save(grant, store, load_vertical())
+    saved = store.saved_track_record("old-shape")
+    saved["ending"] = {"status": "ok", "items": [{"org_name": "Wind Lab", "projects": []}], "window_months": 9}
+    store.save_track_record("old-shape", saved)
+    clear_track_record_cache()
+    body = ending_soon_for(grant, store, load_vertical(), today=TODAY)
+    assert body["consortia"][0]["acronym"] == "WIND"
+    assert "old-shape" in store.pending_track_records()
+
+
+def test_wrapping_up_counts_keeps_distinct_relevant_orgs_inside_the_window():
+    from app.partners.track_record import wrapping_up_counts
+
+    rows = {
+        "a": {
+            "computed_at": "2026-11-13T00:00:00+00:00",
+            "relevant": [["111", "2027-05-01"], ["111", "2027-06-01"], ["222", "2027-12-01"]],
+        },
+        "stale": {"computed_at": "2026-01-01T00:00:00+00:00", "relevant": [["111", "2027-05-01"]]},
+        "empty": {"computed_at": "2026-11-13T00:00:00+00:00"},
+    }
+    assert wrapping_up_counts(rows, TODAY, 9) == {"a": 1}

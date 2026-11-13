@@ -49,7 +49,8 @@ def compute_and_save(item, store, vertical) -> dict:
         from app.partners.track_record import ending_soon_for
 
         # Candidatos con margen: la ficha recorta la ventana al abrirse.
-        record["ending"] = ending_soon_for(item, store, vertical, live=True)
+        # `track` marca qué socios del consorcio salen también en el historial.
+        record["ending"] = ending_soon_for(item, store, vertical, track=record, live=True)
     record["inputs_hash"] = inputs_hash(item, store, vertical)
     record["computed_at"] = datetime.now(UTC).isoformat()
     record["pending"] = False

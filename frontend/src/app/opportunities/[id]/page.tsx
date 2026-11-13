@@ -32,11 +32,33 @@ type Project = {
   contract_end?: string | null;
 };
 
+type EndingPartner = {
+  org_name: string;
+  country: string | null;
+  activity_type: string | null;
+  pic: string | null;
+  sme?: boolean | null;
+  role: string | null;
+  relevant?: boolean;
+};
+
+type Consortium = {
+  id: string;
+  acronym: string | null;
+  title: string | null;
+  url: string | null;
+  programme_id: string | null;
+  end_date: string;
+  partners: EndingPartner[];
+};
+
 type EndingSoon = {
   status: "ok" | "no_match" | "not_loaded";
   window_months: number;
   total: number;
-  items: Partner[];
+  consortia_total?: number;
+  relevant_total?: number | null;
+  consortia?: Consortium[];
 };
 
 type Partner = {
@@ -119,7 +141,10 @@ export default function OpportunityPage() {
     setTrackOpen(false);
     setEndingOpen(false);
     api<Detail>(`/opportunities/${params.id}`)
-      .then(setItem)
+      .then((body) => {
+        setItem(body);
+        setEndingOpen(body.ending_soon?.status === "ok");
+      })
       .catch((err: Error) => setError(err.message));
   }, [params.id]);
 
@@ -416,18 +441,36 @@ function TrackRecordSection({ item, open, onToggle }: { item: Detail; open: bool
 
 function EndingSoonSection({ item, open, onToggle }: { item: Detail; open: boolean; onToggle: () => void }) {
   const record = item.ending_soon;
+  const [month, setMonth] = useState<string | null>(null);
+  const [relevantOnly, setRelevantOnly] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   if (!record) return null;
-  const count = record.total;
+  const consortia = record.consortia ?? [];
+  const consortiaTotal = record.consortia_total ?? consortia.length;
   const months = String(record.window_months);
-  const title = (count === 1 ? t("endingSoonTitleOne") : t("endingSoonTitle"))
-    .replace("{count}", String(count))
+  const title = (consortiaTotal === 1 ? t("endingSoonConsortiaOne") : t("endingSoonConsortia"))
+    .replace("{count}", String(consortiaTotal))
     .replace("{months}", months);
+  const orgs = (record.total === 1 ? t("endingSoonOrgsOne") : t("endingSoonOrgs")).replace(
+    "{count}",
+    String(record.total),
+  );
+  const relevant =
+    record.relevant_total == null
+      ? null
+      : t("endingSoonRelevantCount").replace("{count}", String(record.relevant_total));
   const message =
     record.status === "not_loaded"
       ? t("endingSoonNotLoaded")
       : record.status === "no_match"
         ? t("endingSoonNoMatch").replace("{months}", months)
         : null;
+  const listed = relevantOnly ? consortia.filter((consortium) => consortium.partners.some((partner) => partner.relevant)) : consortia;
+  const columns = monthColumns(record.window_months);
+  const peak = Math.max(1, ...columns.map((column) => listed.filter((consortium) => consortium.end_date.startsWith(column.key)).length));
+  const shown = month ? listed.filter((consortium) => consortium.end_date.startsWith(month)) : listed;
+  const visible = month || showAll ? shown : shown.slice(0, 10);
   return (
     <section>
       <h2 className="text-lg font-semibold">
@@ -446,34 +489,167 @@ function EndingSoonSection({ item, open, onToggle }: { item: Detail; open: boole
       </h2>
       {open && (
         <>
+          <p className="mt-2 font-mono text-xs text-muted-foreground">
+            {orgs}
+            {relevant ? ` · ${relevant}` : ""}
+          </p>
           {message && <p className="mt-3 text-sm text-muted-foreground">{message}</p>}
-          <ul className="mt-3 space-y-3 text-sm">
-            {record.items.map((partner) => (
-              <li key={partner.pic || partner.org_name}>
-                <span className="font-medium">{partner.org_name}</span>
-                {partner.country ? ` · ${partner.country}` : ""}
-                <ul className="mt-1 text-muted-foreground">
-                  {partner.projects.map((project) => (
-                    <li key={project.id || project.url || project.acronym}>
-                      {project.url ? (
-                        <a href={project.url} className="underline" target="_blank" rel="noreferrer">
-                          {project.acronym || project.title}
-                        </a>
-                      ) : (
-                        project.acronym || project.title
-                      )}
-                      {project.role ? ` · ${project.role}` : ""}
-                      {project.end_date ? <span className="tabular"> · {dateOnly(project.end_date)}</span> : ""}
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
+          {record.status === "ok" && (
+            <>
+              <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+                <div className="flex min-w-0 flex-1 items-end gap-1" role="group" aria-label={t("endingSoonMonths")}>
+                  {columns.map((column) => {
+                    const count = listed.filter((consortium) => consortium.end_date.startsWith(column.key)).length;
+                    const pressed = month === column.key;
+                    const height = count === 0 ? 4 : Math.max(8, Math.round((count / peak) * 64));
+                    const label = (count === 1 ? t("endingSoonMonthOne") : t("endingSoonMonth"))
+                      .replace("{month}", column.full)
+                      .replace("{count}", String(count));
+                    return (
+                      <button
+                        key={column.key}
+                        type="button"
+                        aria-pressed={pressed}
+                        aria-label={label}
+                        onClick={() => setMonth(pressed ? null : column.key)}
+                        className="flex min-w-0 flex-1 cursor-pointer flex-col items-center gap-1"
+                      >
+                        <span className="tabular font-mono text-xs">{count}</span>
+                        <span
+                          className={`w-full ${pressed ? "bg-accent-ink" : "bg-muted-foreground/40"}`}
+                          style={{ height }}
+                        />
+                        <span className="font-mono text-[10px] leading-tight text-muted-foreground">{column.short}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {record.relevant_total != null && record.relevant_total > 0 && (
+                  <button
+                    type="button"
+                    aria-pressed={relevantOnly}
+                    onClick={() => {
+                      setRelevantOnly((value) => !value);
+                      setMonth(null);
+                    }}
+                    className={`cursor-pointer border border-border px-2 py-1 text-sm ${relevantOnly ? "bg-accent-wash" : "bg-card"}`}
+                  >
+                    {t("endingSoonOnlyRelevant")}
+                  </button>
+                )}
+              </div>
+              <ul className="mt-4 space-y-3">
+                {visible.map((consortium) => (
+                  <ConsortiumCard
+                    key={consortium.id}
+                    consortium={consortium}
+                    expanded={Boolean(expanded[consortium.id])}
+                    onToggle={() => setExpanded((current) => ({ ...current, [consortium.id]: !current[consortium.id] }))}
+                  />
+                ))}
+              </ul>
+              {!month && !showAll && shown.length > 10 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAll(true)}
+                  className="mt-3 cursor-pointer text-sm underline"
+                >
+                  {t("endingSoonShowAll").replace("{count}", String(shown.length))}
+                </button>
+              )}
+            </>
+          )}
+          <p className="mt-3 font-mono text-xs text-muted-foreground">{t("endingSoonFoot")}</p>
         </>
       )}
     </section>
   );
+}
+
+function ConsortiumCard({
+  consortium,
+  expanded,
+  onToggle,
+}: {
+  consortium: Consortium;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const partners = [...consortium.partners].sort((left, right) => {
+    const rank = (partner: EndingPartner) => (partner.role === "coordinator" ? 0 : partner.relevant ? 1 : 2);
+    return rank(left) - rank(right) || (left.org_name || "").localeCompare(right.org_name || "");
+  });
+  const shown = expanded ? partners : partners.slice(0, 6);
+  const count = partners.length;
+  const name = consortium.acronym || consortium.title;
+  return (
+    <li className="border border-border bg-card px-4 py-3 text-sm">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        {consortium.url ? (
+          <a href={consortium.url} className="font-medium underline" target="_blank" rel="noreferrer">
+            {name}
+          </a>
+        ) : (
+          <span className="font-medium">{name}</span>
+        )}
+        <span className="tabular font-mono text-xs text-muted-foreground">
+          {t("ends").replace("{date}", dateOnly(consortium.end_date))}
+        </span>
+      </div>
+      {consortium.acronym && consortium.title && (
+        <p className="mt-1 truncate text-muted-foreground">{consortium.title}</p>
+      )}
+      <p className="mt-1 font-mono text-xs text-muted-foreground">
+        {[
+          consortium.programme_id ? programmeLabel(consortium.programme_id) : null,
+          (count === 1 ? t("endingSoonPartnersOne") : t("endingSoonPartners")).replace("{count}", String(count)),
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      </p>
+      <ul className="mt-2 space-y-1 text-muted-foreground">
+        {shown.map((partner) => (
+          <li key={partner.pic || partner.org_name}>
+            <span className="text-foreground">{partner.org_name}</span>
+            {partner.country ? ` · ${partner.country}` : ""}
+            {partner.activity_type ? ` · ${activityLabel(partner.activity_type)}` : ""}
+            {partner.sme ? ` · ${t("trackRecordSme")}` : ""}
+            {roleLabel(partner.role) ? ` · ${roleLabel(partner.role)}` : ""}
+            {partner.relevant ? ` · ${t("endingSoonRelevant")}` : ""}
+          </li>
+        ))}
+      </ul>
+      {count > 6 && (
+        <button type="button" onClick={onToggle} className="mt-2 cursor-pointer text-xs underline">
+          {expanded ? t("endingSoonShowFewer") : t("endingSoonMore").replace("{count}", String(count - 6))}
+        </button>
+      )}
+    </li>
+  );
+}
+
+function monthColumns(windowMonths: number): { key: string; short: string; full: string }[] {
+  const now = new Date();
+  const columns = [];
+  for (let offset = 0; offset <= windowMonths; offset += 1) {
+    const day = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + offset, 1));
+    const key = `${day.getUTCFullYear()}-${String(day.getUTCMonth() + 1).padStart(2, "0")}`;
+    const shortMonth = new Intl.DateTimeFormat("en", { month: "short", timeZone: "UTC" }).format(day);
+    const showYear = offset === 0 || day.getUTCMonth() === 0;
+    columns.push({
+      key,
+      short: showYear ? `${shortMonth} ${day.getUTCFullYear()}` : shortMonth,
+      full: new Intl.DateTimeFormat("en", { month: "long", year: "numeric", timeZone: "UTC" }).format(day),
+    });
+  }
+  return columns;
+}
+
+function roleLabel(role: string | null): string | null {
+  if (!role || role === "participant") return null;
+  const key = `role${role}`;
+  const label = t(key);
+  return label === key ? role : label;
 }
 
 function OverviewSection({ analysis, fallback }: { analysis: Detail["analysis"]; fallback?: string }) {

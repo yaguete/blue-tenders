@@ -8,8 +8,9 @@ El historial de la ficha responde quién ha hecho algo parecido. Quien arma un c
 
 ## Decisión
 
-- En una subvención, la ficha lista además los proyectos del mismo subsector cuya fecha de fin cae en los próximos `ending_window_months` (9 en el YAML). La fecha es la del registro. Sin fecha no se estima, y un año suelto no cuenta.
-- Esa lista se calcula al abrir la ficha. No se guarda: la ventana depende de hoy, y una lista cacheada caducaría sin que cambie la convocatoria.
+- En una subvención, la ficha lista los consorcios del mismo subsector cuya fecha de fin cae en los próximos `ending_window_months` (9 en el YAML). La fecha es la del registro. Sin fecha no se estima, y un año suelto no cuenta. Cada proyecto es un consorcio, con sus socios; no hay tope de 30.
+- La lista se guarda con el historial, por proyecto y con un trimestre de margen. La ficha recorta la ventana al abrirse. Un socio se marca relevante si además sale en el historial de esa convocatoria.
+- Search filtra por ese cruce (`wrapping_up`), no por «el subsector tiene proyectos que acaban»: eso daría el mismo número a todas las convocatorias del subsector. La tarjeta enseña el recuento.
 - El parecido de texto sigue siendo el del historial, y solo con CORDIS. La ventana no mide parecido: entra por subsector, también si la ficha no está en inglés.
 - LIFE no entra en esta ronda. La base pública no ofrece un volcado con términos de reutilización claros (spike del 13 nov). Keep.eu sigue esperando la clave. Si alguno llega al almacén de proyectos, la ventana lo lee igual.
 - En una licitación, el historial de adjudicaciones enseña el importe adjudicado frente al presupuesto base de la licitación del mismo expediente, y el fin de contrato cuando la fuente lo trae. PLACSP aporta adjudicatario, importe y fin desde el feed diario. No hay carga hacia atrás: solo entra lo que pase el CPV y el prefiltro a partir de ahora. TED usa `contract-duration-end-date-lot`; si los lotes no coinciden, el campo se queda vacío.

@@ -1,11 +1,13 @@
 import threading
 import time
+from datetime import date, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
 
 from app.api import opportunities as api
 from app.main import app
+from app.models.opportunity import Opportunity, OpportunityKind, OpportunityType
 
 
 def test_search_returns_the_seeded_call():
@@ -87,3 +89,39 @@ def test_failed_reload_serves_the_previous_copy(monkeypatch, empty_cache):
     assert api.cached_opportunities() == ["old"]
     assert api.cached_opportunities() == ["old"]
     assert store.calls == 1
+
+
+def _call(call_id: str, kind: OpportunityKind) -> Opportunity:
+    return Opportunity(
+        id=call_id,
+        source_id="eu-ft",
+        external_id=call_id,
+        url=f"https://example.com/{call_id}",
+        title=call_id,
+        type=OpportunityType.grant if kind == OpportunityKind.grant else OpportunityType.tender,
+        kind=kind,
+    )
+
+
+def test_wrapping_up_keeps_grants_with_a_count_and_marks_the_card(monkeypatch):
+    soon = (date.today() + timedelta(days=20)).isoformat()
+    computed = date.today().isoformat()
+    grant = _call("grant-yes", OpportunityKind.grant)
+    other = _call("grant-no", OpportunityKind.grant)
+    tender = _call("tender-yes", OpportunityKind.tender)
+    monkeypatch.setattr(api, "cached_opportunities", lambda: [grant, other, tender])
+    monkeypatch.setattr(
+        api,
+        "cached_endings",
+        lambda: {
+            "grant-yes": {"computed_at": computed, "relevant": [["111", soon], ["111", soon]]},
+            "tender-yes": {"computed_at": computed, "relevant": [["999", soon]]},
+        },
+    )
+    filtered = api.search(wrapping_up=True)
+    assert [row["id"] for row in filtered["items"]] == ["grant-yes"]
+    assert filtered["items"][0]["wrapping_up"] == 1
+    plain = {row["id"]: row for row in api.search()["items"]}
+    assert plain["grant-yes"]["wrapping_up"] == 1
+    assert "wrapping_up" not in plain["grant-no"]
+    assert "wrapping_up" not in plain["tender-yes"]
