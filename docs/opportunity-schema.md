@@ -58,10 +58,10 @@ Facts que salen del portal, todos con `origin: source`:
 
 ## Procedencia
 
-`facts[]`: `field`, `value`, `origin` (`source`, `programme_rule`, `llm`, `manual`), `confidence` (0–1), `document_id`, `page`, `quote`, `model`.
+`facts[]`: `field`, `value`, `origin` (`source`, `programme_rule`, `llm`, `manual`, `scraped`), `confidence` (0–1), `document_id`, `page`, `quote`, `model`. `contract_end_at` es la fecha de fin de contrato cuando la fuente la trae (TED o PLACSP) y entra en `content_hash`. `award_value_eur` y `winners` también.
 
 `analysis`: secciones con `text`, `origin` (`extracted` o `generated`) y `citations` (documento, página, cita). `analysis_updated_at`.
 
 ## Qué no va en la fila
 
-Partners, perfiles y conversaciones son tablas aparte. Ver migraciones `0003`–`0005`.
+Partners, perfiles y conversaciones son tablas aparte. Ver migraciones `0003`–`0005`. `ending_soon` no se guarda: la ficha lo calcula al leer, con la fecha de fin del registro y la ventana del YAML.

@@ -16,6 +16,8 @@
   selector: ".block-sbep-custom-news-all-block"
   title: Sustainable Blue Economy Partnership
   language: en
+  # Programa de subvenciones. Sin esto la ficha sale como licitación.
+  kind: grant
 
 - id: fundo-azul
   url: https://www.dgpm.mm.gov.pt/fundo-azul-anuncios
@@ -23,18 +25,21 @@
   title: Fundo Azul — anúncios
   language: pt
   country: PT
+  kind: grant
 
 - id: mission-ocean
   url: https://research-and-innovation.ec.europa.eu/funding/funding-opportunities/funding-programmes-and-open-calls/horizon-europe/eu-missions-horizon-europe/restore-our-ocean-and-waters_en
   selector: main
   title: EU Mission Restore our Ocean and Waters
   language: en
+  kind: grant
 
 - id: horizon-work-programmes
   url: https://research-and-innovation.ec.europa.eu/funding/funding-opportunities/funding-programmes-and-open-calls/horizon-europe/horizon-europe-work-programmes_en
   selector: main
   title: Horizon Europe work programmes
   language: en
+  kind: grant
 
 - id: puertos-estado
   url: https://www.puertos.es/comunicacion

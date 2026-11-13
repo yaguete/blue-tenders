@@ -401,6 +401,8 @@ track_record:
   awards_min_cpv_digits: 5
   min_shared_tokens: 2
   limit: 30
+  # Proyectos del mismo subsector cuya fecha de fin del registro cae en esta ventana.
+  ending_window_months: 9
 
 sdg_by_subsector:
   offshore-wind: [7, 13, 14]

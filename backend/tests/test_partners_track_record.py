@@ -2,7 +2,14 @@ from datetime import date
 
 from app.api.opportunities import detail
 from app.jobs import ted_awards
-from app.models.opportunity import Fact, FactOrigin, Opportunity, OpportunityKind, OpportunityType
+from app.models.opportunity import (
+    Budget,
+    Fact,
+    FactOrigin,
+    Opportunity,
+    OpportunityKind,
+    OpportunityType,
+)
 from app.partners.score import rank_track_record, specific_cpv
 from app.partners.track_record import track_record_for
 from app.sources.ted import TedSource
@@ -218,6 +225,58 @@ def test_ted_awards_job_does_not_touch_ingest_runs(tmp_path, monkeypatch):
     assert store.track_record_sources()["ted-awards"]["since"] == "2025-11-11"
 
 
+def test_the_normalized_mirror_only_keeps_cordis_orgs(tmp_path):
+    from app.partners.precompute import compute_and_save
+    from app.partners.track_record import clear_track_record_cache
+
+    clear_track_record_cache()
+    store = SupabaseStore(client=FakeSupabase())
+    store.client.table("partner_orgs").insert(
+        [{"id": "hash-1", "pic": "hash-1", "name": "Grid Co", "country": "NO", "activity_type": "PRC", "sme": True}]
+    ).execute()
+    award = Opportunity(
+        id="award-1",
+        source_id="ted",
+        external_id="9-2026",
+        url="https://ted.europa.eu/9",
+        title="Cable repair",
+        type=OpportunityType.award,
+        call_id="PROC-9",
+        cpv=["45315400"],
+        subsectors=["subsea-cables"],
+        language="en",
+        facts=[
+            Fact(
+                field="winners",
+                value=[
+                    {"name": "Grid Co", "country": "NO", "size": "medium", "id_hash": "hash-1"},
+                    {"name": "Unknown AS", "country": "NO", "size": "medium", "id_hash": None},
+                ],
+                origin=FactOrigin.source,
+                confidence=0.9,
+            )
+        ],
+    )
+    viewed = Opportunity(
+        id="tender-1",
+        source_id="ted",
+        external_id="8-2026",
+        url="https://ted.europa.eu/8",
+        title="Cable works",
+        type=OpportunityType.tender,
+        call_id="PROC-8",
+        cpv=["45315400"],
+        subsectors=["subsea-cables"],
+        language="en",
+    )
+    store.upsert_opportunities([award, viewed])
+    store.save_track_record_source("ted-awards", loaded_at="2026-11-11T00:00:00+00:00", projects=1)
+    compute_and_save(viewed, store, load_vertical())
+    rows = store.client.table("opportunity_partner_matches").select("*").execute().data or []
+    # El espejo referencia partner_orgs: un ganador que no es organización CORDIS solo viaja en el registro.
+    assert [row["org_id"] for row in rows] == ["hash-1"]
+
+
 def test_an_award_notice_is_not_sent_to_the_model(monkeypatch):
     from app.pipeline.run import enrich
 
@@ -236,3 +295,53 @@ def test_an_award_notice_is_not_sent_to_the_model(monkeypatch):
     )
     enrich([award], load_vertical())
     assert called == []
+
+
+def test_a_placsp_award_shows_its_winner_against_the_call_budget(tmp_path):
+    from pathlib import Path
+
+    from app.partners.track_record import clear_track_record_cache
+    from app.sources.placsp import PlacspSource
+
+    clear_track_record_cache()
+    store = FileStore(tmp_path / "opportunities.json")
+    xml = (Path(__file__).parent / "fixtures" / "placsp" / "award_entry.xml").read_text()
+    award = PlacspSource().to_tender({"xml": xml, "status": "ADJ"})
+    award.subsectors = ["green-ports"]
+    call = Opportunity(
+        id="the-call",
+        source_id="placsp",
+        external_id=award.call_id,
+        url="https://contrataciondelestado.es/call",
+        title="Shore power call",
+        type=OpportunityType.tender,
+        call_id=award.call_id,
+        budget=Budget(amount=700_000, currency="EUR", amount_eur=700_000),
+        subsectors=["green-ports"],
+    )
+    viewed = Opportunity(
+        id="other-call",
+        source_id="ted",
+        external_id="2",
+        url="https://ted.europa.eu/2",
+        title="Shore power for another port",
+        type=OpportunityType.tender,
+        call_id="OTHER",
+        cpv=["45315300"],
+        subsectors=["green-ports"],
+        language="en",
+    )
+    store.upsert_opportunities([call, award, viewed])
+    body = track_record_for(viewed, store, load_vertical())
+    project = body["items"][0]["projects"][0]
+    assert body["items"][0]["org_name"] == "BONSAILAB SLU"
+    assert project["amount_eur"] == 499_000
+    assert project["base_amount_eur"] == 700_000
+    assert project["contract_end"] == "2027-01-07"
+
+    # La licitación no está guardada: el presupuesto del propio aviso no hace de base.
+    alone = FileStore(tmp_path / "alone.json")
+    alone.upsert_opportunities([award, viewed])
+    missing = track_record_for(viewed, alone, load_vertical())
+    assert missing["items"][0]["projects"][0]["base_amount_eur"] is None
+    assert missing["items"][0]["projects"][0]["amount_eur"] == 499_000

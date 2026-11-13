@@ -14,7 +14,14 @@ import yaml
 from selectolax.lexbor import LexborHTMLParser as HTMLParser
 
 from app.enrich.watched_draft import change_quote
-from app.models.opportunity import Document, Fact, FactOrigin, Opportunity, OpportunityType
+from app.models.opportunity import (
+    Document,
+    Fact,
+    FactOrigin,
+    Opportunity,
+    OpportunityKind,
+    OpportunityType,
+)
 from app.settings import settings
 from app.sources.base import SOURCE_SUBSECTORS, Source
 from app.vertical import Vertical
@@ -87,6 +94,9 @@ class WatchedSource(Source):
                     payload["language"] = str(page["language"])
                 if page.get("country"):
                     payload["country"] = str(page["country"])
+                kind = str(page.get("kind") or "")
+                if kind in {item.value for item in OpportunityKind}:
+                    payload["kind"] = kind
                 subsectors = [str(item) for item in page.get("subsectors") or []]
                 if subsectors:
                     payload[SOURCE_SUBSECTORS] = subsectors
@@ -102,12 +112,14 @@ class WatchedSource(Source):
         quote = change_quote(str(raw.get("text") or ""), str(raw.get("previous") or ""))
         subsectors = raw.get(SOURCE_SUBSECTORS)
         kept = {SOURCE_SUBSECTORS: list(subsectors)} if isinstance(subsectors, list) and subsectors else {}
+        kind = str(raw.get("kind") or "")
         return Opportunity(
             id=Opportunity.make_id(self.id, page_id),
             source_id=self.id,
             external_id=page_id,
             url=url,
             type=OpportunityType.prior_information_notice,
+            kind=OpportunityKind(kind) if kind in {item.value for item in OpportunityKind} else None,
             title=title,
             description=quote or None,
             country=raw.get("country") or None,

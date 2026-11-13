@@ -24,9 +24,19 @@ type Project = {
   url: string | null;
   programme_id: string | null;
   end_year: number | null;
+  end_date?: string | null;
   evidence: string | null;
   buyer: string | null;
   amount_eur: number | null;
+  base_amount_eur?: number | null;
+  contract_end?: string | null;
+};
+
+type EndingSoon = {
+  status: "ok" | "no_match" | "not_loaded";
+  window_months: number;
+  total: number;
+  items: Partner[];
 };
 
 type Partner = {
@@ -90,6 +100,7 @@ type Detail = {
   documents: { url: string; name: string | null; kind?: string | null; access?: string | null }[];
   awards: { id: string; title: string; winner: string | null; amount_eur: number | null; url: string }[];
   track_record?: TrackRecord;
+  ending_soon?: EndingSoon;
   partners: Partner[];
 };
 
@@ -102,9 +113,11 @@ export default function OpportunityPage() {
   const [original, setOriginal] = useState(false);
   const [compareNote, setCompareNote] = useState<string | null>(null);
   const [trackOpen, setTrackOpen] = useState(false);
+  const [endingOpen, setEndingOpen] = useState(false);
 
   useEffect(() => {
     setTrackOpen(false);
+    setEndingOpen(false);
     api<Detail>(`/opportunities/${params.id}`)
       .then(setItem)
       .catch((err: Error) => setError(err.message));
@@ -308,6 +321,10 @@ export default function OpportunityPage() {
 
       <TrackRecordSection item={item} open={trackOpen} onToggle={() => setTrackOpen((value) => !value)} />
 
+      {item.kind === "grant" && item.ending_soon && (
+        <EndingSoonSection item={item} open={endingOpen} onToggle={() => setEndingOpen((value) => !value)} />
+      )}
+
       <footer className="space-y-1 font-mono text-xs text-muted-foreground">
         <p>
           <a className="underline" href={item.url}>
@@ -369,8 +386,14 @@ function TrackRecordSection({ item, open, onToggle }: { item: Detail; open: bool
                       {project.end_year ? <span className="tabular"> · {project.end_year}</span> : ""}
                       {project.buyer ? ` · ${project.buyer}` : ""}
                       {project.amount_eur != null ? (
-                        <span className="tabular"> · EUR {project.amount_eur.toLocaleString("en-GB")}</span>
+                        <span className="tabular">
+                          {" · "}EUR {project.amount_eur.toLocaleString("en-GB")}
+                          {project.base_amount_eur != null
+                            ? ` (${t("baseBudget").replace("{amount}", project.base_amount_eur.toLocaleString("en-GB"))})`
+                            : ""}
+                        </span>
                       ) : null}
+                      {project.contract_end ? ` · ${t("ends").replace("{date}", dateOnly(project.contract_end))}` : ""}
                       {evidenceLabel(project.evidence) ? ` · ${evidenceLabel(project.evidence)}` : ""}
                     </li>
                   ))}
@@ -385,6 +408,68 @@ function TrackRecordSection({ item, open, onToggle }: { item: Detail; open: bool
                 .replace("{total}", String(item.track_record.total))}
             </p>
           )}
+        </>
+      )}
+    </section>
+  );
+}
+
+function EndingSoonSection({ item, open, onToggle }: { item: Detail; open: boolean; onToggle: () => void }) {
+  const record = item.ending_soon;
+  if (!record) return null;
+  const count = record.total;
+  const months = String(record.window_months);
+  const title = (count === 1 ? t("endingSoonTitleOne") : t("endingSoonTitle"))
+    .replace("{count}", String(count))
+    .replace("{months}", months);
+  const message =
+    record.status === "not_loaded"
+      ? t("endingSoonNotLoaded")
+      : record.status === "no_match"
+        ? t("endingSoonNoMatch").replace("{months}", months)
+        : null;
+  return (
+    <section>
+      <h2 className="text-lg font-semibold">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={onToggle}
+          className="inline-flex cursor-pointer items-center gap-2 text-left"
+        >
+          <span>{title}</span>
+          <ChevronDown
+            className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+            aria-hidden
+          />
+        </button>
+      </h2>
+      {open && (
+        <>
+          {message && <p className="mt-3 text-sm text-muted-foreground">{message}</p>}
+          <ul className="mt-3 space-y-3 text-sm">
+            {record.items.map((partner) => (
+              <li key={partner.pic || partner.org_name}>
+                <span className="font-medium">{partner.org_name}</span>
+                {partner.country ? ` · ${partner.country}` : ""}
+                <ul className="mt-1 text-muted-foreground">
+                  {partner.projects.map((project) => (
+                    <li key={project.id || project.url || project.acronym}>
+                      {project.url ? (
+                        <a href={project.url} className="underline" target="_blank" rel="noreferrer">
+                          {project.acronym || project.title}
+                        </a>
+                      ) : (
+                        project.acronym || project.title
+                      )}
+                      {project.role ? ` · ${project.role}` : ""}
+                      {project.end_date ? <span className="tabular"> · {dateOnly(project.end_date)}</span> : ""}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
         </>
       )}
     </section>

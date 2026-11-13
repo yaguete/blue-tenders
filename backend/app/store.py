@@ -67,6 +67,7 @@ def flat_participation(part: dict, org: dict, project: dict) -> dict:
         "role": part.get("role"),
         "programme_id": project.get("programme_id"),
         "end_year": _end_year(project),
+        "end_date": project.get("end_date") or None,
         "subsectors": project.get("subsectors") or [],
         "project_id": project.get("id") or part.get("project_id"),
         "cpv": project.get("cpv") or [],
@@ -421,6 +422,21 @@ class FileStore(AssistantRecords):
     def award_notices(self) -> list[Opportunity]:
         return [item for item in self.opportunities() if item.notice == NoticeKind.award_notice]
 
+    def call_budgets(self, call_ids) -> dict[str, float]:
+        """Presupuesto base en EUR de esas licitaciones. La adjudicación no hace de base."""
+        wanted = {call_id for call_id in call_ids if call_id}
+        if not wanted:
+            return {}
+        bases: dict[str, float] = {}
+        for item in self.opportunities():
+            if item.notice == NoticeKind.award_notice or item.call_id not in wanted:
+                continue
+            budget = item.budget
+            if budget is None or budget.currency != "EUR" or budget.amount_eur is None:
+                continue
+            bases.setdefault(item.call_id, budget.amount_eur)
+        return bases
+
     def track_record_path(self) -> Path:
         return self.path.with_name("track_record.json")
 
@@ -475,6 +491,11 @@ class SupabaseStore(AssistantRecords):
             from supabase import create_client
 
             client = create_client(settings.supabase_url, settings.supabase_service_role_key)
+            # La API crea un store por petición. Con el mismo token, el caché del
+            # historial aguanta entre peticiones; con un cliente inyectado (tests), no.
+            self._cache_token = settings.supabase_url
+        else:
+            self._cache_token = id(client)
         self.client = client
 
     def _pages(self, table: str, columns: str = "*") -> list[dict]:
@@ -751,12 +772,29 @@ class SupabaseStore(AssistantRecords):
             {"opportunity_id": opportunity_id, "pending": False, **record}
         ).execute()
         self.client.table("opportunity_partner_matches").delete().eq("opportunity_id", opportunity_id).execute()
+        # El espejo normalizado referencia partner_orgs (organizaciones CORDIS). Un
+        # adjudicatario de TED o PLACSP no está allí: solo viaja en el `items` del registro.
+        candidates = {org.get("pic") or org.get("org_name") for org in record.get("items") or []}
+        known = set()
+        for chunk in _chunks([org_id for org_id in candidates if org_id], 500):
+            rows = (
+                self.client.table("partner_orgs")
+                .select("id")
+                .in_("id", chunk)
+                .execute()
+                .data
+                or []
+            )
+            known.update(row["id"] for row in rows)
         matches = []
         for rank, org in enumerate(record.get("items") or []):
+            org_id = org.get("pic") or org.get("org_name")
+            if org_id not in known:
+                continue
             matches.append(
                 {
                     "opportunity_id": opportunity_id,
-                    "org_id": org.get("pic") or org.get("org_name"),
+                    "org_id": org_id,
                     "source": record.get("source"),
                     "rank": rank,
                     "score": org.get("score"),
@@ -869,6 +907,38 @@ class SupabaseStore(AssistantRecords):
                 break
             start += 1000
         return [Opportunity.model_validate(row) for row in rows]
+
+    def call_budgets(self, call_ids) -> dict[str, float]:
+        """Presupuesto base en EUR de esas licitaciones, sin recorrer la tabla entera.
+
+        Solo `call_id`, `budget` y `notice`: el resto de columnas (análisis, documentos,
+        facts) es lo que hace pesada una lectura completa.
+        """
+        wanted = sorted({call_id for call_id in call_ids if call_id})
+        bases: dict[str, float] = {}
+        if not wanted:
+            return bases
+        for chunk in _chunks(wanted, 500):
+            rows = (
+                self.client.table("opportunities")
+                .select("call_id,budget,notice")
+                .in_("call_id", chunk)
+                .execute()
+                .data
+                or []
+            )
+            for row in rows:
+                call_id = row.get("call_id")
+                if not call_id or call_id in bases or row.get("notice") == "award_notice":
+                    continue
+                budget = row.get("budget") or {}
+                if (
+                    isinstance(budget, dict)
+                    and budget.get("currency") == "EUR"
+                    and isinstance(budget.get("amount_eur"), (int, float))
+                ):
+                    bases[call_id] = budget["amount_eur"]
+        return bases
 
     def _ids_for(self, table: str, column: str, value: str) -> list[str]:
         found = []

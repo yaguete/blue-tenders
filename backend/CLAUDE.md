@@ -30,7 +30,7 @@ uv run python -m app.jobs.seed_demo
 | `app/alerts/` | Búsquedas guardadas, recordatorios, baja. |
 | `app/assistant/` | Panel: documentos por página, chat, herramientas y subidas de 24 h. Sin `DEEPSEEK_API_KEY` ni `ANTHROPIC_API_KEY`, no llama al modelo. |
 | `app/store.py` | JSON local o Supabase. El historial va en `data/partners.json` o en `partner_*`, no en `load()`. |
-| `supabase/migrations/` | Esquema. `0001` crea `tenders`; `0002` la renombra. `0003`–`0006` partners, cuenta, asistente e ingesta. `0007` el historial. `0011` `dedupe_key`. `0012` `closed_at`. |
+| `supabase/migrations/` | Esquema. `0001` crea `tenders`; `0002` la renombra. `0003`–`0006` partners, cuenta, asistente e ingesta. `0007` el historial. `0011` `dedupe_key`. `0012` `closed_at`. `0013` la columna `ending`. |
 
 ## Contratos
 

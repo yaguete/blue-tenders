@@ -58,6 +58,7 @@ def test_project_keywords_do_not_enter_the_call_prefilter():
     assert "wind turbine" in wind.project_keywords
     assert vertical.track_record.min_text_similarity == 0.15
     assert vertical.track_record.awards_min_text_similarity == 0.14
+    assert vertical.track_record.ending_window_months == 9
 
 
 @pytest.mark.parametrize(

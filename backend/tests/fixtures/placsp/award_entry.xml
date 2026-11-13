@@ -1,0 +1,46 @@
+<entry>
+  <id>exp-adj</id>
+  <updated>2026-11-13T18:57:51.992+01:00</updated>
+  <link href="https://contrataciondelestado.es/expediente/exp-adj"/>
+  <summary>Estado: ADJ</summary>
+  <ContractFolderID>IACS-2026-20013</ContractFolderID>
+  <ContractFolderStatusCode>ADJ</ContractFolderStatusCode>
+  <ProcurementProject>
+    <Name>Suministro eléctrico a buques en el puerto</Name>
+    <BudgetAmount>
+      <TaxExclusiveAmount currencyID="EUR">600000</TaxExclusiveAmount>
+    </BudgetAmount>
+    <PlannedPeriod>
+      <StartDate>2026-12-28</StartDate>
+      <EndDate>2027-01-07</EndDate>
+    </PlannedPeriod>
+  </ProcurementProject>
+  <Party>
+    <PartyName><Name>Instituto Aragonés de Ciencias de la Salud</Name></PartyName>
+  </Party>
+  <ItemClassificationCode>45315300</ItemClassificationCode>
+  <TenderSubmissionDeadlinePeriod>
+    <EndDate>2026-10-01</EndDate>
+    <EndTime>14:00:00</EndTime>
+  </TenderSubmissionDeadlinePeriod>
+  <TenderResult>
+    <ResultCode>8</ResultCode>
+    <AwardDate>2026-11-13</AwardDate>
+    <SMEAwardedIndicator>true</SMEAwardedIndicator>
+    <WinningParty>
+      <PartyIdentification>
+        <ID schemeName="NIF">B82394248</ID>
+      </PartyIdentification>
+      <PartyName><Name>BONSAILAB SLU</Name></PartyName>
+      <Country>
+        <IdentificationCode>ES</IdentificationCode>
+      </Country>
+    </WinningParty>
+    <AwardedTenderedProject>
+      <LegalMonetaryTotal>
+        <TaxExclusiveAmount currencyID="EUR">499000</TaxExclusiveAmount>
+        <PayableAmount currencyID="EUR">603790</PayableAmount>
+      </LegalMonetaryTotal>
+    </AwardedTenderedProject>
+  </TenderResult>
+</entry>

@@ -45,6 +45,11 @@ def precomputable(item, today: date | None = None) -> bool:
 
 def compute_and_save(item, store, vertical) -> dict:
     record = track_record_for(item, store, vertical, live=True)
+    if item.kind != OpportunityKind.tender:
+        from app.partners.track_record import ending_soon_for
+
+        # Candidatos con margen: la ficha recorta la ventana al abrirse.
+        record["ending"] = ending_soon_for(item, store, vertical, live=True)
     record["inputs_hash"] = inputs_hash(item, store, vertical)
     record["computed_at"] = datetime.now(UTC).isoformat()
     record["pending"] = False

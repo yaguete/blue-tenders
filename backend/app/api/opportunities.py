@@ -9,8 +9,8 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import PlainTextResponse
 
 from app.matching.fit import explain_fit
-from app.models.opportunity import Opportunity, compute_status
-from app.partners.track_record import track_record_for
+from app.models.opportunity import Opportunity, OpportunityKind, compute_status
+from app.partners.track_record import ending_soon_for, track_record_for
 from app.quality.text import plain_text
 from app.search.query import SearchFilters, match_reason, search_opportunities, suggest_relaxation
 from app.search.stats import platform_stats
@@ -183,9 +183,12 @@ def detail(opportunity_id: str) -> dict:
             block["heading"] = plain_text(block.get("heading"))
             block["text"] = plain_text(block.get("text"))
     payload["status"] = compute_status(item).value
-    record = track_record_for(item, store, load_vertical())
+    vertical = load_vertical()
+    record = track_record_for(item, store, vertical)
     payload["track_record"] = record
     payload["partners"] = record["items"]
+    if item.kind != OpportunityKind.tender:
+        payload["ending_soon"] = ending_soon_for(item, store, vertical)
     payload["awards"] = store.awards_for(item.call_id)
     payload["updated_at"] = item.analysis.updated_at.isoformat() if item.analysis and item.analysis.updated_at else None
     return payload

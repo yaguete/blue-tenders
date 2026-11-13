@@ -96,6 +96,8 @@ FIELDS = [
     "winner-size",
     "result-value-notice",
     "result-value-cur-notice",
+    # Fin de contrato del lote. Si los lotes no coinciden, no se elige uno.
+    "contract-duration-end-date-lot",
 ]
 
 _CPV = re.compile(r"^\d{8}$")
@@ -329,6 +331,21 @@ def _award_eur(raw: dict) -> float | None:
     return value
 
 
+def _contract_end(raw: dict) -> str | None:
+    """Fecha de fin solo cuando todos los lotes publican la misma."""
+    dates = set()
+    for item in _string_list(raw.get("contract-duration-end-date-lot")):
+        day = item.strip()[:10]
+        try:
+            date.fromisoformat(day)
+        except ValueError:
+            continue
+        dates.add(day)
+    if len(dates) != 1:
+        return None
+    return dates.pop()
+
+
 def _id_hash(value) -> str | None:
     text = re.sub(r"\s+", "", str(value or "")).upper()
     if not text or text in {"-1", "0"}:
@@ -543,6 +560,7 @@ class TedSource(Source):
         published = _first(raw.get("publication-date"))
         winners = _winners(raw, lang3)
         award_value = _award_eur(raw)
+        contract_end = _contract_end(raw)
         facts = []
         if winners:
             facts.append(Fact(field="winners", value=winners, origin=FactOrigin.source, confidence=0.9))
@@ -557,6 +575,10 @@ class TedSource(Source):
         if award_value is not None:
             facts.append(
                 Fact(field="award_value_eur", value=award_value, origin=FactOrigin.source, confidence=0.9)
+            )
+        if contract_end is not None:
+            facts.append(
+                Fact(field="contract_end_at", value=contract_end, origin=FactOrigin.source, confidence=0.9)
             )
         procedure = _first(raw.get("procedure-identifier"))
         return Tender(

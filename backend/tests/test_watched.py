@@ -1,7 +1,7 @@
 from datetime import date
 
 from app.enrich.watched_draft import change_quote
-from app.models.opportunity import FactOrigin, NoticeKind
+from app.models.opportunity import FactOrigin, NoticeKind, OpportunityKind
 from app.pipeline.run import prefilter
 from app.settings import settings
 from app.sources.base import SOURCE_SUBSECTORS
@@ -25,6 +25,7 @@ def test_a_change_carries_the_day_and_the_page_subsectors(tmp_path, monkeypatch)
   selector: main
   title: SBEP
   language: en
+  kind: grant
   subsectors: [offshore-wind]
 """,
         encoding="utf-8",
@@ -63,6 +64,7 @@ def test_a_change_carries_the_day_and_the_page_subsectors(tmp_path, monkeypatch)
     found = list(source.fetch(date.min, vertical))
     assert len(found) == 1
     assert found[0]["detected_at"]
+    assert found[0]["kind"] == "grant"
     assert found[0][SOURCE_SUBSECTORS] == ["offshore-wind"]
     assert list(source.fetch(date.min, vertical)) == []
 
@@ -97,6 +99,24 @@ def test_without_subsectors_only_a_diff_that_names_the_sector_is_kept():
     assert noise.published_at == date(2026, 11, 13)
     assert prefilter([noise], vertical) == []
     assert prefilter([signal], vertical)
+
+
+def test_a_grant_page_stays_a_pin_and_a_page_without_kind_stays_a_tender():
+    source = WatchedSource()
+    base = {
+        "id": "sbep",
+        "url": "https://example.test/sbep",
+        "title": "SBEP",
+        "detected_at": "2026-11-13T08:00:00+00:00",
+        "text": "Draft offshore wind work programme",
+        "previous": "News",
+    }
+    grant = source.to_tender({**base, "kind": "grant"})
+    assert grant.kind == OpportunityKind.grant
+    assert grant.notice == NoticeKind.pin
+    tender = source.to_tender(base)
+    assert tender.kind == OpportunityKind.tender
+    assert tender.notice == NoticeKind.pin
 
 
 def test_a_page_without_a_seen_date_is_not_a_card():

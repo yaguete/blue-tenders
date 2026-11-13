@@ -361,6 +361,8 @@ def rank_track_record(
                 "end_year": row.get("end_year"),
                 "buyer": row.get("buyer"),
                 "amount_eur": row.get("amount_eur"),
+                "base_amount_eur": row.get("base_amount_eur"),
+                "contract_end": row.get("contract_end"),
                 "score": scored["score"],
                 "evidence": evidence,
             }

@@ -26,6 +26,8 @@ class TrackRecordConfig(BaseModel):
     awards_min_cpv_digits: int = 5
     min_shared_tokens: int = 2
     limit: int = 30
+    # Meses hacia delante para «quién acaba». La ficha lo calcula al abrirla.
+    ending_window_months: int = 9
 
 
 class Vertical(BaseModel):

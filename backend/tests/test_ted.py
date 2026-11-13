@@ -212,10 +212,36 @@ def test_a_positive_eur_award_is_kept_and_changes_the_hash():
     )
     amount = next(fact.value for fact in awarded.facts if fact.field == "award_value_eur")
     assert amount == 1_250_000
+    assert not any(fact.field == "contract_end_at" for fact in awarded.facts)
     bare = TedSource().to_tender(
         {"publication-number": "8-2026", "notice-type": "can-standard", "notice-title": {"eng": "Cable"}}
     )
     assert bare.content_hash != awarded.content_hash
+
+
+def test_contract_end_is_kept_only_when_every_lot_agrees():
+    agreed = TedSource().to_tender(
+        {
+            "publication-number": "7-2026",
+            "notice-type": "can-standard",
+            "notice-title": {"eng": "Cable"},
+            "contract-duration-end-date-lot": ["2028-10-22+03:00", "2028-10-22+02:00"],
+        }
+    )
+    assert next(fact.value for fact in agreed.facts if fact.field == "contract_end_at") == "2028-10-22"
+    split = TedSource().to_tender(
+        {
+            "publication-number": "6-2026",
+            "notice-type": "can-standard",
+            "notice-title": {"eng": "Cable"},
+            "contract-duration-end-date-lot": ["2028-10-22+03:00", "2029-01-01Z"],
+        }
+    )
+    assert not any(fact.field == "contract_end_at" for fact in split.facts)
+    bare = TedSource().to_tender(
+        {"publication-number": "7-2026", "notice-type": "can-standard", "notice-title": {"eng": "Cable"}}
+    )
+    assert bare.content_hash != agreed.content_hash
 
 
 def test_dedupe_keeps_the_call_and_its_award():

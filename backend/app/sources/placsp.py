@@ -4,6 +4,7 @@ Se leen el título, el enlace, el expediente y la fecha de presentación si vien
 Un anuncio sin título o sin identificador se rechaza: no se fabrica uno.
 """
 
+import hashlib
 import xml.etree.ElementTree as ET
 from collections.abc import Iterable
 from datetime import date, datetime
@@ -167,6 +168,7 @@ class PlacspSource(Source):
             deadline_at=_submission_deadline(entry),
             published_at=_published(entry),
             documents=_documents(entry, link),
+            facts=_closed_facts(entry) if (raw.get("status") or "") in _CLOSED else [],
             call_id=external,
             dedupe_key=external,
             raw={"external_id": external, "procedure": external, "procedure-identifier": external},
@@ -232,6 +234,111 @@ def _cpv_ok(entry: ET.Element, wanted: list[str]) -> bool:
     if not codes:
         return True
     return any(code.startswith(prefix[:8]) or prefix.startswith(code[:8]) for code in codes for prefix in wanted)
+
+
+def _closed_facts(entry: ET.Element) -> list[Fact]:
+    """Adjudicatario, importe y fin de ejecución. Sin el nodo, el fact no se crea.
+
+    El NIF no se guarda en claro: solo su hash, igual que el identificador de TED.
+    Un PlannedPeriod que solo trae duración no se convierte en fecha.
+    """
+    winners = _winners(entry)
+    facts: list[Fact] = []
+    if winners:
+        facts.append(Fact(field="winners", value=winners, origin=FactOrigin.source, confidence=0.9))
+        facts.append(
+            Fact(
+                field="winner_name",
+                value=", ".join(row["name"] for row in winners),
+                origin=FactOrigin.source,
+                confidence=0.9,
+            )
+        )
+    amount = _award_eur(entry)
+    if amount is not None:
+        facts.append(Fact(field="award_value_eur", value=amount, origin=FactOrigin.source, confidence=0.9))
+    end = _contract_end(entry)
+    if end is not None:
+        facts.append(Fact(field="contract_end_at", value=end, origin=FactOrigin.source, confidence=0.9))
+    return facts
+
+
+def _winners(entry: ET.Element) -> list[dict]:
+    rows = []
+    seen = set()
+    for result in _named(entry, "TenderResult"):
+        sme = (_find_text(result, "SMEAwardedIndicator") or "").strip().lower() == "true"
+        for party in _named(result, "WinningParty"):
+            name = None
+            for node in party.iter():
+                if _local(node.tag) == "PartyName":
+                    name = _find_text(node, "Name")
+                    break
+            if not name or name in seen:
+                continue
+            seen.add(name)
+            nif = None
+            for node in party.iter():
+                if _local(node.tag) == "ID" and node.attrib.get("schemeName") == "NIF" and node.text:
+                    nif = node.text.strip()
+                    break
+            country = None
+            for node in party.iter():
+                if _local(node.tag) == "IdentificationCode" and node.text and len(node.text.strip()) == 2:
+                    country = node.text.strip().upper()
+                    break
+            rows.append(
+                {
+                    "name": name,
+                    "country": country,
+                    "size": "sme" if sme else None,
+                    "id_hash": hashlib.sha256(nif.encode()).hexdigest()[:16] if nif else None,
+                }
+            )
+    return rows
+
+
+def _award_eur(entry: ET.Element) -> float | None:
+    total = 0.0
+    found = False
+    for project in _named(entry, "AwardedTenderedProject"):
+        for node in project.iter():
+            if _local(node.tag) != "TaxExclusiveAmount" or not (node.text and node.text.strip()):
+                continue
+            if (node.attrib.get("currencyID") or "EUR").upper() != "EUR":
+                break
+            try:
+                value = float(node.text.strip())
+            except ValueError:
+                break
+            if value <= 0:
+                break
+            total += value
+            found = True
+            break
+    return total if found else None
+
+
+def _contract_end(entry: ET.Element) -> str | None:
+    """Fin de ejecución solo si todos los lotes dicen la misma fecha."""
+    dates = set()
+    for period in _named(entry, "PlannedPeriod"):
+        end = _find_text(period, "EndDate")
+        if not end:
+            continue
+        day = end.strip()[:10]
+        try:
+            date.fromisoformat(day)
+        except ValueError:
+            continue
+        dates.add(day)
+    if len(dates) != 1:
+        return None
+    return dates.pop()
+
+
+def _named(entry: ET.Element, name: str) -> list[ET.Element]:
+    return [node for node in entry.iter() if _local(node.tag) == name]
 
 
 def _submission_deadline(entry: ET.Element) -> datetime | None:

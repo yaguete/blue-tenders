@@ -1,3 +1,4 @@
+import hashlib
 import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -185,6 +186,52 @@ def test_placsp_uses_the_submission_deadline_not_the_contract_end():
     assert item.deadline_at is not None
     assert item.deadline_at.day == 2
     assert item.deadline_at.hour == 12
+    assert item.facts == []
+
+
+def test_placsp_award_keeps_the_winner_the_amount_and_the_contract_end():
+    xml = (FIXTURES / "placsp" / "award_entry.xml").read_text()
+    item = PlacspSource().to_tender({"xml": xml, "status": "ADJ"})
+    winners = next(fact.value for fact in item.facts if fact.field == "winners")
+    assert winners[0]["name"] == "BONSAILAB SLU"
+    assert winners[0]["country"] == "ES"
+    assert winners[0]["size"] == "sme"
+    assert winners[0]["id_hash"] == hashlib.sha256(b"B82394248").hexdigest()[:16]
+    assert "B82394248" not in json.dumps(item.model_dump(mode="json"))
+    amount = next(fact.value for fact in item.facts if fact.field == "award_value_eur")
+    assert amount == 499_000
+    assert item.budget is not None and item.budget.amount_eur == 600_000
+    end = next(fact.value for fact in item.facts if fact.field == "contract_end_at")
+    assert end == "2027-01-07"
+    assert item.deadline_at is not None
+    assert item.deadline_at.day == 1
+    assert item.buyer is not None and item.buyer.name.startswith("Instituto")
+    bare = PlacspSource().to_tender({"xml": xml})
+    assert bare.content_hash != item.content_hash
+
+
+def test_placsp_award_without_a_result_and_a_duration_only_stay_empty():
+    closed = """<entry>
+      <ContractFolderID>exp-2</ContractFolderID>
+      <ProcurementProject><Name>Cable</Name></ProcurementProject>
+      <TenderSubmissionDeadlinePeriod><EndDate>2026-12-02</EndDate></TenderSubmissionDeadlinePeriod>
+    </entry>"""
+    item = PlacspSource().to_tender({"xml": closed, "status": "ADJ"})
+    assert item.facts == []
+    assert item.deadline_at is not None and item.deadline_at.day == 2
+    duration = """<entry>
+      <ContractFolderID>exp-3</ContractFolderID>
+      <ProcurementProject>
+        <Name>Cable</Name>
+        <PlannedPeriod><DurationMeasure unitCode="DAY">15</DurationMeasure></PlannedPeriod>
+      </ProcurementProject>
+      <TenderResult>
+        <WinningParty><PartyName><Name>Grid Co</Name></PartyName></WinningParty>
+      </TenderResult>
+    </entry>"""
+    awarded = PlacspSource().to_tender({"xml": duration, "status": "RES"})
+    assert any(fact.field == "winner_name" and fact.value == "Grid Co" for fact in awarded.facts)
+    assert not any(fact.field == "contract_end_at" for fact in awarded.facts)
 
 
 def test_bdns_detail_keeps_the_hour_and_a_filter_must_shrink_the_total():

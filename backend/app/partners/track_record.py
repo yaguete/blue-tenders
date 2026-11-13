@@ -2,15 +2,22 @@
 
 Subvenciones: proyectos de CORDIS. Licitaciones: adjudicaciones de TED. Las dos con umbral.
 El texto de cada proyecto se trocea una vez por volcado, no en cada ficha.
+
+Quién acaba se calcula aparte, al abrir la ficha: la ventana es relativa a hoy.
 """
 
+import calendar
 import time
+from datetime import date, timedelta
 
 from app.models.opportunity import OpportunityKind
 from app.partners.score import prepare_corpus, rank_track_record
 from app.store import FileStore
 
 _CORDIS = ("cordis-h2020", "cordis-horizon-europe")
+# Margen de la lista guardada: mientras hoy no pase de un trimestre desde el cálculo,
+# los candidatos almacenados siguen cubriendo la ventana.
+_ENDING_MARGIN_DAYS = 92
 _CACHE: dict = {
     "key": None,
     "cordis": None,
@@ -33,6 +40,129 @@ def track_record_for(item, store, vertical, *, live: bool = False) -> dict:
     if not live and _precomputable_status(item):
         store.mark_track_record_pending(item.id)
     return record
+
+
+def ending_soon_for(item, store, vertical, *, today: date | None = None, live: bool = False) -> dict:
+    """Proyectos del mismo subsector que terminan dentro de la ventana.
+
+    La fecha es la del registro. Sin fecha no se estima. No mide parecido de texto:
+    un proyecto entra por subsector, así que no hace falta que la ficha esté en inglés.
+
+    Los candidatos se guardan con el historial (con un trimestre de margen) y la ficha
+    solo recorta la ventana al abrirse: la lista guardada caduca con el volcado, no con
+    el calendario. Sin registro válido, se calcula en vivo y queda pendiente.
+    """
+    window = vertical.track_record.ending_window_months
+    today = today or date.today()
+    if not live and _precomputable_status(item):
+        saved = store.saved_track_record(item.id)
+        from app.partners.precompute import inputs_hash
+
+        if (
+            saved
+            and saved.get("ending")
+            and saved.get("inputs_hash") == inputs_hash(item, store, vertical)
+            and _ending_fresh(saved, today)
+        ):
+            return _ending_view(saved["ending"], today, window, vertical.track_record.limit)
+        store.mark_track_record_pending(item.id)
+    stored = _ending_collect(item, store, today, window, vertical.track_record.limit)
+    if live:
+        return stored
+    return _ending_view(stored, today, window, vertical.track_record.limit)
+
+
+def _ending_collect(item, store, today: date, window: int, cap: int) -> dict:
+    """Candidatos que terminan entre hoy y la ventana más un trimestre de margen."""
+    sources = store.track_record_sources()
+    loaded = [sources[name] for name in _CORDIS if sources.get(name, {}).get("loaded_at")]
+    if not loaded:
+        return _ending_payload("not_loaded", window)
+    stamp = max(row.get("loaded_at") or "" for row in loaded)
+    horizon = _add_months(today, window) + timedelta(days=_ENDING_MARGIN_DAYS)
+    wanted = set(item.subsectors or [])
+    rows, _corpus = _cordis(store)
+    seen = set()
+    by_org: dict[str, dict] = {}
+    for row in rows:
+        end = _as_date(row.get("end_date"))
+        if end is None or end < today or end > horizon:
+            continue
+        if not wanted.intersection(row.get("subsectors") or []):
+            continue
+        project_key = (row.get("pic") or row.get("org_name"), row.get("project_id") or row.get("url"))
+        if project_key in seen:
+            continue
+        seen.add(project_key)
+        key = row.get("pic") or row.get("org_name")
+        bucket = by_org.setdefault(
+            key,
+            {
+                "org_name": row.get("org_name"),
+                "country": row.get("country"),
+                "activity_type": row.get("activity_type"),
+                "pic": row.get("pic"),
+                "sme": row.get("sme"),
+                "demo": bool(row.get("demo")),
+                "projects": [],
+            },
+        )
+        bucket["projects"].append(
+            {
+                "id": row.get("project_id") or row.get("url") or row.get("acronym"),
+                "acronym": row.get("acronym"),
+                "title": row.get("title"),
+                "url": row.get("url"),
+                "role": row.get("role"),
+                "programme_id": row.get("programme_id"),
+                "end_year": row.get("end_year"),
+                "end_date": end.isoformat(),
+            }
+        )
+    ranked = []
+    for bucket in by_org.values():
+        bucket["projects"].sort(key=lambda project: (project["end_date"], project.get("title") or ""))
+        ranked.append(bucket)
+    ranked.sort(key=lambda bucket: (bucket["projects"][0]["end_date"], bucket.get("org_name") or ""))
+    return _ending_payload(
+        "ok" if ranked else "no_match",
+        window,
+        items=ranked[:cap],
+        total=len(ranked),
+        loaded_at=stamp,
+    )
+
+
+def _ending_view(stored: dict, today: date, window: int, cap: int) -> dict:
+    """Recorta los candidatos guardados a la ventana de hoy."""
+    if stored.get("status") == "not_loaded":
+        return _ending_payload("not_loaded", window)
+    horizon = _add_months(today, window).isoformat()
+    floor = today.isoformat()
+    buckets = []
+    for bucket in stored.get("items") or []:
+        projects = [
+            project
+            for project in bucket.get("projects") or []
+            if floor <= str(project.get("end_date") or "") <= horizon
+        ]
+        if not projects:
+            continue
+        projects.sort(key=lambda project: (project.get("end_date") or "", project.get("title") or ""))
+        buckets.append({**bucket, "projects": projects})
+    buckets.sort(key=lambda bucket: (bucket["projects"][0]["end_date"], bucket.get("org_name") or ""))
+    return _ending_payload(
+        "ok" if buckets else "no_match",
+        window,
+        items=buckets[:cap],
+        total=len(buckets),
+        loaded_at=stored.get("loaded_at"),
+    )
+
+
+def _ending_fresh(saved: dict, today: date) -> bool:
+    computed = _as_date(str(saved.get("computed_at") or "")[:10])
+    return computed is not None and (today - computed).days <= _ENDING_MARGIN_DAYS
 
 
 def _precomputable_status(item) -> bool:
@@ -106,6 +236,34 @@ def _needs_english(item) -> bool:
     return not (item.title_en and item.title_en != item.title)
 
 
+def _ending_payload(status: str, window: int, *, items=None, total: int = 0, loaded_at=None) -> dict:
+    return {
+        "status": status,
+        "source": "cordis",
+        "window_months": window,
+        "total": total,
+        "loaded_at": loaded_at,
+        "items": items or [],
+    }
+
+
+def _add_months(day: date, months: int) -> date:
+    index = day.month - 1 + months
+    year = day.year + index // 12
+    month = index % 12 + 1
+    return date(year, month, min(day.day, calendar.monthrange(year, month)[1]))
+
+
+def _as_date(value) -> date | None:
+    text = str(value or "")[:10]
+    if len(text) != 10:
+        return None
+    try:
+        return date.fromisoformat(text)
+    except ValueError:
+        return None
+
+
 def _payload(status: str, source: str, *, items=None, total: int = 0, loaded_at=None, since=None) -> dict:
     rows = items or []
     return {
@@ -133,7 +291,10 @@ def _refresh(store) -> None:
     if _CACHE["key"] == key and _CACHE["cordis"] is not None:
         return
     cordis = store.cordis_participations()
-    awards = [_award_row(item, winner) for item in store.award_notices() for winner in _winners(item)]
+    notices = store.award_notices()
+    # Solo los expedientes de esas adjudicaciones: la tabla de convocatorias no se recorre entera.
+    bases = store.call_budgets({item.call_id for item in notices})
+    awards = [_award_row(item, winner, bases) for item in notices for winner in _winners(item)]
     _CACHE["key"] = key
     _CACHE["cordis"] = cordis
     _CACHE["awards"] = awards
@@ -144,13 +305,21 @@ def _refresh(store) -> None:
 def _cache_key(store):
     if isinstance(store, FileStore):
         return ("file", _mtime(store.partners_path()), _mtime(store.path))
-    return ("remote", id(store.client), _remote_stamp(store))
+    return ("remote", _cache_token(store), _remote_stamp(store))
+
+
+def _cache_token(store) -> str:
+    """La API crea un store por petición: el token compartido hace que el caché aguante.
+
+    Con un cliente inyectado (los tests) vale el id, que es lo que hacía antes.
+    """
+    return getattr(store, "_cache_token", None) or id(store.client)
 
 
 def _remote_stamp(store) -> tuple:
     """Como mucho una lectura de partner_sources cada 60 s. Las tablas grandes, solo si cambia."""
     now = time.monotonic()
-    client = id(store.client)
+    client = _cache_token(store)
     if (
         _SOURCE_LOOKUP["client"] == client
         and _SOURCE_LOOKUP["stamp"] is not None
@@ -190,7 +359,7 @@ def _winners(item) -> list[dict]:
     return []
 
 
-def _award_row(item, winner: dict) -> dict:
+def _award_row(item, winner: dict, bases: dict[str, float]) -> dict:
     size = winner.get("size")
     # TED a veces dice "sme" en vez de "small". No se enseña el código crudo.
     sme = size in {"small", "micro", "sme"}
@@ -215,6 +384,10 @@ def _award_row(item, winner: dict) -> dict:
         "buyer": item.buyer.name if item.buyer else None,
         "amount_eur": next(
             (fact.value for fact in item.facts if fact.field == "award_value_eur"), None
+        ),
+        "base_amount_eur": bases.get(item.call_id) if item.call_id else None,
+        "contract_end": next(
+            (fact.value for fact in item.facts if fact.field == "contract_end_at"), None
         ),
     }
 
