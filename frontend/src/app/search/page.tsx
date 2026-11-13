@@ -7,7 +7,7 @@ import { CallPreview } from "@/components/call-preview";
 import { LoadingState } from "@/components/loading-state";
 import { api, type Card, type SearchResponse } from "@/lib/api";
 import { comparePath, toggleCompare, useCompareIds } from "@/lib/compare";
-import { daysLeft, money, when } from "@/lib/format";
+import { daysLeft, metaLine, money, shortTitle, when } from "@/lib/format";
 import { t } from "@/lib/i18n";
 
 const KINDS = [
@@ -28,6 +28,7 @@ const DEADLINES = [
 ] as const;
 
 const DEADLINE_IDS = DEADLINES.map(([id]) => id);
+const DEFAULT_DEADLINES = DEADLINE_IDS.filter((id) => id !== "closed");
 const NONE = "none";
 
 function readList(params: URLSearchParams, key: string, all: readonly string[]): string[] {
@@ -35,6 +36,26 @@ function readList(params: URLSearchParams, key: string, all: readonly string[]):
   if (values.length === 0) return [...all];
   if (values.length === 1 && values[0] === NONE) return [];
   return values.filter((value) => all.includes(value));
+}
+
+function readDeadlines(params: URLSearchParams): string[] {
+  const values = params.getAll("deadline");
+  if (values.length === 0) return [...DEFAULT_DEADLINES];
+  if (values.length === 1 && values[0] === NONE) return [];
+  return values.filter((value) => DEADLINE_IDS.includes(value));
+}
+
+function writeDeadlines(params: URLSearchParams, selected: string[]) {
+  if (selected.length === 0) {
+    params.append("deadline", NONE);
+    return;
+  }
+  const isDefault =
+    selected.length === DEFAULT_DEADLINES.length && DEFAULT_DEADLINES.every((id) => selected.includes(id));
+  if (isDefault) return;
+  for (const id of DEADLINE_IDS) {
+    if (selected.includes(id)) params.append("deadline", id);
+  }
 }
 
 function readCountries(params: URLSearchParams): string[] | null {
@@ -68,7 +89,7 @@ function searchQuery(q: string, kinds: string[], deadlines: string[], countries:
   const params = new URLSearchParams();
   if (q) params.set("q", q);
   writeList(params, "kind", kinds, KIND_IDS);
-  writeList(params, "deadline", deadlines, DEADLINE_IDS);
+  writeDeadlines(params, deadlines);
   writeCountries(params, countries);
   return params.toString();
 }
@@ -95,7 +116,7 @@ function SearchScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [countries, setCountries] = useState<string[] | null>(() => readCountries(params));
-  const [deadlines, setDeadlines] = useState<string[]>(() => readList(params, "deadline", DEADLINE_IDS));
+  const [deadlines, setDeadlines] = useState<string[]>(() => readDeadlines(params));
   const [seen, setSeen] = useState(queryString);
   const selectionKey = [...selected].sort().join(",");
   const countryKey = countries === null ? "*" : [...countries].sort().join(",");
@@ -106,7 +127,7 @@ function SearchScreen() {
     const incoming = new URLSearchParams(queryString);
     const nextQ = incoming.get("q") ?? "";
     const nextKinds = readList(incoming, "kind", KIND_IDS);
-    const nextDeadlines = readList(incoming, "deadline", DEADLINE_IDS);
+    const nextDeadlines = readDeadlines(incoming);
     const nextCountries = readCountries(incoming);
     setSeen(queryString);
     if (nextQ !== q) setQ(nextQ);
@@ -164,7 +185,7 @@ function SearchScreen() {
       .map((row) => ({ id: row.value, name: countryLabel(row.value), count: row.count }))
       .sort((a, b) => a.name.localeCompare(b.name)),
     { id: "uncategorized", name: t("uncategorized"), count: data?.facets?.country_missing || 0 },
-  ];
+  ].filter((option) => option.count > 0);
   const countrySelection = countries === null ? countryOptions.map((option) => option.id) : countries;
   const matches =
     countries?.length === 0 || selected.length === 0 || deadlines.length === 0 ? [] : (data?.items ?? []);
@@ -206,7 +227,7 @@ function SearchScreen() {
             id,
             name: label,
             count: data?.counts?.kind[id] || 0,
-          }))}
+          })).filter((option) => option.count > 0)}
         />
         <MultiFilter
           name={t("deadline")}
@@ -218,7 +239,7 @@ function SearchScreen() {
             id,
             name: t(label),
             count: data?.counts?.deadline?.[id] || 0,
-          }))}
+          })).filter((option) => option.count > 0)}
         />
       </div>
       {loading && <LoadingState label={t("loading")} className="mt-6" />}
@@ -265,7 +286,7 @@ function MultiFilter({
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const listId = useId();
-  const allOn = options.length > 0 && selected.length === options.length;
+  const allOn = options.length === 0 || options.every((option) => selected.includes(option.id));
 
   useEffect(() => {
     if (!open) return;
@@ -381,11 +402,11 @@ function SelectedToCompare({ ids }: { ids: string[] }) {
             <div>
               {card.title && (
                 <p className="font-mono text-xs text-muted-foreground">
-                  {card.kind} · {card.programme_id || card.country || "—"}
+                  {metaLine(card.kind, card.programme_id || card.country)}
                 </p>
               )}
               <Link href={`/opportunities/${card.id}`} className="mt-1 block font-medium hover:underline">
-                {card.title_en || card.title || t("loadingCall")}
+                {shortTitle(card.title, card.title_en) || t("loadingCall")}
               </Link>
             </div>
             {ids.length > 1 && (
@@ -404,12 +425,12 @@ function SelectedToCompare({ ids }: { ids: string[] }) {
 function Row({ item, picking, onOpen }: { item: Card; picking: boolean; onOpen: (id: string) => void }) {
   const left = daysLeft(item.deadline_at);
   const urgent = left?.startsWith("Closes in") && Number(left.replace(/\D/g, "")) < 15;
-  const title = item.title_en || item.title;
+  const title = shortTitle(item.title, item.title_en);
   return (
     <li className="grid grid-cols-[1fr_auto] gap-4 py-4">
       <div>
         <p className="font-mono text-xs text-muted-foreground">
-          {item.kind} · {item.programme_id || item.country || "—"}
+          {metaLine(item.kind, item.programme_id || item.country)}
         </p>
         {picking ? (
           <button

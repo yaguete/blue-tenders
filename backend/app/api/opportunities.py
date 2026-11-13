@@ -2,6 +2,7 @@
 
 import time
 from datetime import UTC, date, datetime
+from html import unescape
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
@@ -10,6 +11,7 @@ from fastapi.responses import PlainTextResponse
 from app.matching.fit import explain_fit
 from app.models.opportunity import Opportunity, compute_status
 from app.partners.track_record import track_record_for
+from app.quality.text import plain_text
 from app.search.query import SearchFilters, match_reason, search_opportunities, suggest_relaxation
 from app.vertical import load_vertical
 
@@ -146,6 +148,15 @@ def detail(opportunity_id: str) -> dict:
     if item is None or not item.searchable():
         raise HTTPException(status_code=404, detail="Opportunity not found")
     payload = item.model_dump(mode="json")
+    for field in ("title", "title_en", "description"):
+        payload[field] = unescape(payload[field]) if payload.get(field) else payload.get(field)
+    payload["summary_en"] = plain_text(payload.get("summary_en")) or None
+    analysis = payload.get("analysis")
+    if analysis:
+        analysis["summary"] = plain_text(analysis.get("summary")) or None
+        for block in analysis.get("blocks") or []:
+            block["heading"] = plain_text(block.get("heading"))
+            block["text"] = plain_text(block.get("text"))
     payload["status"] = compute_status(item).value
     record = track_record_for(item, store, load_vertical())
     payload["track_record"] = record
@@ -166,9 +177,9 @@ def calendar(opportunity_id: str) -> str:
 def _card(item: Opportunity) -> dict:
     return {
         "id": item.id,
-        "title": item.title,
-        "title_en": item.title_en,
-        "summary_en": item.summary_en,
+        "title": unescape(item.title) if item.title else item.title,
+        "title_en": unescape(item.title_en) if item.title_en else item.title_en,
+        "summary_en": plain_text(item.summary_en) or None,
         "kind": item.kind.value if item.kind else None,
         "status": item.status.value if item.status else None,
         "programme_id": item.programme_id,

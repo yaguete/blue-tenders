@@ -16,6 +16,18 @@ export function when(iso: string | null | undefined): string {
   }).format(date);
 }
 
+export function metaLine(...parts: (string | null | undefined)[]): string {
+  return parts.filter(Boolean).join(" · ");
+}
+
+export function shortTitle(title: string | null | undefined, titleEn: string | null | undefined): string {
+  const english = (titleEn || "").trim();
+  const original = (title || "").trim();
+  if (!english) return original;
+  if (!original || english === original || !english.endsWith(original)) return english;
+  return english.slice(0, english.length - original.length).replace(/[\s–—-]+$/u, "") || english;
+}
+
 export function daysLeft(iso: string | null | undefined): string | null {
   if (!iso) return null;
   const ms = new Date(iso).getTime() - Date.now();

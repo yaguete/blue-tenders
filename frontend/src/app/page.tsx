@@ -6,7 +6,6 @@ import { clearCompare } from "@/lib/compare";
 export default function Home() {
   return (
     <div className="max-w-xl space-y-6">
-      <p className="font-mono text-xs text-muted-foreground">Marine energy · EU and Spain</p>
       <h1 className="text-4xl font-semibold tracking-tight">Find the call. See who has done it before.</h1>
       <p className="text-muted-foreground">
         Grants, public tenders and a short list of funders, classified for offshore wind, ocean energy,

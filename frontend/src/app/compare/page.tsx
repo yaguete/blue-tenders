@@ -6,7 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 import { LoadingState } from "@/components/loading-state";
 import { api } from "@/lib/api";
 import { replaceCompare } from "@/lib/compare";
-import { money, when } from "@/lib/format";
+import { money, shortTitle, when } from "@/lib/format";
 import { t } from "@/lib/i18n";
 
 type Row = {
@@ -107,7 +107,7 @@ function CompareInner() {
             {rows.map((row) => (
               <th key={row.id} className="p-2 align-top font-medium">
                 <Link href={`/opportunities/${row.id}`} className="hover:underline">
-                  {row.title_en || row.title}
+                  {shortTitle(row.title, row.title_en)}
                 </Link>
                 <button type="button" className="mt-2 block cursor-pointer text-xs font-normal underline" onClick={() => drop(row.id)}>
                   {t("remove")}

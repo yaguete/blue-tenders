@@ -227,10 +227,17 @@ def _all_in_language(value, lang: str | None) -> str:
 
 
 def _first(value) -> str | None:
-    """Primer elemento de una lista, o el propio valor si no es una lista."""
+    """Primer elemento de una lista, o el propio valor si no es una lista.
+
+    TED deja entidades HTML en el título (`&#8217;`, `&amp;`). Se decodifican aquí.
+    """
+    from html import unescape
+
     if isinstance(value, list):
-        return str(value[0]) if value else None
-    return str(value) if value not in (None, "") else None
+        text = str(value[0]) if value else None
+    else:
+        text = str(value) if value not in (None, "") else None
+    return unescape(text) if text is not None else None
 
 
 def _in_language(value, lang: str | None) -> str | None:

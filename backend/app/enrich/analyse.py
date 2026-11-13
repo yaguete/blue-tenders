@@ -9,6 +9,7 @@ import json
 from datetime import UTC, datetime
 
 from app.models.opportunity import Analysis, AnalysisBlock, Citation, Opportunity
+from app.quality.text import plain_text
 from app.quality.validate import quote_in_text
 
 
@@ -27,7 +28,7 @@ def analyse(opp: Opportunity) -> Opportunity:
 
 def _from_fields(opp: Opportunity) -> Analysis:
     source = opp.summary_en or opp.description or opp.title
-    summary = " ".join((source or "").split())
+    summary = plain_text(" ".join((source or "").split()))
     if len(summary) > 480:
         summary = summary[:477].rsplit(" ", 1)[0] + "…"
     blocks: list[AnalysisBlock] = []
@@ -125,16 +126,17 @@ def _from_llm(opp: Opportunity, fallback: Analysis) -> Analysis | None:
             continue
         blocks.append(
             AnalysisBlock(
-                heading=str(raw.get("heading") or "Note"),
-                text=str(raw.get("text") or ""),
+                heading=plain_text(str(raw.get("heading") or "Note")),
+                text=plain_text(str(raw.get("text") or "")),
                 origin="extracted" if quote else "generated",
                 citations=[Citation(quote=quote, document_url=opp.url)] if quote else [],
             )
         )
     if not blocks:
         return None
+    summary = plain_text(str(data.get("summary") or ""))
     return Analysis(
-        summary=data.get("summary") or fallback.summary,
+        summary=summary or fallback.summary,
         blocks=blocks,
         model=settings.extract_model,
         updated_at=datetime.now(UTC),

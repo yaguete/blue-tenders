@@ -5,13 +5,14 @@ Sin clave, title_en se queda como viniera de la fuente.
 """
 
 from app.models.opportunity import Opportunity
+from app.quality.text import plain_text
 
 
 def translate(opp: Opportunity) -> Opportunity:
     if opp.language == "en" and not opp.title_en:
         opp.title_en = opp.title
     if opp.language == "en" and opp.description and not opp.summary_en:
-        text = " ".join(opp.description.split())
+        text = plain_text(" ".join(opp.description.split()))
         opp.summary_en = text[:480]
     if opp.title_en or opp.language == "en":
         return opp

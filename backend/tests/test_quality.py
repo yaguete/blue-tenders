@@ -1,6 +1,7 @@
 from datetime import UTC
 
 from app.models.opportunity import Fact, FactOrigin, Opportunity
+from app.quality.text import plain_text
 from app.quality.validate import extractions_agree, quote_in_text, validate_opportunity, verify_fact
 
 
@@ -37,3 +38,27 @@ def test_two_extractions_flag_the_deadline():
     assert extractions_agree({"deadline_at": "a", "cofunding_min": 70}, {"deadline_at": "b", "cofunding_min": 70}) == [
         "deadline_at"
     ]
+
+
+def test_plain_text_strips_heading_marks():
+    assert plain_text("## Expected Outcome: World-class hubs across the Union.") == (
+        "Expected Outcome: World-class hubs across the Union."
+    )
+    assert plain_text("### Idea central\nTexto") == "Idea central\nTexto"
+
+
+def test_plain_text_unwraps_emphasis_links_and_bullets():
+    assert plain_text("**TRL 8** and _no change_ here") == "TRL 8 and _no change_ here"
+    assert plain_text("See [the portal](https://example.test) for details") == "See the portal for details"
+    assert plain_text("- First bullet\n- Second bullet") == "First bullet\nSecond bullet"
+
+
+def test_plain_text_decodes_html_entities():
+    assert plain_text("L&#8217;affidamento &amp; &#8220;cold ironing&#8221;") == "L’affidamento & “cold ironing”"
+
+
+def test_plain_text_keeps_content_and_plain_numbers():
+    assert plain_text("2 * 3 = 6") == "2 * 3 = 6"
+    assert plain_text("snake_case_field stays") == "snake_case_field stays"
+    assert plain_text(None) == ""
+    assert plain_text("  spaced   out  ") == "spaced out"

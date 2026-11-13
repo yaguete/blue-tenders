@@ -1,12 +1,12 @@
 "use client";
 
-import { ArrowLeft, ChevronDown, SquareArrowOutUpRight } from "lucide-react";
+import { ArrowLeft, ChevronDown, FileText, Globe, SquareArrowOutUpRight } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LoadingState } from "@/components/loading-state";
 import { api } from "@/lib/api";
 import { addCompare, comparePath, useCompareIds } from "@/lib/compare";
-import { money, when } from "@/lib/format";
+import { money, shortTitle, when } from "@/lib/format";
 import { t } from "@/lib/i18n";
 
 type Block = {
@@ -76,7 +76,7 @@ type Detail = {
   updated_at: string | null;
   analysis: { summary: string | null; blocks: Block[]; model: string | null } | null;
   facts: { field: string; value?: string | number | null; origin: string; confidence: number; quote: string | null }[];
-  documents: { url: string; name: string | null }[];
+  documents: { url: string; name: string | null; kind?: string | null; access?: string | null }[];
   awards: { id: string; title: string; winner: string | null; amount_eur: number | null; url: string }[];
   track_record?: TrackRecord;
   partners: Partner[];
@@ -110,6 +110,8 @@ export default function OpportunityPage() {
     topic && item.budget_total_eur != null
       ? t("budgetForTopic").replace("{amount}", money(item.budget_total_eur))
       : money(item.budget_total_eur);
+  const starred = topic && item.budget_total_eur != null;
+  const files = item.documents.filter((doc) => isFile(doc, item.url));
   const deadlineValue =
     closed && item.deadline_at
       ? `${t("closedLabel")} · ${day(item.deadline_at)}`
@@ -157,6 +159,9 @@ export default function OpportunityPage() {
           <ArrowLeft className="size-4" aria-hidden />
           {t("back")}
         </button>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {original ? item.title : shortTitle(item.title, item.title_en)}
+        </h1>
         {topic && (
           <div className="space-y-1 text-sm">
             <p>
@@ -166,10 +171,9 @@ export default function OpportunityPage() {
             {callLine && <p>{callLine}</p>}
           </div>
         )}
-        <h1 className="text-3xl font-semibold tracking-tight">{original ? item.title : item.title_en || item.title}</h1>
-        <dl className="grid gap-3 text-sm sm:grid-cols-4">
+        <dl className="my-6 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <Cell label="Deadline" value={deadlineValue} />
-          <Cell label="Budget" value={budgetValue} hint={grantLine(item)} />
+          <Cell label="Budget" value={starred ? `${budgetValue}*` : budgetValue} hint={grantLine(item)} />
           <Cell
             label="Co-funding"
             value={
@@ -193,16 +197,7 @@ export default function OpportunityPage() {
           <a href={item.url} className="inline-flex bg-primary px-3 py-1.5 text-sm text-primary-foreground">
             {topic ? t("openOnPortal") : t("officialCall")}
           </a>
-          {portalNote && <p className="max-w-xl text-xs text-muted-foreground">{portalNote}</p>}
           <p className="text-sm">
-            {item.documents?.find((doc) => doc.name === "Partner search") && (
-              <>
-                <a className="underline" href={item.documents.find((doc) => doc.name === "Partner search")?.url}>
-                  Partner search
-                </a>
-                {" · "}
-              </>
-            )}
             {!closed && (
               <>
                 <a className="underline" href={`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/opportunities/${item.id}/calendar`}>
@@ -215,42 +210,53 @@ export default function OpportunityPage() {
               {t("compare")}
             </button>
           </p>
+          {files.length > 0 && (
+            <ul className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              {files.map((doc) => (
+                <li key={`${doc.url}-${doc.name}`}>
+                  <a
+                    href={doc.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm underline"
+                  >
+                    <FileText className="size-4 shrink-0" aria-hidden />
+                    {doc.name || "Document"}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+          {item.language && item.language !== "en" && (
+            <p className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Globe className="size-4 shrink-0" aria-hidden />
+              {original ? (
+                <button type="button" className="cursor-pointer underline text-foreground" onClick={() => setOriginal(false)}>
+                  {t("showEnglish")}
+                </button>
+              ) : (
+                <>
+                  <span>{t("translatedFrom").replace("{language}", languageName(item.language))}</span>
+                  <button type="button" className="cursor-pointer underline text-foreground" onClick={() => setOriginal(true)}>
+                    {t("viewOriginal")}
+                  </button>
+                </>
+              )}
+            </p>
+          )}
         </div>
         {compareNote && <p className="text-sm text-muted-foreground">{compareNote}</p>}
-        {item.language && item.language !== "en" && (
-          <button type="button" className="text-sm underline" onClick={() => setOriginal((value) => !value)}>
-            {original ? "Show English" : `Translated from ${item.language}. View original`}
-          </button>
-        )}
         {low && <p className="text-sm text-status-soon">{t("verify")}</p>}
-        <p className="flex flex-wrap items-baseline gap-x-4 font-mono text-xs text-muted-foreground">
+        <p className="flex flex-wrap items-baseline gap-x-4 font-mono text-xs text-muted-foreground/70">
           <span>{category}</span>
           <span>
             {t("updated")} {item.updated_at ? when(item.updated_at) : "—"}
           </span>
         </p>
+        {portalNote && <p className="text-xs text-muted-foreground">* {portalNote}</p>}
       </header>
 
-      {item.analysis?.blocks.map((block) => {
-        const source = sourceHref(block);
-        return (
-          <section key={block.heading} className="space-y-2">
-            <h2 className="text-lg font-semibold">{block.heading}</h2>
-            <p className="text-sm leading-6">{block.text}</p>
-            {source && (
-              <a
-                href={source}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 border border-border px-2.5 py-1 text-sm hover:bg-muted"
-              >
-                {t("source")}
-                <SquareArrowOutUpRight className="size-3.5" aria-hidden />
-              </a>
-            )}
-          </section>
-        );
-      })}
+      <OverviewSection analysis={item.analysis} />
 
       {item.awards.length > 0 && (
         <section>
@@ -354,6 +360,75 @@ function TrackRecordSection({ item, open, onToggle }: { item: Detail; open: bool
   );
 }
 
+function OverviewSection({ analysis }: { analysis: Detail["analysis"] }) {
+  const blocks = analysis?.blocks ?? [];
+  const summaryBlock = blocks.find((block) => block.heading.trim().toLowerCase() === "summary");
+  const summary = analysis?.summary;
+  const lead = summaryBlock?.text || (summary && !blocks.some((block) => block.text === summary) ? summary : null);
+  const leadSource = summaryBlock ? sourceHref(summaryBlock) : null;
+  const rows = blocks.filter((block) => block !== summaryBlock);
+  if (!lead && rows.length === 0) return null;
+  return (
+    <section>
+      <h2 className="text-lg font-semibold">{t("callOverview")}</h2>
+      {lead && (
+        <p className="mt-3 text-base leading-7">
+          {lead}
+          {leadSource && <SourceLink href={leadSource} />}
+        </p>
+      )}
+      {rows.length > 0 && (
+        <dl className="mt-6 divide-y divide-border border-y border-border">
+          {rows.map((block) => {
+            const source = sourceHref(block);
+            return (
+              <div key={block.heading} className="grid gap-x-10 gap-y-1.5 py-5 md:grid-cols-[13rem_1fr]">
+                <dt className="text-sm font-medium text-accent-ink">{block.heading}</dt>
+                <dd className="text-sm leading-6 text-foreground/85">
+                  {block.text}
+                  {source && <SourceLink href={source} />}
+                </dd>
+              </div>
+            );
+          })}
+        </dl>
+      )}
+    </section>
+  );
+}
+
+function SourceLink({ href }: { href: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="ml-2 inline-flex items-baseline gap-1 whitespace-nowrap text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+    >
+      {t("source")}
+      <SquareArrowOutUpRight className="size-3 self-center" aria-hidden />
+    </a>
+  );
+}
+
+function isFile(doc: Detail["documents"][number], pageUrl: string): boolean {
+  // The topic text is already on this page and portal links open the same official page.
+  if (doc.kind === "topic_text" || doc.access === "link_only") return false;
+  return doc.url.split("#")[0] !== pageUrl.split("#")[0];
+}
+
+const languageNames = new Intl.DisplayNames(["en"], { type: "language" });
+
+function languageName(code: string): string {
+  try {
+    const name = languageNames.of(code);
+    if (!name) return code;
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  } catch {
+    return code;
+  }
+}
+
 function sourceHref(block: Block): string | null {
   for (const citation of block.citations) {
     if (citation.quote?.startsWith("http")) return citation.quote;
@@ -366,9 +441,9 @@ function sourceHref(block: Block): string | null {
 
 function Cell({ label, value, hint }: { label: string; value: string; hint?: string | null }) {
   return (
-    <div>
+    <div className="border border-border bg-card px-4 py-3">
       <dt className="font-mono text-xs text-muted-foreground">{label}</dt>
-      <dd className="tabular">{value}</dd>
+      <dd className="tabular mt-1.5 text-base font-medium">{value}</dd>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </div>
   );

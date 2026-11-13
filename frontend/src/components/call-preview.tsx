@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { LoadingState } from "@/components/loading-state";
 import { api } from "@/lib/api";
 import { addCompare, COMPARE_LIMIT, comparePath, useCompareIds } from "@/lib/compare";
-import { money, when } from "@/lib/format";
+import { metaLine, money, shortTitle, when } from "@/lib/format";
 import { t } from "@/lib/i18n";
 
 type Block = {
@@ -120,10 +120,10 @@ export function CallPreview({ id, onClose }: { id: string; onClose: () => void }
             <article className="space-y-6">
               <header className="space-y-3">
                 <p className="font-mono text-xs text-muted-foreground">
-                  {item.kind} · {item.funder_id || "—"} · {item.programme_id || "—"}
+                  {metaLine(item.kind, item.funder_id, item.programme_id)}
                 </p>
                 <h2 id="call-preview-title" className="text-2xl font-semibold tracking-tight">
-                  {item.title_en || item.title}
+                  {shortTitle(item.title, item.title_en)}
                 </h2>
                 <dl className="grid gap-3 text-sm sm:grid-cols-2">
                   <Fact label="Deadline" value={when(item.deadline_at)} />
