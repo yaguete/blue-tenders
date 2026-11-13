@@ -1,0 +1,13 @@
+id: life
+programme_id: life
+type_of_action: standard_action
+label: LIFE
+consortium_required: false
+cofunding_min: 60
+cofunding_max: 75
+eligible_entity_types: [sme, large_company, ngo, research, public_body]
+eligible_countries: [EU27, HE_ASSOCIATED]
+legal_basis: https://cinea.ec.europa.eu/programmes/life_en
+notes: >
+  La tasa habitual de LIFE está en esa horquilla y depende del subprograma y del tipo
+  de entidad. No se aplica si la call publica un porcentaje propio.

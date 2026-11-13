@@ -1,0 +1,223 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import Link from "next/link";
+import { ArrowUp, Plus, X } from "lucide-react";
+import { t } from "@/lib/i18n";
+import type { ChatMessage, DocChip } from "@/lib/assistant-chat";
+import { Chips } from "./chips";
+import { Message } from "./message";
+
+export function Panel({
+  messages,
+  documents,
+  uploads,
+  busy,
+  error,
+  draft,
+  mismatch,
+  suggestions,
+  onDraft,
+  onSend,
+  onClose,
+  onReset,
+  onUpload,
+  onRemove,
+  returnFocus,
+}: {
+  messages: ChatMessage[];
+  documents: DocChip[];
+  uploads: DocChip[];
+  busy: boolean;
+  error: string | null;
+  draft: string;
+  mismatch: boolean;
+  suggestions: string[];
+  onDraft: (value: string) => void;
+  onSend: (text: string) => void;
+  onClose: () => void;
+  onReset: () => void;
+  onUpload: (file: File) => void;
+  onRemove: (id: string) => void;
+  returnFocus: () => void;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const onCloseRef = useRef(onClose);
+  const returnFocusRef = useRef(returnFocus);
+  onCloseRef.current = onClose;
+  returnFocusRef.current = returnFocus;
+
+  useEffect(() => {
+    const root = panelRef.current;
+    if (!root) return;
+    const dialog = root;
+    inputRef.current?.focus();
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const items = [...dialog.querySelectorAll<HTMLElement>("button, textarea, a, input")].filter(
+        (node) => !node.hasAttribute("disabled"),
+      );
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      returnFocusRef.current();
+    };
+  }, []);
+
+  useEffect(() => {
+    const node = panelRef.current?.querySelector("[data-assistant-scroll]");
+    if (node) node.scrollTop = node.scrollHeight;
+  }, [messages, busy]);
+
+  useEffect(() => {
+    const node = inputRef.current;
+    if (!node) return;
+    node.style.height = "auto";
+    node.style.height = `${node.scrollHeight}px`;
+  }, [draft]);
+
+  return (
+    <div
+      ref={panelRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="assistant-title"
+      className="flex h-full min-h-0 flex-col border border-border bg-background motion-reduce:transition-none"
+    >
+      <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+        <p id="assistant-title" className="text-sm font-medium">
+          {t("assistantTitle")}
+        </p>
+        <div className="flex items-center gap-2">
+          {messages.length > 0 && (
+            <button type="button" className="cursor-pointer px-2 text-xs text-muted-foreground hover:underline" onClick={onReset}>
+              {t("assistantNew")}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 cursor-pointer items-center justify-center text-muted-foreground hover:bg-muted"
+            aria-label={t("assistantClose")}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </header>
+      {mismatch && (
+        <p className="px-4 pb-2 text-xs text-muted-foreground">
+          <button type="button" className="underline" onClick={onReset}>
+            {t("assistantSwitch")}
+          </button>
+        </p>
+      )}
+      <div data-assistant-scroll aria-live="polite" className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3">
+        {messages.length === 0 ? (
+          <div className="flex h-full flex-col justify-end gap-3">
+            <p className="text-sm text-muted-foreground">{t("assistantEmpty")}</p>
+            <div className="flex flex-wrap gap-2">
+              {suggestions.map((suggestion) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  className="cursor-pointer border border-border px-2 py-1 text-left text-xs hover:bg-muted"
+                  onClick={() => onSend(suggestion)}
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          messages.map((message) => <Message key={message.id} message={message} />)
+        )}
+        {busy && <p className="text-xs text-muted-foreground">{t("assistantThinking")}</p>}
+        {error === "sign-in" && (
+          <p className="text-sm">
+            {t("assistantSignIn")}{" "}
+            <Link href="/profile" className="underline">
+              {t("assistantSignInLink")}
+            </Link>
+          </p>
+        )}
+        {error === "closed" && <p className="text-sm">{t("assistantClosed")}</p>}
+        {error === "quota" && <p className="text-sm">{t("assistantQuota")}</p>}
+        {error === "paused" && <p className="text-sm">{t("assistantPaused")}</p>}
+        {error === "error" && <p className="text-sm text-status-urgent">{t("assistantError")}</p>}
+      </div>
+      <form
+        className="border-t border-border px-4 py-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSend(draft);
+        }}
+      >
+        <Chips documents={documents} uploads={uploads} onRemove={onRemove} />
+        <div className="border border-border px-1.5 py-1">
+          <div className="flex items-start gap-1">
+            <textarea
+              ref={inputRef}
+              value={draft}
+              onChange={(event) => onDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  onSend(draft);
+                }
+              }}
+              rows={1}
+              placeholder={t("assistantPlaceholder")}
+              className="max-h-32 min-h-8 w-full resize-none overflow-y-auto bg-transparent px-1 py-1.5 text-sm leading-5 outline-none"
+            />
+            <button
+              type="submit"
+              disabled={busy || !draft.trim()}
+              aria-label={t("assistantSend")}
+              className="mt-0.5 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center bg-primary text-primary-foreground disabled:cursor-default disabled:opacity-40"
+            >
+              <ArrowUp className="h-4 w-4" />
+            </button>
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,.txt,.md,application/pdf,text/plain"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) onUpload(file);
+              event.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            className="flex cursor-pointer items-center gap-1 px-1 py-1 text-xs font-normal leading-4 text-muted-foreground hover:text-foreground"
+            onClick={() => fileRef.current?.click()}
+          >
+            <Plus className="h-3 w-3" />
+            {t("assistantUpload")}
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">{t("assistantUploadNotice")}</p>
+      </form>
+    </div>
+  );
+}

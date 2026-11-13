@@ -1,0 +1,101 @@
+# Perfiles sin convocatoria con plazo. El ticket se deja vacío si no está
+# publicado en la página enlazada: no se rellena de memoria.
+- id: eib
+  name: European Investment Bank
+  kind: development_bank
+  url: https://www.eib.org/en/products/index.htm
+  summary: Loans and guarantees for large projects, including energy and maritime infrastructure. Not a call with a deadline.
+  instruments: [loan]
+  geographies: [EU]
+  subsectors: [offshore-wind, green-ports, subsea-cables]
+  last_verified: "2026-11-11"
+- id: blueinvest
+  name: BlueInvest
+  kind: development_bank
+  url: https://maritime-forum.ec.europa.eu/theme/blueinvest_en
+  summary: Readiness and fundraising assistance for EU blue-economy SMEs, backed by the EIB and the Commission. Registration is continuous.
+  instruments: [technical_assistance, equity]
+  geographies: [EU27]
+  subsectors: [offshore-wind, ocean-energy]
+  last_verified: "2026-11-11"
+- id: investeu
+  name: InvestEU
+  kind: development_bank
+  url: https://investeu.europa.eu/
+  summary: EU guarantee programme implemented by the EIB and other partners. Access is through financial intermediaries, not a single call.
+  instruments: [loan, equity]
+  geographies: [EU]
+  subsectors: []
+  last_verified: "2026-11-11"
+- id: innovation-fund
+  name: Innovation Fund
+  kind: eu
+  url: https://climate.ec.europa.eu/eu-action/eu-funding-climate-action/innovation-fund_en
+  summary: Grants for demonstration of low-carbon tech, including some maritime projects. Live calls are indexed separately when the portal publishes them.
+  instruments: [grant]
+  geographies: [EU27, EEA]
+  subsectors: [offshore-wind, fleet-decarbonisation, offshore-hydrogen]
+  last_verified: "2026-11-11"
+- id: cdti
+  name: CDTI
+  kind: national
+  url: https://www.cdti.es/
+  summary: Spanish centre for industrial technology development. Loans and grants for R&D; each call is published on its own calendar.
+  instruments: [loan, grant]
+  geographies: [ES]
+  subsectors: []
+  last_verified: "2026-11-11"
+- id: idae
+  name: IDAE
+  kind: national
+  url: https://www.idae.es/
+  summary: Spanish institute for energy diversification. Publishes aid programmes for renewables and efficiency, including ports and fleets when a call is open.
+  instruments: [grant]
+  geographies: [ES]
+  subsectors: [offshore-wind, green-ports, fleet-decarbonisation]
+  last_verified: "2026-11-11"
+- id: enisa
+  name: ENISA
+  kind: national
+  url: https://www.enisa.es/
+  summary: Participative loans for Spanish innovative SMEs. Application windows are published by ENISA; this profile is not one of those windows.
+  instruments: [loan]
+  geographies: [ES]
+  subsectors: []
+  last_verified: "2026-11-11"
+- id: ico
+  name: ICO
+  kind: national
+  url: https://www.ico.es/
+  summary: Spanish official credit institute. Financing lines through banks, not a grant call.
+  instruments: [loan]
+  geographies: [ES]
+  subsectors: []
+  last_verified: "2026-11-11"
+- id: fundacion-biodiversidad
+  name: Fundación Biodiversidad
+  kind: philanthropic
+  url: https://fundacion-biodiversidad.es/
+  summary: Spanish public foundation. Grants for marine conservation and, when a call says so, the blue economy. Open calls are ingested from BDNS when they match.
+  instruments: [grant]
+  geographies: [ES]
+  subsectors: [marine-restoration]
+  last_verified: "2026-11-11"
+- id: oceano-azul
+  name: Oceano Azul Foundation
+  kind: philanthropic
+  url: https://www.oceanoazulfoundation.org/
+  summary: Portuguese foundation working on ocean conservation and literacy. Funding is by relationship and programme, not an open rolling form documented here.
+  instruments: [grant]
+  geographies: [PT]
+  subsectors: []
+  last_verified: "2026-11-11"
+- id: sbep
+  name: Sustainable Blue Economy Partnership
+  kind: eu
+  url: https://www.bluepartnership.eu/
+  summary: Partnership of national funders plus the EU. Joint calls are indexed as opportunities when a text with dates has been checked.
+  instruments: [grant]
+  geographies: [EU]
+  subsectors: []
+  last_verified: "2026-11-11"

@@ -1,0 +1,11 @@
+id: innovation-fund
+programme_id: innovation-fund
+type_of_action: grant
+label: Innovation Fund
+consortium_required: false
+eligible_entity_types: [sme, large_company, public_body]
+eligible_countries: [EU27, EEA]
+legal_basis: https://climate.ec.europa.eu/eu-action/eu-funding-climate-action/innovation-fund_en
+notes: >
+  La ayuda depende de los costes pertinentes y de la call (small-scale, large-scale,
+  auctions). No se rellena un porcentaje por defecto.

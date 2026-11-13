@@ -1,0 +1,42 @@
+# Convocatorias metidas a mano, con la URL de la que salió cada dato.
+# Un campo que no esté aquí no se inventa.
+
+- id: sbep-jtc-2026
+  external_id: SBEP-JTC-2026
+  url: https://www.bluepartnership.eu/sites/bluepartnership.eu/files/documents/2026-10/sbep_jtc_2026_4th_call_announcement_011026.pdf
+  kind: grant
+  notice: call_for_proposals
+  title: "Building a sustainable and innovative Blue Economy: mastering digital opportunities and unlocking resilience"
+  language: en
+  programme_id: sbep
+  funder_id: sbep
+  deadline_model: two_stage
+  opens_at: "2026-09-14T00:00:00+02:00"
+  deadlines:
+    - phase: pre-proposal
+      at: "2026-11-16T15:00:00+01:00"
+      timezone: CET
+    - phase: full-proposal
+      at: "2027-06-14T15:00:00+02:00"
+      timezone: CEST
+  budget_total_eur: 37041760
+  summary_en: >
+    Fourth joint transnational call of the Sustainable Blue Economy Partnership.
+    Provisional budget of EUR 37,041,760 from national funding organisations plus
+    an EU contribution. Pre-proposals close on 16 November 2026 at 15:00 CET.
+  facts:
+    - field: deadline_at
+      value: "2026-11-16T15:00:00+01:00"
+      origin: manual
+      confidence: 0.9
+      quote: "Pre-proposal submission deadline: 16 November 2026, 15:00 CET"
+    - field: budget_total_eur
+      value: 37041760
+      origin: manual
+      confidence: 0.9
+      quote: "A total estimated budget of 37,041,760 EUR has been provisionally allocated"
+  subsectors: []
+  notes: >
+    El anuncio no limita la call a energía marina: las áreas son transición de sectores,
+    usos del mar, biorecursos y comunidades costeras. El clasificador decide si entra
+    en el vertical. No se le asigna subsector a mano.

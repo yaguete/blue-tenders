@@ -1,0 +1,372 @@
+# Vertical: Blue Economy
+# Taxonomía basada en el EU Blue Economy Report (sectores establecidos + emergentes).
+# MVP: solo el corte de transición energética marina (enabled: true).
+
+id: blue-economy
+name: Blue Economy
+taxonomy_source: EU Blue Economy Report (DG MARE / JRC)
+
+# keywords: las usa el prefiltro. Reglas (backend/app/pipeline/run.py):
+#   - se comparan sin acentos ni mayúsculas, como palabras completas (con su plural en -s/-es);
+#   - las palabras de una keyword pueden aparecer en cualquier orden y con hasta 4 palabras
+#     de por medio ("offshore and onshore wind" casa con "offshore wind");
+#   - una palabra acabada en * casa por prefijo (mínimo 4 letras). Es para los compuestos
+#     del alemán: landstrom* casa con "Landstromanlage".
+#   Pensadas para no perder nada: el ruido lo quita el clasificador, no el prefiltro.
+#   En TED se buscan además en el texto completo del anuncio, pero solo las que son una frase
+#   sin comodín o una única palabra (con o sin comodín, mínimo 5 letras). Una keyword de varias
+#   palabras con comodín ("eólic* offshore") solo actúa en local: si importa, añade también
+#   la frase entera ("eólica offshore").
+# exclude_keywords: el prefiltro NO las aplica (perdería convocatorias buenas);
+#   son ejemplos negativos para el clasificador.
+# Los términos en fr, pt y de están sin revisar por alguien del sector (pendiente: María).
+subsectors:
+  # --- MVP: transición energética marina ---
+  - id: offshore-wind
+    name: Offshore wind (fixed & floating)
+    enabled: true
+    keywords:
+      # en
+      - offshore wind
+      - offshore wind*
+      - windpark op zee
+      - havvind
+      - floating wind
+      - floating wind*
+      - wind farm offshore
+      # es
+      - eólica marina
+      - eólica flotante
+      - eólica offshore
+      # fr
+      - éolien en mer
+      - éolienne en mer
+      - éolien offshore
+      - éolien flottant
+      - éolienne flottante
+      # pt
+      - eólic* offshore
+      - eólic* flutuante*
+      - eólic* marítim*
+      - eólico offshore
+      - eólica flutuante
+      # de
+      - windenergie auf see
+      - offshore windpark
+      - offshore windenergie
+      - offshore windkraft
+      - schwimmende windenergie
+      - windpark* auf see
+      - schwimmende windenergie*
+      - schwimmende windkraft*
+    # Solo para el historial (CORDIS). El prefiltro de convocatorias y TED no las leen:
+    # "wind turbine" a secas también es eólica terrestre.
+    project_keywords: [wind turbine, wind energy, wind farm, wind blade]
+    exclude_keywords: [onshore]
+  - id: ocean-energy
+    name: Ocean energy (tidal, wave, OTEC)
+    enabled: true
+    keywords:
+      # en
+      - tidal energy
+      - wave energy
+      - ocean energy
+      # es
+      - energía mareomotriz
+      - energía undimotriz
+      - energías marinas
+      # fr
+      - énergie marémotrice
+      - énergie houlomotrice
+      - hydrolien*
+      - houlomot*
+      - énergie marine renouvelable
+      # pt
+      - energia das ondas
+      - energia das marés
+      - energia oceânica
+      - maremotri*
+      # de
+      - meeresenergie*
+      - gezeitenenergie*
+      - gezeitenkraft*
+      - wellenenergie*
+      - wellenkraft*
+    project_keywords: [tidal stream, tidal turbine]
+  - id: offshore-hydrogen
+    name: Offshore hydrogen & floating solar
+    enabled: true
+    keywords:
+      # en
+      - offshore hydrogen
+      - floating solar
+      - floating photovoltaic*
+      - floating photovoltaic
+      - floating pv
+      # es
+      - hidrógeno offshore
+      - hidrógeno marino
+      - solar flotante
+      - fotovoltaica flotante
+      # fr
+      - hydrogène en mer
+      - hydrogène offshore
+      - solaire flottant
+      - photovoltaïque flottant
+      # pt
+      - hidrogénio offshore
+      - solar flutuante
+      - fotovoltaic* flutuante*
+      - fotovoltaica flutuante
+      # de
+      - offshore wasserstoff*
+      - offshore wasserstoff
+      - schwimmende photovoltaik
+      - schwimmende photovoltaik*
+      - schwimmende solaranlage*
+  - id: green-ports
+    name: Green ports & shore power
+    enabled: true
+    keywords:
+      # en
+      - shore power
+      - onshore power supply
+      - cold ironing
+      - port electrification
+      - green port
+      - OPS
+      # es
+      - suministro eléctrico a buques
+      - conexión eléctrica a buques
+      - electrificación de muelles
+      - electrificación portuaria
+      - puerto verde
+      # fr
+      - courant de quai
+      - alimentation électrique à quai
+      - branchement électrique à quai
+      - électrification des quais
+      - CENAQ
+      # pt
+      - eletrificação do cais
+      - eletrificação portuária
+      - energia elétrica a navios atracados
+      # de
+      - landstrom*
+      # nl, da, no, sv. Pendiente de revisión por alguien del sector.
+      - walstroom
+      - landstrøm
+      - landström
+      - søkabel
+  - id: fleet-decarbonisation
+    name: Fleet decarbonisation & retrofit
+    enabled: true
+    keywords:
+      # en
+      - ship retrofit
+      - vessel electrification
+      - LNG bunkering
+      - methanol ship
+      - hybrid vessel
+      - zero-emission vessel
+      - electric ferry
+      # es
+      - electrificación de buques
+      - buque híbrido
+      - buque eléctrico
+      - buque cero emisiones
+      - ferry eléctrico
+      - bunkering de GNL
+      # fr
+      - navire électrique
+      - navire hybride
+      - navire zéro émission
+      - ferry électrique
+      - soutage GNL
+      - décarbonation maritime
+      # pt
+      - navio elétrico
+      - navio híbrido
+      - embarcação elétrica
+      - ferry elétrico
+      - descarbonização marítima
+      # de
+      - elektrofähre*
+      - hybridfähre*
+      - emissionsfrei* schiff*
+      - emissionsfreies schiff
+      - emissionsfreie fähre
+      - schiffsumrüstung*
+      - LNG bunker*
+      - LNG bunker
+    project_keywords: [waterborne transport, zero emission ship, zero emission waterborne]
+    exclude_keywords: [blood vessel, pressure vessel]
+  - id: subsea-cables
+    name: Subsea cables & grid connection
+    enabled: true
+    keywords:
+      # en
+      - subsea cable
+      - submarine cable
+      - export cable
+      - offshore substation
+      # es
+      - cable submarino
+      - interconexión submarina
+      - subestación offshore
+      - subestación marina
+      # fr
+      - câble sous-marin
+      - liaison sous-marine
+      - poste électrique en mer
+      # pt
+      - cabo submarino
+      - interligação submarina
+      - subestação offshore
+      # de
+      - seekabel*
+      - unterseekabel*
+      - offshore umspannwerk*
+      - offshore konverter*
+      - netzanbindung* offshore
+      - offshore netzanbindung
+      - offshore umspannwerk
+      - offshore konverterplattform
+      - netzanbindungssystem*
+
+  # --- Fuera del MVP (pendiente de alcance con la fundación) ---
+  - id: living-resources
+    name: Fisheries & aquaculture
+    enabled: false
+  - id: shipbuilding
+    name: Shipbuilding & repair
+    enabled: false
+  - id: maritime-transport
+    name: Maritime transport
+    enabled: false
+  - id: coastal-tourism
+    name: Coastal tourism
+    enabled: false
+  - id: blue-biotech
+    name: Blue biotechnology
+    enabled: false
+  - id: desalination
+    name: Desalination
+    enabled: false
+  - id: coastal-protection
+    name: Coastal protection
+    enabled: false
+  # Apagado hasta que lo pidan 2 de las 5 primeras organizaciones. Ver docs/product/brief.md.
+  - id: marine-restoration
+    name: Marine restoration & ocean mission deployment
+    enabled: false
+    keywords:
+      - marine restoration
+      - ocean restoration
+      - restauración marina
+    definition: >
+      Restauración de hábitats marinos y costeros, reducción de contaminación
+      y agendas locales de la Misión Océano. No incluye obra portuaria genérica.
+    negative_examples:
+      - A beach nourishment contract with no ecological objective
+      - Urban wastewater treatment inland
+
+# Códigos CPV (UE) con los que se consulta TED.
+#
+# Cada código incluye sus subcódigos: TED casa "45240000" también con "45241000".
+# Las etiquetas son las oficiales, comprobadas en TED el 11 nov 2026.
+#
+# Cómo se eligieron: se buscaron en TED, por texto completo y sin filtrar por CPV, 62 términos
+# del sector en los últimos 90 días (109 anuncios) y se midió qué códigos los cubren y cuánto
+# volumen añade cada uno. Entre paréntesis: anuncios del sector / anuncios totales en 90 días.
+# Esta lista cubre 62 de los 109 (antes, 18) con unos 78 anuncios al día (antes, 44).
+#
+# Límite conocido: el CPV no llega más lejos. Lo que queda fuera son sistemas de clasificación
+# de proveedores con divisiones enteras (15 de los 109) y encargos de ingeniería o consultoría
+# genéricos (71300000, 71310000), demasiado caudalosos para filtrar por código.
+cpv:
+  # --- energía y red ---
+  - "09310000"   # Electricity (5 / 2003; ruidoso: suministro eléctrico a edificios)
+  - "31682000"   # Electricity supplies (3 / 513)
+  - "31121300"   # Wind-energy generators (4 / 31)
+  - "31320000"   # Power distribution cables; incluye 31321500 Submarine cable (5 / 359)
+  - "45251160"   # Wind-power installation works (0 / 11)
+  - "45315300"   # Electricity supply installations (5 / 431)
+  - "45315400"   # High voltage installation work (3 / 96)
+  # --- obra marítima y servicios offshore ---
+  - "45240000"   # Construction work for water projects; incluye puertos (10 / 1018)
+  - "76520000"   # Offshore services (9 / 19)
+  # --- buques y transporte por agua ---
+  - "34510000"   # Ships (5 / 180)
+  - "34930000"   # Marine equipment (4 / 73)
+  - "50241000"   # Repair and maintenance services of ships (0 / 191)
+  - "60600000"   # Water transport services (7 / 122)
+  # --- estudios del emplazamiento ---
+  # Sustituyen a 71351910, que estaba anotado como "Geophysical services" y es "Geology
+  # services": traía sobre todo excavaciones arqueológicas (71351914) y 1 anuncio del sector
+  # de 254, que estos códigos también cubren.
+  - "71351200"   # Geological and geophysical consultancy services (7 / 89)
+  - "71351600"   # Weather-forecasting services; estudios metoceánicos (2 / 36)
+  - "71351700"   # Scientific prospecting services; incluye la prospección geofísica (4 / 52)
+  - "71351920"   # Oceanography and hydrology services; incluye batimetría (3 / 47)
+  - "71352000"   # Subsurface surveying services (6 / 98)
+  # --- investigación ---
+  - "73000000"   # Research and development services and related consultancy (13 / 1467)
+
+geographies:
+  priority: [EU, ES, PT, FR, UK, NO, DK, NL, DE]
+  allow_international: true
+
+opportunity_types: [tender, grant, prior_information_notice]
+opportunity_kinds: [grant, tender, loan, equity, prize, technical_assistance, blended]
+
+# Definiciones para el clasificador. El prefiltro no las lee.
+subsector_notes:
+  offshore-wind:
+    definition: Fixed or floating wind turbines at sea, including their foundations and array cables inside the farm.
+    negative_examples:
+      - Onshore wind only
+      - A generic electricity supply contract for public buildings
+  ocean-energy:
+    definition: Tidal, wave, OTEC and salinity-gradient devices.
+    negative_examples:
+      - Hydropower dams in rivers
+  offshore-hydrogen:
+    definition: Hydrogen produced at sea or from offshore renewables, and floating solar.
+    negative_examples:
+      - Onshore electrolysers with no marine link
+  green-ports:
+    definition: Shore power, port electrification and cold ironing.
+    negative_examples:
+      - A port cafeteria refurbishment
+  fleet-decarbonisation:
+    definition: Retrofit or newbuild of vessels to cut emissions, including electric ferries and alternative fuels onboard.
+    negative_examples:
+      - Blood vessel
+      - Pressure vessel
+      - A fishing vessel repair with no emissions scope
+  subsea-cables:
+    definition: Subsea power cables, export cables and offshore substations.
+    negative_examples:
+      - Building wiring
+      - A terrestrial interconnector with no subsea section
+
+languages: [en, es, fr, pt, de]
+
+# Umbrales del historial de organizaciones (CORDIS y adjudicaciones de TED).
+# Medidos el 11 nov 2026 contra el volcado de CORDIS y 365 días de TED.
+# El prefiltro de convocatorias no los lee.
+track_record:
+  min_text_similarity: 0.15
+  awards_min_text_similarity: 0.14
+  awards_min_cpv_digits: 5
+  min_shared_tokens: 2
+  limit: 30
+
+sdg_by_subsector:
+  offshore-wind: [7, 13, 14]
+  ocean-energy: [7, 13, 14]
+  offshore-hydrogen: [7, 13]
+  green-ports: [9, 13, 14]
+  fleet-decarbonisation: [7, 9, 13, 14]
+  subsea-cables: [7, 9, 13]

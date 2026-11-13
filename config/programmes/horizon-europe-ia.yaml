@@ -1,0 +1,15 @@
+id: horizon-europe-ia
+programme_id: horizon-europe
+type_of_action: IA
+label: Horizon Europe Innovation Action
+consortium_required: true
+consortium_min_partners: 3
+consortium_min_countries: 3
+cofunding_min: 70
+cofunding_max: 100
+eligible_entity_types: [sme, large_company, ngo, research, public_body]
+eligible_countries: [EU27, HE_ASSOCIATED]
+legal_basis: https://ec.europa.eu/info/funding-tenders/opportunities/docs/2021-2027/horizon/wp-call/2023-2024/wp-13-general-annexes_horizon-2023-2024_en.pdf
+notes: >
+  70 % para entidades con ánimo de lucro y 100 % para entidades sin ánimo de lucro,
+  salvo que el topic diga otra cosa. Por eso el rango es 70–100 y no un único número.

@@ -1,0 +1,56 @@
+# Opportunity canónico
+
+Sustituye a [tender-schema.md](tender-schema.md). El modelo vive en `backend/app/models/opportunity.py`. `Tender` es un alias.
+
+## Identidad
+
+| Campo | Notas |
+|---|---|
+| `id` | SHA1 de `source_id:external_id`, 16 hex. |
+| `source_id` | Fila de `docs/sources.md`. |
+| `external_id` | Id en la fuente. |
+| `url` | Anuncio oficial. |
+| `content_hash` | Título, descripción, plazos e importes. Si no cambia, no se reextrae. |
+
+## Tipo
+
+| Campo | Valores |
+|---|---|
+| `type` | Legado: `tender`, `grant`, `prior_information_notice`, `award`. |
+| `kind` | `grant`, `tender`, `loan`, `equity`, `prize`, `technical_assistance`, `blended`. |
+| `notice` | `contract_notice`, `pin`, `award_notice`, `call_for_proposals`, `cascade`, `continuous`. |
+| `instruments` | Lista, para mezclas. Un EIC Accelerator puede ser `["grant", "equity"]` con `kind = blended`. |
+
+Derivación por defecto: `tender` → kind tender + contract_notice; `grant` → grant + call_for_proposals; `prior_information_notice` → tender + pin; `award` → tender + award_notice. Las adjudicaciones no salen en la búsqueda.
+
+## Financiador y programa
+
+`funder_id`, `programme_id`, `call_id`, `topic_id`, `type_of_action`, `mission_ocean`. El comprador de una licitación sigue en `buyer` (nombre, país, tipo).
+
+## Plazos y dinero
+
+`opens_at`, `deadline_at` (el próximo o el único), `deadline_model` (`single`, `two_stage`, `multiple_cutoff`, `continuous`), `deadlines` (fase, fecha, zona), `status` (`open`, `forthcoming`, `closed`).
+
+`budget_total_eur`, `amount_min_eur`, `amount_max_eur`, `cofunding_min`, `cofunding_max`. `budget` conserva importe y moneda originales. No se inventa el contravalor.
+
+## Elegibilidad y tema
+
+`eligible_entity_types`, `eligible_countries` (ISO o grupos: `EU27`, `HE_ASSOCIATED`), `consortium_required`, `consortium_min_partners`, `consortium_min_countries`.
+
+`subsectors`, `relevance`, `sea_basins`, `trl_min`, `trl_max`, `sdgs` (deducidos, no filtrables), `cpv`, `nuts`.
+
+## Texto
+
+`title` y `description` en el idioma original. `title_en` y `summary_en` traducidos. `language` en ISO 639-1.
+
+`documents[]`: `url`, `name`, `kind`, `access`. `access` es `fetch` (se descarga al abrir el chat), `inline` (el texto ya está en la ficha; el topic europeo) o `link_only` (se enseña el enlace y no se lee). El texto por página no va en la fila: va en `document_pages`.
+
+## Procedencia
+
+`facts[]`: `field`, `value`, `origin` (`source`, `programme_rule`, `llm`, `manual`), `confidence` (0–1), `document_id`, `page`, `quote`, `model`.
+
+`analysis`: secciones con `text`, `origin` (`extracted` o `generated`) y `citations` (documento, página, cita). `analysis_updated_at`.
+
+## Qué no va en la fila
+
+Partners, perfiles y conversaciones son tablas aparte. Ver migraciones `0003`–`0005`.

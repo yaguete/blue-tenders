@@ -1,0 +1,15 @@
+id: horizon-europe-ria
+programme_id: horizon-europe
+type_of_action: RIA
+label: Horizon Europe Research and Innovation Action
+consortium_required: true
+consortium_min_partners: 3
+consortium_min_countries: 3
+cofunding_min: 100
+cofunding_max: 100
+eligible_entity_types: [sme, large_company, ngo, research, public_body]
+eligible_countries: [EU27, HE_ASSOCIATED]
+legal_basis: https://ec.europa.eu/info/funding-tenders/opportunities/docs/2021-2027/horizon/wp-call/2023-2024/wp-13-general-annexes_horizon-2023-2024_en.pdf
+notes: >
+  Anexo general B y G. Una call concreta puede exigir más. La cofinanciación del 100 %
+  es la del anexo para RIA; no sustituye al texto del topic.

@@ -1,0 +1,14 @@
+CRON_TZ=Europe/Madrid
+15 6 * * *    /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source eu-ft
+30 6 * * *    /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source bdns
+45 6,13 * * * /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source placsp
+50 6,13 * * * /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source placsp-regional
+0  7 * * *    /srv/backend/.venv/bin/python -m app.jobs.alerts --digest daily
+5  7 * * 1    /srv/backend/.venv/bin/python -m app.jobs.alerts --digest weekly
+30 10 * * 1-5 /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source ted
+0  11 * * *   /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source curated
+30 11 * * 1   /srv/backend/.venv/bin/python -m app.jobs.watch
+# CORDIS publica el volcado una vez al mes. La segunda pasada sale casi siempre en 304.
+30 4 1,15 * * /srv/backend/.venv/bin/python -m app.jobs.cordis
+20 3 * * *    /srv/backend/.venv/bin/python -m app.jobs.purge_uploads
+40 3 * * 1   /srv/backend/.venv/bin/python -m app.jobs.shared_documents

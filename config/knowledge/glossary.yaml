@@ -1,0 +1,31 @@
+- id: consortium
+  title: Consortium
+  text: >
+    In Horizon Europe a Research and Innovation Action usually needs at least three
+    legal entities from three different eligible countries. A Coordination and Support
+    Action can be a single applicant unless the topic says otherwise. The topic text
+    wins over this glossary.
+  source: config/programmes/horizon-europe-ria.yaml
+- id: cofunding
+  title: Co-funding rate
+  keywords: [cofunding, co-funding, cofinanciacion]
+  text: >
+    The co-funding rate is the share of eligible costs paid by the programme.
+    The rest is the applicant's own contribution. Innovation Actions are often 70%
+    for profit-making entities and 100% for non-profit ones. Always check the call.
+  source: config/programmes/horizon-europe-ia.yaml
+- id: trl
+  title: Technology readiness level
+  keywords: [trl, readiness]
+  text: >
+    TRL 1 is an observed principle. TRL 9 is a system proven in operation.
+    A call may name a range. If this database has no TRL for a call, it is unknown,
+    not "any TRL".
+  source: docs/data-quality.md
+- id: pin
+  title: Prior information notice
+  keywords: [pin, prior information]
+  text: >
+    A prior information notice is a buyer signalling a future procurement.
+    It is not yet a tender you can submit to. In this product it shows as forthcoming.
+  source: docs/opportunity-schema.md

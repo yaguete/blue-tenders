@@ -1,0 +1,605 @@
+{
+ "notices": [
+  {
+   "place-of-performance": [
+    "SE110",
+    "SE121",
+    "SE122",
+    "SE123",
+    "SE124",
+    "SE125",
+    "SE211",
+    "SE212",
+    "SE213",
+    "SE214",
+    "SE221",
+    "SE224",
+    "SE231",
+    "SE232",
+    "SE311",
+    "SE312",
+    "SE313",
+    "SE321",
+    "SE322",
+    "SE331",
+    "SE332",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SE110",
+    "SE121",
+    "SE122",
+    "SE123",
+    "SE124",
+    "SE125",
+    "SE211",
+    "SE212",
+    "SE213",
+    "SE214",
+    "SE221",
+    "SE224",
+    "SE231",
+    "SE232",
+    "SE311",
+    "SE312",
+    "SE313",
+    "SE321",
+    "SE322",
+    "SE331",
+    "SE332",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE"
+   ],
+   "title-proc": {
+    "swe": "Varvsöversyn vägfärja VF322/Göta"
+   },
+   "deadline-receipt-tender-date-lot": [
+    "2026-11-29+01:00"
+   ],
+   "notice-type": "cn-standard",
+   "publication-number": "760071-2026",
+   "estimated-value-lot": [
+    "4000000"
+   ],
+   "estimated-value-cur-lot": [
+    "SEK"
+   ],
+   "estimated-value-cur-proc": "SEK",
+   "procedure-identifier": "9a5a4511-945c-4409-b530-4ef4d383a039",
+   "buyer-country": [
+    "SWE"
+   ],
+   "place-of-performance-country-proc": [
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE",
+    "SWE"
+   ],
+   "deadline-receipt-tender-time-lot": [
+    "23:59:00+01:00"
+   ],
+   "official-language": [
+    "SWE"
+   ],
+   "classification-cpv": [
+    "50240000",
+    "50200000",
+    "50241100",
+    "50240000",
+    "50200000",
+    "50241100"
+   ],
+   "publication-date": "2026-11-02+01:00",
+   "buyer-name": {
+    "swe": [
+     "Trafikverket Myndighet"
+    ]
+   },
+   "estimated-value-proc": "4000000",
+   "links": {
+    "xml": {
+     "MUL": "https://ted.europa.eu/en/notice/760071-2026/xml"
+    },
+    "pdf": {
+     "BUL": "https://ted.europa.eu/bg/notice/760071-2026/pdf",
+     "SPA": "https://ted.europa.eu/es/notice/760071-2026/pdf",
+     "CES": "https://ted.europa.eu/cs/notice/760071-2026/pdf",
+     "DAN": "https://ted.europa.eu/da/notice/760071-2026/pdf",
+     "DEU": "https://ted.europa.eu/de/notice/760071-2026/pdf",
+     "EST": "https://ted.europa.eu/et/notice/760071-2026/pdf",
+     "ELL": "https://ted.europa.eu/el/notice/760071-2026/pdf",
+     "ENG": "https://ted.europa.eu/en/notice/760071-2026/pdf",
+     "FRA": "https://ted.europa.eu/fr/notice/760071-2026/pdf",
+     "GLE": "https://ted.europa.eu/ga/notice/760071-2026/pdf",
+     "HRV": "https://ted.europa.eu/hr/notice/760071-2026/pdf",
+     "ITA": "https://ted.europa.eu/it/notice/760071-2026/pdf",
+     "LAV": "https://ted.europa.eu/lv/notice/760071-2026/pdf",
+     "LIT": "https://ted.europa.eu/lt/notice/760071-2026/pdf",
+     "HUN": "https://ted.europa.eu/hu/notice/760071-2026/pdf",
+     "MLT": "https://ted.europa.eu/mt/notice/760071-2026/pdf",
+     "NLD": "https://ted.europa.eu/nl/notice/760071-2026/pdf",
+     "POL": "https://ted.europa.eu/pl/notice/760071-2026/pdf",
+     "POR": "https://ted.europa.eu/pt/notice/760071-2026/pdf",
+     "RON": "https://ted.europa.eu/ro/notice/760071-2026/pdf",
+     "SLK": "https://ted.europa.eu/sk/notice/760071-2026/pdf",
+     "SLV": "https://ted.europa.eu/sl/notice/760071-2026/pdf",
+     "FIN": "https://ted.europa.eu/fi/notice/760071-2026/pdf",
+     "SWE": "https://ted.europa.eu/sv/notice/760071-2026/pdf"
+    },
+    "pdfs": {
+     "SWE": "https://ted.europa.eu/sv/notice/760071-2026/pdfs"
+    },
+    "html": {
+     "BUL": "https://ted.europa.eu/bg/notice/-/detail/760071-2026",
+     "SPA": "https://ted.europa.eu/es/notice/-/detail/760071-2026",
+     "CES": "https://ted.europa.eu/cs/notice/-/detail/760071-2026",
+     "DAN": "https://ted.europa.eu/da/notice/-/detail/760071-2026",
+     "DEU": "https://ted.europa.eu/de/notice/-/detail/760071-2026",
+     "EST": "https://ted.europa.eu/et/notice/-/detail/760071-2026",
+     "ELL": "https://ted.europa.eu/el/notice/-/detail/760071-2026",
+     "ENG": "https://ted.europa.eu/en/notice/-/detail/760071-2026",
+     "FRA": "https://ted.europa.eu/fr/notice/-/detail/760071-2026",
+     "GLE": "https://ted.europa.eu/ga/notice/-/detail/760071-2026",
+     "HRV": "https://ted.europa.eu/hr/notice/-/detail/760071-2026",
+     "ITA": "https://ted.europa.eu/it/notice/-/detail/760071-2026",
+     "LAV": "https://ted.europa.eu/lv/notice/-/detail/760071-2026",
+     "LIT": "https://ted.europa.eu/lt/notice/-/detail/760071-2026",
+     "HUN": "https://ted.europa.eu/hu/notice/-/detail/760071-2026",
+     "MLT": "https://ted.europa.eu/mt/notice/-/detail/760071-2026",
+     "NLD": "https://ted.europa.eu/nl/notice/-/detail/760071-2026",
+     "POL": "https://ted.europa.eu/pl/notice/-/detail/760071-2026",
+     "POR": "https://ted.europa.eu/pt/notice/-/detail/760071-2026",
+     "RON": "https://ted.europa.eu/ro/notice/-/detail/760071-2026",
+     "SLK": "https://ted.europa.eu/sk/notice/-/detail/760071-2026",
+     "SLV": "https://ted.europa.eu/sl/notice/-/detail/760071-2026",
+     "FIN": "https://ted.europa.eu/fi/notice/-/detail/760071-2026",
+     "SWE": "https://ted.europa.eu/sv/notice/-/detail/760071-2026"
+    },
+    "htmlDirect": {
+     "BUL": "https://ted.europa.eu/bg/notice/760071-2026/html",
+     "SPA": "https://ted.europa.eu/es/notice/760071-2026/html",
+     "CES": "https://ted.europa.eu/cs/notice/760071-2026/html",
+     "DAN": "https://ted.europa.eu/da/notice/760071-2026/html",
+     "DEU": "https://ted.europa.eu/de/notice/760071-2026/html",
+     "EST": "https://ted.europa.eu/et/notice/760071-2026/html",
+     "ELL": "https://ted.europa.eu/el/notice/760071-2026/html",
+     "ENG": "https://ted.europa.eu/en/notice/760071-2026/html",
+     "FRA": "https://ted.europa.eu/fr/notice/760071-2026/html",
+     "GLE": "https://ted.europa.eu/ga/notice/760071-2026/html",
+     "HRV": "https://ted.europa.eu/hr/notice/760071-2026/html",
+     "ITA": "https://ted.europa.eu/it/notice/760071-2026/html",
+     "LAV": "https://ted.europa.eu/lv/notice/760071-2026/html",
+     "LIT": "https://ted.europa.eu/lt/notice/760071-2026/html",
+     "HUN": "https://ted.europa.eu/hu/notice/760071-2026/html",
+     "MLT": "https://ted.europa.eu/mt/notice/760071-2026/html",
+     "NLD": "https://ted.europa.eu/nl/notice/760071-2026/html",
+     "POL": "https://ted.europa.eu/pl/notice/760071-2026/html",
+     "POR": "https://ted.europa.eu/pt/notice/760071-2026/html",
+     "RON": "https://ted.europa.eu/ro/notice/760071-2026/html",
+     "SLK": "https://ted.europa.eu/sk/notice/760071-2026/html",
+     "SLV": "https://ted.europa.eu/sl/notice/760071-2026/html",
+     "FIN": "https://ted.europa.eu/fi/notice/760071-2026/html",
+     "SWE": "https://ted.europa.eu/sv/notice/760071-2026/html"
+    }
+   },
+   "place-of-performance-subdiv-proc": [
+    "SE110",
+    "SE121",
+    "SE122",
+    "SE123",
+    "SE124",
+    "SE125",
+    "SE211",
+    "SE212",
+    "SE213",
+    "SE214",
+    "SE221",
+    "SE224",
+    "SE231",
+    "SE232",
+    "SE311",
+    "SE312",
+    "SE313",
+    "SE321",
+    "SE322",
+    "SE331",
+    "SE332"
+   ],
+   "notice-title": {
+    "hun": "Svédország – Vízi és egyéb járművek javítása, karbantartása és kapcsolódó szolgáltatása – Varvsöversyn vägfärja VF322/Göta",
+    "lav": "Zviedrija – Remonta, tehniskās apkopes un saistītie pakalpojumi attiecībā uz jūras transportu un citām iekārtām – Varvsöversyn vägfärja VF322/Göta",
+    "swe": "Sverige – Reparation, underhåll och tillhörande tjänster avseende sjöfart och annan utrustning – Varvsöversyn vägfärja VF322/Göta",
+    "gle": "An tSualainn – Repair, maintenance and associated services related to marine and other equipment – Varvsöversyn vägfärja VF322/Göta",
+    "ell": "Σουηδία – Υπηρεσίες επισκευής και συντήρησης και συναφείς υπηρεσίες σχετιζόμενες με σκάφη και λοιπό εξοπλισμό – Varvsöversyn vägfärja VF322/Göta",
+    "spa": "Suecia – Servicios de reparación, mantenimiento y servicios asociados relacionados con equipos navales y otros equipos – Varvsöversyn vägfärja VF322/Göta",
+    "est": "Rootsi – Laevavarustuse ja muude seadmete remondi-, hooldus- ja seonduvad teenused – Varvsöversyn vägfärja VF322/Göta",
+    "nld": "Zweden – Reparatie, onderhoud en aanverwante diensten in verband met scheepvaart en andere uitrusting – Varvsöversyn vägfärja VF322/Göta",
+    "fin": "Ruotsi – Vesiliikenteeseen liittyvät korjaus- ja huoltopalvelut ja muut palvelut – Varvsöversyn vägfärja VF322/Göta",
+    "pol": "Szwecja – Usługi w zakresie napraw i konserwacji i inne usługi dotyczące sprzętu morskiego i innego – Varvsöversyn vägfärja VF322/Göta",
+    "hrv": "Švedska – Usluge popravaka, održavanja i srodne usluge u vezi s pomorskim prijevozom i drugom opremom – Varvsöversyn vägfärja VF322/Göta",
+    "ces": "Švédsko – Opravy, údržba a služby související s lodní dopravou a jiným zařízením – Varvsöversyn vägfärja VF322/Göta",
+    "dan": "Sverige – Reparation, vedligeholdelse og tilhørende tjenesteydelser vedrørende marint og andet udstyr – Varvsöversyn vägfärja VF322/Göta",
+    "ron": "Suedia – Servicii de reparare şi de întreţinere şi servicii conexe pentru transportul maritim şi pentru alte echipamente – Varvsöversyn vägfärja VF322/Göta",
+    "por": "Suécia – Serviços de reparação e manutenção e serviços conexos relacionados com equipamento marinho e outro – Varvsöversyn vägfärja VF322/Göta",
+    "slk": "Švédsko – Opravy, údržba a súvisiace služby týkajúce sa námorného loďstva a iných zariadení – Varvsöversyn vägfärja VF322/Göta",
+    "fra": "Suède – Services de réparation, d'entretien et services connexes relatifs au transport maritime et à d'autres équipements – Varvsöversyn vägfärja VF322/Göta",
+    "mlt": "L-Iżvezja – Tiswija, manutenzjoni u servizzi assoċċjati relatati ma’ l-apparat marittimu u apparat ieħor – Varvsöversyn vägfärja VF322/Göta",
+    "deu": "Schweden – Reparatur, Wartung und zugehörige Dienste in Verbindung mit Schifffahrt und anderen Einrichtungen – Varvsöversyn vägfärja VF322/Göta",
+    "lit": "Švedija – Remonto, priežiūros ir kitos paslaugos, susijusios su jūros ir kitais įrenginiais – Varvsöversyn vägfärja VF322/Göta",
+    "ita": "Svezia – Riparazione, manutenzione e servizi affini relativi alle navi ed altre attrezzature – Varvsöversyn vägfärja VF322/Göta",
+    "bul": "Швeция – Услуги по ремонт, поддържане и подобни услуги (преустройство, възстановяване, реконструкция) на плавателни средства – Varvsöversyn vägfärja VF322/Göta",
+    "slv": "Švedska – Storitve popravila, vzdrževanja in pripadajoče storitve, povezane s pomorskim prevozom in drugo opremo – Varvsöversyn vägfärja VF322/Göta",
+    "eng": "Sweden – Repair, maintenance and associated services related to marine and other equipment – Varvsöversyn vägfärja VF322/Göta"
+   },
+   "form-type": "competition",
+   "description-proc": {
+    "swe": "Varvsöversyn vägfärja VF322/Göta."
+   }
+  },
+  {
+   "place-of-performance": [
+    "ES300",
+    "ESP",
+    "ES300",
+    "ESP"
+   ],
+   "title-proc": {
+    "spa": "Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada"
+   },
+   "notice-type": "can-standard",
+   "publication-number": "756943-2026",
+   "procedure-identifier": "061be068-1311-4ef1-8675-0b4e9bef1785",
+   "buyer-country": [
+    "ESP"
+   ],
+   "place-of-performance-country-proc": [
+    "ESP"
+   ],
+   "official-language": [
+    "SPA"
+   ],
+   "classification-cpv": [
+    "31154000",
+    "31682530",
+    "50711000",
+    "31154000",
+    "31682530",
+    "50711000"
+   ],
+   "publication-date": "2026-11-02+01:00",
+   "buyer-name": {
+    "spa": [
+     "Dirección de Gestión Económica de la Jefatura de Apoyo Logístico de la Armada"
+    ]
+   },
+   "links": {
+    "xml": {
+     "MUL": "https://ted.europa.eu/en/notice/756943-2026/xml"
+    },
+    "pdf": {
+     "BUL": "https://ted.europa.eu/bg/notice/756943-2026/pdf",
+     "SPA": "https://ted.europa.eu/es/notice/756943-2026/pdf",
+     "CES": "https://ted.europa.eu/cs/notice/756943-2026/pdf",
+     "DAN": "https://ted.europa.eu/da/notice/756943-2026/pdf",
+     "DEU": "https://ted.europa.eu/de/notice/756943-2026/pdf",
+     "EST": "https://ted.europa.eu/et/notice/756943-2026/pdf",
+     "ELL": "https://ted.europa.eu/el/notice/756943-2026/pdf",
+     "ENG": "https://ted.europa.eu/en/notice/756943-2026/pdf",
+     "FRA": "https://ted.europa.eu/fr/notice/756943-2026/pdf",
+     "GLE": "https://ted.europa.eu/ga/notice/756943-2026/pdf",
+     "HRV": "https://ted.europa.eu/hr/notice/756943-2026/pdf",
+     "ITA": "https://ted.europa.eu/it/notice/756943-2026/pdf",
+     "LAV": "https://ted.europa.eu/lv/notice/756943-2026/pdf",
+     "LIT": "https://ted.europa.eu/lt/notice/756943-2026/pdf",
+     "HUN": "https://ted.europa.eu/hu/notice/756943-2026/pdf",
+     "MLT": "https://ted.europa.eu/mt/notice/756943-2026/pdf",
+     "NLD": "https://ted.europa.eu/nl/notice/756943-2026/pdf",
+     "POL": "https://ted.europa.eu/pl/notice/756943-2026/pdf",
+     "POR": "https://ted.europa.eu/pt/notice/756943-2026/pdf",
+     "RON": "https://ted.europa.eu/ro/notice/756943-2026/pdf",
+     "SLK": "https://ted.europa.eu/sk/notice/756943-2026/pdf",
+     "SLV": "https://ted.europa.eu/sl/notice/756943-2026/pdf",
+     "FIN": "https://ted.europa.eu/fi/notice/756943-2026/pdf",
+     "SWE": "https://ted.europa.eu/sv/notice/756943-2026/pdf"
+    },
+    "pdfs": {
+     "SPA": "https://ted.europa.eu/es/notice/756943-2026/pdfs"
+    },
+    "html": {
+     "BUL": "https://ted.europa.eu/bg/notice/-/detail/756943-2026",
+     "SPA": "https://ted.europa.eu/es/notice/-/detail/756943-2026",
+     "CES": "https://ted.europa.eu/cs/notice/-/detail/756943-2026",
+     "DAN": "https://ted.europa.eu/da/notice/-/detail/756943-2026",
+     "DEU": "https://ted.europa.eu/de/notice/-/detail/756943-2026",
+     "EST": "https://ted.europa.eu/et/notice/-/detail/756943-2026",
+     "ELL": "https://ted.europa.eu/el/notice/-/detail/756943-2026",
+     "ENG": "https://ted.europa.eu/en/notice/-/detail/756943-2026",
+     "FRA": "https://ted.europa.eu/fr/notice/-/detail/756943-2026",
+     "GLE": "https://ted.europa.eu/ga/notice/-/detail/756943-2026",
+     "HRV": "https://ted.europa.eu/hr/notice/-/detail/756943-2026",
+     "ITA": "https://ted.europa.eu/it/notice/-/detail/756943-2026",
+     "LAV": "https://ted.europa.eu/lv/notice/-/detail/756943-2026",
+     "LIT": "https://ted.europa.eu/lt/notice/-/detail/756943-2026",
+     "HUN": "https://ted.europa.eu/hu/notice/-/detail/756943-2026",
+     "MLT": "https://ted.europa.eu/mt/notice/-/detail/756943-2026",
+     "NLD": "https://ted.europa.eu/nl/notice/-/detail/756943-2026",
+     "POL": "https://ted.europa.eu/pl/notice/-/detail/756943-2026",
+     "POR": "https://ted.europa.eu/pt/notice/-/detail/756943-2026",
+     "RON": "https://ted.europa.eu/ro/notice/-/detail/756943-2026",
+     "SLK": "https://ted.europa.eu/sk/notice/-/detail/756943-2026",
+     "SLV": "https://ted.europa.eu/sl/notice/-/detail/756943-2026",
+     "FIN": "https://ted.europa.eu/fi/notice/-/detail/756943-2026",
+     "SWE": "https://ted.europa.eu/sv/notice/-/detail/756943-2026"
+    },
+    "htmlDirect": {
+     "BUL": "https://ted.europa.eu/bg/notice/756943-2026/html",
+     "SPA": "https://ted.europa.eu/es/notice/756943-2026/html",
+     "CES": "https://ted.europa.eu/cs/notice/756943-2026/html",
+     "DAN": "https://ted.europa.eu/da/notice/756943-2026/html",
+     "DEU": "https://ted.europa.eu/de/notice/756943-2026/html",
+     "EST": "https://ted.europa.eu/et/notice/756943-2026/html",
+     "ELL": "https://ted.europa.eu/el/notice/756943-2026/html",
+     "ENG": "https://ted.europa.eu/en/notice/756943-2026/html",
+     "FRA": "https://ted.europa.eu/fr/notice/756943-2026/html",
+     "GLE": "https://ted.europa.eu/ga/notice/756943-2026/html",
+     "HRV": "https://ted.europa.eu/hr/notice/756943-2026/html",
+     "ITA": "https://ted.europa.eu/it/notice/756943-2026/html",
+     "LAV": "https://ted.europa.eu/lv/notice/756943-2026/html",
+     "LIT": "https://ted.europa.eu/lt/notice/756943-2026/html",
+     "HUN": "https://ted.europa.eu/hu/notice/756943-2026/html",
+     "MLT": "https://ted.europa.eu/mt/notice/756943-2026/html",
+     "NLD": "https://ted.europa.eu/nl/notice/756943-2026/html",
+     "POL": "https://ted.europa.eu/pl/notice/756943-2026/html",
+     "POR": "https://ted.europa.eu/pt/notice/756943-2026/html",
+     "RON": "https://ted.europa.eu/ro/notice/756943-2026/html",
+     "SLK": "https://ted.europa.eu/sk/notice/756943-2026/html",
+     "SLV": "https://ted.europa.eu/sl/notice/756943-2026/html",
+     "FIN": "https://ted.europa.eu/fi/notice/756943-2026/html",
+     "SWE": "https://ted.europa.eu/sv/notice/756943-2026/html"
+    }
+   },
+   "place-of-performance-subdiv-proc": [
+    "ES300"
+   ],
+   "notice-title": {
+    "hun": "Spanyolország – Szünetmentes áramforrások – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "lav": "Spānija – Nepārtrauktās barošanas avoti – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "swe": "Spanien – Kontinuerlig strömförsörjning – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "gle": "An Spáinn – Uninterruptible power supplies – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "ell": "Ισπανία – Αδιάλειπτα τροφοδοτικά ρεύματος – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "spa": "España – Suministros ininterrumpidos de energía – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "est": "Hispaania – Katkematu voolu allikad – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "nld": "Spanje – Onderbrekingsvrije stroomvoorziening – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "fin": "Espanja – Keskeytysvarmistetut virtalähteet – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "pol": "Hiszpania – Bezprzestojowe źródła energii – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "hrv": "Španjolska – Neprekidno električno napajanje – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "ces": "Španělsko – Nepřerušitelné zdroje energie – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "dan": "Spanien – Afbrydelsesfri strømforsyninger (UPS) – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "ron": "Spania – Surse de alimentare electrică continuă – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "por": "Espanha – Fontes de alimentação ininterruptas – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "slk": "Španielsko – Zdroje nepretržitého/stáleho napájania – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "fra": "Espagne – Sources d'alimentation électrique ininterruptible – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "mlt": "Spanja – Fornimenti ta' l-enerġija mingħajr interruzzjoni – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "deu": "Spanien – Unterbrechungsfreie Stromversorgung – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "lit": "Ispanija – Nenutrūkstamojo maitinimo šaltiniai – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "ita": "Spagna – Alimentatori continui – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "bul": "Иcпaния – Източници на непрекъсваемо електрическо захранване – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "slv": "Španija – Neprekinjena oskrba z električno energijo – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada",
+    "eng": "Spain – Uninterruptible power supplies – Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada"
+   },
+   "form-type": "result",
+   "description-proc": {
+    "spa": "Acuerdo Marco para el mantenimiento de los equipos de alimentación interrumpida (SAI) de los CECIS-CECOM de la Armada"
+   }
+  },
+  {
+   "place-of-performance": [
+    "RO224",
+    "ROU",
+    "RO224",
+    "ROU"
+   ],
+   "title-proc": {
+    "ron": "Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”"
+   },
+   "notice-type": "can-modif",
+   "publication-number": "762033-2026",
+   "procedure-identifier": "bbfca823-7a0d-4f74-a0ae-6f3433774ed2",
+   "buyer-country": [
+    "ROU"
+   ],
+   "place-of-performance-country-proc": [
+    "ROU"
+   ],
+   "official-language": [
+    "RON"
+   ],
+   "classification-cpv": [
+    "50241000",
+    "50241000"
+   ],
+   "publication-date": "2026-11-03+01:00",
+   "buyer-name": {
+    "ron": [
+     "Compania Nationala Administratia Porturilor Dunarii Maritime SA"
+    ]
+   },
+   "links": {
+    "xml": {
+     "MUL": "https://ted.europa.eu/en/notice/762033-2026/xml"
+    },
+    "pdf": {
+     "BUL": "https://ted.europa.eu/bg/notice/762033-2026/pdf",
+     "SPA": "https://ted.europa.eu/es/notice/762033-2026/pdf",
+     "CES": "https://ted.europa.eu/cs/notice/762033-2026/pdf",
+     "DAN": "https://ted.europa.eu/da/notice/762033-2026/pdf",
+     "DEU": "https://ted.europa.eu/de/notice/762033-2026/pdf",
+     "EST": "https://ted.europa.eu/et/notice/762033-2026/pdf",
+     "ELL": "https://ted.europa.eu/el/notice/762033-2026/pdf",
+     "ENG": "https://ted.europa.eu/en/notice/762033-2026/pdf",
+     "FRA": "https://ted.europa.eu/fr/notice/762033-2026/pdf",
+     "GLE": "https://ted.europa.eu/ga/notice/762033-2026/pdf",
+     "HRV": "https://ted.europa.eu/hr/notice/762033-2026/pdf",
+     "ITA": "https://ted.europa.eu/it/notice/762033-2026/pdf",
+     "LAV": "https://ted.europa.eu/lv/notice/762033-2026/pdf",
+     "LIT": "https://ted.europa.eu/lt/notice/762033-2026/pdf",
+     "HUN": "https://ted.europa.eu/hu/notice/762033-2026/pdf",
+     "MLT": "https://ted.europa.eu/mt/notice/762033-2026/pdf",
+     "NLD": "https://ted.europa.eu/nl/notice/762033-2026/pdf",
+     "POL": "https://ted.europa.eu/pl/notice/762033-2026/pdf",
+     "POR": "https://ted.europa.eu/pt/notice/762033-2026/pdf",
+     "RON": "https://ted.europa.eu/ro/notice/762033-2026/pdf",
+     "SLK": "https://ted.europa.eu/sk/notice/762033-2026/pdf",
+     "SLV": "https://ted.europa.eu/sl/notice/762033-2026/pdf",
+     "FIN": "https://ted.europa.eu/fi/notice/762033-2026/pdf",
+     "SWE": "https://ted.europa.eu/sv/notice/762033-2026/pdf"
+    },
+    "pdfs": {
+     "RON": "https://ted.europa.eu/ro/notice/762033-2026/pdfs"
+    },
+    "html": {
+     "BUL": "https://ted.europa.eu/bg/notice/-/detail/762033-2026",
+     "SPA": "https://ted.europa.eu/es/notice/-/detail/762033-2026",
+     "CES": "https://ted.europa.eu/cs/notice/-/detail/762033-2026",
+     "DAN": "https://ted.europa.eu/da/notice/-/detail/762033-2026",
+     "DEU": "https://ted.europa.eu/de/notice/-/detail/762033-2026",
+     "EST": "https://ted.europa.eu/et/notice/-/detail/762033-2026",
+     "ELL": "https://ted.europa.eu/el/notice/-/detail/762033-2026",
+     "ENG": "https://ted.europa.eu/en/notice/-/detail/762033-2026",
+     "FRA": "https://ted.europa.eu/fr/notice/-/detail/762033-2026",
+     "GLE": "https://ted.europa.eu/ga/notice/-/detail/762033-2026",
+     "HRV": "https://ted.europa.eu/hr/notice/-/detail/762033-2026",
+     "ITA": "https://ted.europa.eu/it/notice/-/detail/762033-2026",
+     "LAV": "https://ted.europa.eu/lv/notice/-/detail/762033-2026",
+     "LIT": "https://ted.europa.eu/lt/notice/-/detail/762033-2026",
+     "HUN": "https://ted.europa.eu/hu/notice/-/detail/762033-2026",
+     "MLT": "https://ted.europa.eu/mt/notice/-/detail/762033-2026",
+     "NLD": "https://ted.europa.eu/nl/notice/-/detail/762033-2026",
+     "POL": "https://ted.europa.eu/pl/notice/-/detail/762033-2026",
+     "POR": "https://ted.europa.eu/pt/notice/-/detail/762033-2026",
+     "RON": "https://ted.europa.eu/ro/notice/-/detail/762033-2026",
+     "SLK": "https://ted.europa.eu/sk/notice/-/detail/762033-2026",
+     "SLV": "https://ted.europa.eu/sl/notice/-/detail/762033-2026",
+     "FIN": "https://ted.europa.eu/fi/notice/-/detail/762033-2026",
+     "SWE": "https://ted.europa.eu/sv/notice/-/detail/762033-2026"
+    },
+    "htmlDirect": {
+     "BUL": "https://ted.europa.eu/bg/notice/762033-2026/html",
+     "SPA": "https://ted.europa.eu/es/notice/762033-2026/html",
+     "CES": "https://ted.europa.eu/cs/notice/762033-2026/html",
+     "DAN": "https://ted.europa.eu/da/notice/762033-2026/html",
+     "DEU": "https://ted.europa.eu/de/notice/762033-2026/html",
+     "EST": "https://ted.europa.eu/et/notice/762033-2026/html",
+     "ELL": "https://ted.europa.eu/el/notice/762033-2026/html",
+     "ENG": "https://ted.europa.eu/en/notice/762033-2026/html",
+     "FRA": "https://ted.europa.eu/fr/notice/762033-2026/html",
+     "GLE": "https://ted.europa.eu/ga/notice/762033-2026/html",
+     "HRV": "https://ted.europa.eu/hr/notice/762033-2026/html",
+     "ITA": "https://ted.europa.eu/it/notice/762033-2026/html",
+     "LAV": "https://ted.europa.eu/lv/notice/762033-2026/html",
+     "LIT": "https://ted.europa.eu/lt/notice/762033-2026/html",
+     "HUN": "https://ted.europa.eu/hu/notice/762033-2026/html",
+     "MLT": "https://ted.europa.eu/mt/notice/762033-2026/html",
+     "NLD": "https://ted.europa.eu/nl/notice/762033-2026/html",
+     "POL": "https://ted.europa.eu/pl/notice/762033-2026/html",
+     "POR": "https://ted.europa.eu/pt/notice/762033-2026/html",
+     "RON": "https://ted.europa.eu/ro/notice/762033-2026/html",
+     "SLK": "https://ted.europa.eu/sk/notice/762033-2026/html",
+     "SLV": "https://ted.europa.eu/sl/notice/762033-2026/html",
+     "FIN": "https://ted.europa.eu/fi/notice/762033-2026/html",
+     "SWE": "https://ted.europa.eu/sv/notice/762033-2026/html"
+    }
+   },
+   "place-of-performance-subdiv-proc": [
+    "RO224"
+   ],
+   "notice-title": {
+    "hun": "Románia – Hajójavítási és karbantartási szolgáltatások – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "lav": "Rumānija – Kuģu remonta un tehniskās apkopes pakalpojumi – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "swe": "Rumänien – Reparation och underhåll av skepp – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "gle": "An Rómáin – Repair and maintenance services of ships – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "ell": "Ρουμανία – Υπηρεσίες επισκευής και συντήρησης πλοίων – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "spa": "Rumanía – Servicios de reparación y mantenimiento de buques – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "est": "Rumeenia – Laevade remondi- ja hooldusteenused – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "nld": "Roemenië – Reparatie en onderhoud van schepen – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "fin": "Romania – Laivojen korjaus ja huolto – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "pol": "Rumunia – Usługi w zakresie napraw i konserwacji statków – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "hrv": "Rumunjska – Usluge popravaka i održavanja brodova – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "ces": "Rumunsko – Opravy a údržba lodí – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "dan": "Rumænien – Reparation og vedligeholdelse af skibe – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "ron": "România – Servicii de reparare şi de întreţinere a navelor – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "por": "Roménia – Serviços de reparação e manutenção de navios – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "slk": "Rumunsko – Opravy a údržba lodí – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "fra": "Roumanie – Services de réparation et d'entretien de bateaux – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "mlt": "Ir-Rumanija – Servizzi ta’ tiswija u tal-manutenzjoni ta’ vapuri – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "deu": "Rumänien – Reparatur und Wartung von Schiffen – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "lit": "Rumunija – Laivų remonto ir priežiūros paslaugos – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "ita": "Romania – Servizi di riparazione e manutenzione di navi – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "bul": "Pyмъния – Услуги по ремонт и поддържане на кораби – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "slv": "Romunija – Storitve popravila in vzdrževanja ladij – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”",
+    "eng": "Romania – Repair and maintenance services of ships – Acord cadru Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați”. Lotul 2:,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”"
+   },
+   "form-type": "cont-modif",
+   "description-proc": {
+    "ron": "Entitatea contractantă va încheia un acord cadru de prestări servicii ce va avea ca obiect: – Lotul 1: „Servicii de reparatii ale navelor aflate în dotarea CN APDM SA Galați ” pe perioadă de 48 luni, conform Caietului de sarcini nr. 137/COMP TEHNIC REPARAȚII ISPS/11.05.2022. - Lotul 2: ,,Servicii de mentenanță, conform instrucțiunilor tehnice si servicii de reparații accidentale pentru motoarele aflate în dotarea navelor C.N. APDM S.A. Galați”, pe o perioadă de 36 de luni, conform Caietului de sarcini nr. 106/COMP TEHNIC REPARAȚII ISPS/07.04.2022. C.N. APDM S.A. Galati are in dotare nave propulsate, nave speciale, nave nepropulsate, pasarele de acces si scondri. Toate navele sunt supuse certificarii tehnice periodice, inspectiilor tehnice cu ridicarea navei pe uscat si inspectiilor tehnice anuale in conformitate cu prevederile - Cerintelor tehnice de navigatie interioara, Normelor tehnice privind clasificarea si constructia navelor de navigatie interioara si Normelor tehnice suplimentare stabilite de Autoritatea Navala Romana. Autoritatea competenta din Romania care efectueaza inspectiile tehnice la constructiile navale de navigatie interioara este Autoritatea Navala Romana si elibereaza certificate tehnice/comunitare de navigatie noi, dar poate prelungi certificatele cu pana la 36 de luni daca sunt indeplinite anumite cerinte ANR."
+   }
+  }
+ ],
+ "totalNoticeCount": 92,
+ "iterationNextToken": "fixture-token",
+ "timedOut": false
+}

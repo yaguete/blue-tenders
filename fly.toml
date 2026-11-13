@@ -1,0 +1,29 @@
+# Región de Fráncfort. El nombre de la app se fija con `fly apps create`.
+app = "blue-tenders"
+primary_region = "fra"
+
+[build]
+  dockerfile = "backend/Dockerfile"
+
+[processes]
+  app = "/srv/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080"
+  cron = "/usr/local/bin/supercronic /srv/backend/crontab"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  processes = ["app"]
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  swap_size_mb = 512
+  processes = ["cron"]

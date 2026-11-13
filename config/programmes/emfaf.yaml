@@ -1,0 +1,11 @@
+id: emfaf
+programme_id: emfaf
+type_of_action: shared_management
+label: European Maritime, Fisheries and Aquaculture Fund
+consortium_required: false
+eligible_entity_types: [sme, large_company, ngo, research, public_body]
+eligible_countries: [EU27]
+legal_basis: https://oceans-and-fisheries.ec.europa.eu/funding/emfaf_en
+notes: >
+  Gestión compartida: cada Estado publica sus propias convocatorias. La regla no
+  rellena cofinanciación ni plazo.

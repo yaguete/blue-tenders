@@ -1,0 +1,13 @@
+id: cef-energy
+programme_id: cef-energy
+type_of_action: works
+label: Connecting Europe Facility — Energy
+consortium_required: false
+cofunding_min: 50
+cofunding_max: 75
+eligible_entity_types: [sme, large_company, public_body]
+eligible_countries: [EU27]
+legal_basis: https://cinea.ec.europa.eu/programmes/connecting-europe-facility/energy-infrastructure-connecting-europe-facility-energy_en
+notes: >
+  Estudios y obras tienen tasas distintas. El rango cubre las tasas públicas habituales
+  de CEF Energy; el texto de la call manda.

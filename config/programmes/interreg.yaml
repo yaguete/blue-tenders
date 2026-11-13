@@ -1,0 +1,12 @@
+id: interreg
+programme_id: interreg
+type_of_action: territorial
+label: Interreg
+consortium_required: true
+consortium_min_partners: 2
+consortium_min_countries: 2
+eligible_entity_types: [sme, large_company, ngo, research, public_body]
+legal_basis: https://interreg.eu/
+notes: >
+  El mínimo real lo fija cada programa (Atlantic Area, MED, North Sea…). Dos países
+  es el suelo genérico, no la regla de un programa concreto.

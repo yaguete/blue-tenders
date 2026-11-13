@@ -1,0 +1,11 @@
+# Páginas a vigilar. Un cambio de hash entra en el log de la ingesta y no se publica.
+# selector: el bloque cuyo texto se compara. Sin él, dos descargas del mismo
+# contenido pueden diferir en bytes (scripts, nonces) y dar un falso aviso.
+- id: mercator-tenders
+  url: https://www.mercator-ocean.eu/about-us/work-with-us/calls-for-tender/
+  title: Mercator Ocean calls for tender
+  selector: main
+- id: cinea-tenders
+  url: https://cinea.ec.europa.eu/funding-opportunities/calls-tenders_en
+  title: CINEA calls for tenders
+  selector: main

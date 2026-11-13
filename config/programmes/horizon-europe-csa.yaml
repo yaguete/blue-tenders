@@ -1,0 +1,15 @@
+id: horizon-europe-csa
+programme_id: horizon-europe
+type_of_action: CSA
+label: Horizon Europe Coordination and Support Action
+consortium_required: false
+consortium_min_partners: 1
+consortium_min_countries: 1
+cofunding_min: 100
+cofunding_max: 100
+eligible_entity_types: [sme, large_company, ngo, research, public_body]
+eligible_countries: [EU27, HE_ASSOCIATED]
+legal_basis: https://ec.europa.eu/info/funding-tenders/opportunities/docs/2021-2027/horizon/wp-call/2023-2024/wp-13-general-annexes_horizon-2023-2024_en.pdf
+notes: >
+  Una CSA puede presentarla una sola entidad. Algunas calls piden consorcio igual:
+  manda el topic, y esta regla queda en confianza 0,7.

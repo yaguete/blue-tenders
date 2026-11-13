@@ -1,0 +1,424 @@
+{
+  "notices": [
+    {
+      "title-proc": {
+        "eng": "Framework Agreement - Fast Response Plan - Subsea Cables - Repair and Jointing"
+      },
+      "notice-type": "can-standard",
+      "publication-number": "745518-2025",
+      "winner-country": [
+        "NOR"
+      ],
+      "winner-size": [
+        "medium"
+      ],
+      "procedure-identifier": "21a0b2a2-ac5d-46b3-be66-80d2c6c3af49",
+      "buyer-country": [
+        "SWE",
+        "DEU"
+      ],
+      "winner-identifier": [
+        "980 722 805"
+      ],
+      "official-language": [
+        "ENG"
+      ],
+      "classification-cpv": [
+        "50000000",
+        "50000000",
+        "45314310",
+        "60630000"
+      ],
+      "publication-date": "2025-11-11+01:00",
+      "buyer-name": {
+        "eng": [
+          "Vattenfall AB",
+          "DanTysk Sandbank Offshore Wind GmbH & Co.KG"
+        ]
+      },
+      "links": {
+        "xml": {
+          "MUL": "https://ted.europa.eu/en/notice/745518-2025/xml"
+        },
+        "pdf": {
+          "BUL": "https://ted.europa.eu/bg/notice/745518-2025/pdf",
+          "SPA": "https://ted.europa.eu/es/notice/745518-2025/pdf",
+          "CES": "https://ted.europa.eu/cs/notice/745518-2025/pdf",
+          "DAN": "https://ted.europa.eu/da/notice/745518-2025/pdf",
+          "DEU": "https://ted.europa.eu/de/notice/745518-2025/pdf",
+          "EST": "https://ted.europa.eu/et/notice/745518-2025/pdf",
+          "ELL": "https://ted.europa.eu/el/notice/745518-2025/pdf",
+          "ENG": "https://ted.europa.eu/en/notice/745518-2025/pdf",
+          "FRA": "https://ted.europa.eu/fr/notice/745518-2025/pdf",
+          "GLE": "https://ted.europa.eu/ga/notice/745518-2025/pdf",
+          "HRV": "https://ted.europa.eu/hr/notice/745518-2025/pdf",
+          "ITA": "https://ted.europa.eu/it/notice/745518-2025/pdf",
+          "LAV": "https://ted.europa.eu/lv/notice/745518-2025/pdf",
+          "LIT": "https://ted.europa.eu/lt/notice/745518-2025/pdf",
+          "HUN": "https://ted.europa.eu/hu/notice/745518-2025/pdf",
+          "MLT": "https://ted.europa.eu/mt/notice/745518-2025/pdf",
+          "NLD": "https://ted.europa.eu/nl/notice/745518-2025/pdf",
+          "POL": "https://ted.europa.eu/pl/notice/745518-2025/pdf",
+          "POR": "https://ted.europa.eu/pt/notice/745518-2025/pdf",
+          "RON": "https://ted.europa.eu/ro/notice/745518-2025/pdf",
+          "SLK": "https://ted.europa.eu/sk/notice/745518-2025/pdf",
+          "SLV": "https://ted.europa.eu/sl/notice/745518-2025/pdf",
+          "FIN": "https://ted.europa.eu/fi/notice/745518-2025/pdf",
+          "SWE": "https://ted.europa.eu/sv/notice/745518-2025/pdf"
+        },
+        "pdfs": {
+          "ENG": "https://ted.europa.eu/en/notice/745518-2025/pdfs"
+        },
+        "html": {
+          "BUL": "https://ted.europa.eu/bg/notice/-/detail/745518-2025",
+          "SPA": "https://ted.europa.eu/es/notice/-/detail/745518-2025",
+          "CES": "https://ted.europa.eu/cs/notice/-/detail/745518-2025",
+          "DAN": "https://ted.europa.eu/da/notice/-/detail/745518-2025",
+          "DEU": "https://ted.europa.eu/de/notice/-/detail/745518-2025",
+          "EST": "https://ted.europa.eu/et/notice/-/detail/745518-2025",
+          "ELL": "https://ted.europa.eu/el/notice/-/detail/745518-2025",
+          "ENG": "https://ted.europa.eu/en/notice/-/detail/745518-2025",
+          "FRA": "https://ted.europa.eu/fr/notice/-/detail/745518-2025",
+          "GLE": "https://ted.europa.eu/ga/notice/-/detail/745518-2025",
+          "HRV": "https://ted.europa.eu/hr/notice/-/detail/745518-2025",
+          "ITA": "https://ted.europa.eu/it/notice/-/detail/745518-2025",
+          "LAV": "https://ted.europa.eu/lv/notice/-/detail/745518-2025",
+          "LIT": "https://ted.europa.eu/lt/notice/-/detail/745518-2025",
+          "HUN": "https://ted.europa.eu/hu/notice/-/detail/745518-2025",
+          "MLT": "https://ted.europa.eu/mt/notice/-/detail/745518-2025",
+          "NLD": "https://ted.europa.eu/nl/notice/-/detail/745518-2025",
+          "POL": "https://ted.europa.eu/pl/notice/-/detail/745518-2025",
+          "POR": "https://ted.europa.eu/pt/notice/-/detail/745518-2025",
+          "RON": "https://ted.europa.eu/ro/notice/-/detail/745518-2025",
+          "SLK": "https://ted.europa.eu/sk/notice/-/detail/745518-2025",
+          "SLV": "https://ted.europa.eu/sl/notice/-/detail/745518-2025",
+          "FIN": "https://ted.europa.eu/fi/notice/-/detail/745518-2025",
+          "SWE": "https://ted.europa.eu/sv/notice/-/detail/745518-2025"
+        },
+        "htmlDirect": {
+          "BUL": "https://ted.europa.eu/bg/notice/745518-2025/html",
+          "SPA": "https://ted.europa.eu/es/notice/745518-2025/html",
+          "CES": "https://ted.europa.eu/cs/notice/745518-2025/html",
+          "DAN": "https://ted.europa.eu/da/notice/745518-2025/html",
+          "DEU": "https://ted.europa.eu/de/notice/745518-2025/html",
+          "EST": "https://ted.europa.eu/et/notice/745518-2025/html",
+          "ELL": "https://ted.europa.eu/el/notice/745518-2025/html",
+          "ENG": "https://ted.europa.eu/en/notice/745518-2025/html",
+          "FRA": "https://ted.europa.eu/fr/notice/745518-2025/html",
+          "GLE": "https://ted.europa.eu/ga/notice/745518-2025/html",
+          "HRV": "https://ted.europa.eu/hr/notice/745518-2025/html",
+          "ITA": "https://ted.europa.eu/it/notice/745518-2025/html",
+          "LAV": "https://ted.europa.eu/lv/notice/745518-2025/html",
+          "LIT": "https://ted.europa.eu/lt/notice/745518-2025/html",
+          "HUN": "https://ted.europa.eu/hu/notice/745518-2025/html",
+          "MLT": "https://ted.europa.eu/mt/notice/745518-2025/html",
+          "NLD": "https://ted.europa.eu/nl/notice/745518-2025/html",
+          "POL": "https://ted.europa.eu/pl/notice/745518-2025/html",
+          "POR": "https://ted.europa.eu/pt/notice/745518-2025/html",
+          "RON": "https://ted.europa.eu/ro/notice/745518-2025/html",
+          "SLK": "https://ted.europa.eu/sk/notice/745518-2025/html",
+          "SLV": "https://ted.europa.eu/sl/notice/745518-2025/html",
+          "FIN": "https://ted.europa.eu/fi/notice/745518-2025/html",
+          "SWE": "https://ted.europa.eu/sv/notice/745518-2025/html"
+        }
+      },
+      "winner-name": {
+        "eng": [
+          "DeepOcean AS"
+        ]
+      },
+      "notice-title": {
+        "eng": "Sweden, Germany – Repair and maintenance services – Framework Agreement - Fast Response Plan - Subsea Cables - Repair and Jointing"
+      },
+      "description-proc": {
+        "eng": "Vattenfall are looking to award a Framework Agreement signed with a maximum of five(5) contractors per Lot for the services and associated works related to Inter Array Cable Repairs and Jointing. Contract duration: 5years Contract Commencement Date: Summer 2022. Note that timings are subject to change. The Contract for Lot 1 will be governed by Swedish law with each site governed by local laws and regulations once a call-off has been sent. Lot 2 will be governed by German law for the FWA agreement and call-off."
+      }
+    },
+    {
+      "title-proc": {
+        "ita": "0000041544 - ELMED - Cables supply and laying for 500 kV HVDC monopolar electrical interconnection between Italy and Tunisia",
+        "eng": "0000041544 - ELMED - Cables supply and laying for 500 kV HVDC monopolar electrical interconnection between Italy and Tunisia"
+      },
+      "notice-type": "can-social",
+      "publication-number": "780925-2025",
+      "result-value-notice": "0",
+      "winner-country": [
+        "ITA",
+        "ITA",
+        "ITA"
+      ],
+      "winner-size": [
+        "large",
+        "large",
+        "large"
+      ],
+      "procedure-identifier": "03db93e8-2f5c-4c25-a7b3-ba093795885e",
+      "buyer-country": [
+        "ITA"
+      ],
+      "winner-identifier": [
+        "05931070964",
+        "00283040178",
+        "15324221009"
+      ],
+      "official-language": [
+        "ITA",
+        "ENG"
+      ],
+      "classification-cpv": [
+        "31321500",
+        "31321500"
+      ],
+      "publication-date": "2025-11-25+01:00",
+      "buyer-name": {
+        "ita": [
+          "Terna Rete Italia S.p.A. - Société Tunisienne de l'Electricité et du Gaz (STEG)"
+        ]
+      },
+      "links": {
+        "xml": {
+          "MUL": "https://ted.europa.eu/en/notice/780925-2025/xml"
+        },
+        "pdf": {
+          "BUL": "https://ted.europa.eu/bg/notice/780925-2025/pdf",
+          "SPA": "https://ted.europa.eu/es/notice/780925-2025/pdf",
+          "CES": "https://ted.europa.eu/cs/notice/780925-2025/pdf",
+          "DAN": "https://ted.europa.eu/da/notice/780925-2025/pdf",
+          "DEU": "https://ted.europa.eu/de/notice/780925-2025/pdf",
+          "EST": "https://ted.europa.eu/et/notice/780925-2025/pdf",
+          "ELL": "https://ted.europa.eu/el/notice/780925-2025/pdf",
+          "ENG": "https://ted.europa.eu/en/notice/780925-2025/pdf",
+          "FRA": "https://ted.europa.eu/fr/notice/780925-2025/pdf",
+          "GLE": "https://ted.europa.eu/ga/notice/780925-2025/pdf",
+          "HRV": "https://ted.europa.eu/hr/notice/780925-2025/pdf",
+          "ITA": "https://ted.europa.eu/it/notice/780925-2025/pdf",
+          "LAV": "https://ted.europa.eu/lv/notice/780925-2025/pdf",
+          "LIT": "https://ted.europa.eu/lt/notice/780925-2025/pdf",
+          "HUN": "https://ted.europa.eu/hu/notice/780925-2025/pdf",
+          "MLT": "https://ted.europa.eu/mt/notice/780925-2025/pdf",
+          "NLD": "https://ted.europa.eu/nl/notice/780925-2025/pdf",
+          "POL": "https://ted.europa.eu/pl/notice/780925-2025/pdf",
+          "POR": "https://ted.europa.eu/pt/notice/780925-2025/pdf",
+          "RON": "https://ted.europa.eu/ro/notice/780925-2025/pdf",
+          "SLK": "https://ted.europa.eu/sk/notice/780925-2025/pdf",
+          "SLV": "https://ted.europa.eu/sl/notice/780925-2025/pdf",
+          "FIN": "https://ted.europa.eu/fi/notice/780925-2025/pdf",
+          "SWE": "https://ted.europa.eu/sv/notice/780925-2025/pdf"
+        },
+        "pdfs": {
+          "ENG": "https://ted.europa.eu/en/notice/780925-2025/pdfs",
+          "ITA": "https://ted.europa.eu/it/notice/780925-2025/pdfs"
+        },
+        "html": {
+          "BUL": "https://ted.europa.eu/bg/notice/-/detail/780925-2025",
+          "SPA": "https://ted.europa.eu/es/notice/-/detail/780925-2025",
+          "CES": "https://ted.europa.eu/cs/notice/-/detail/780925-2025",
+          "DAN": "https://ted.europa.eu/da/notice/-/detail/780925-2025",
+          "DEU": "https://ted.europa.eu/de/notice/-/detail/780925-2025",
+          "EST": "https://ted.europa.eu/et/notice/-/detail/780925-2025",
+          "ELL": "https://ted.europa.eu/el/notice/-/detail/780925-2025",
+          "ENG": "https://ted.europa.eu/en/notice/-/detail/780925-2025",
+          "FRA": "https://ted.europa.eu/fr/notice/-/detail/780925-2025",
+          "GLE": "https://ted.europa.eu/ga/notice/-/detail/780925-2025",
+          "HRV": "https://ted.europa.eu/hr/notice/-/detail/780925-2025",
+          "ITA": "https://ted.europa.eu/it/notice/-/detail/780925-2025",
+          "LAV": "https://ted.europa.eu/lv/notice/-/detail/780925-2025",
+          "LIT": "https://ted.europa.eu/lt/notice/-/detail/780925-2025",
+          "HUN": "https://ted.europa.eu/hu/notice/-/detail/780925-2025",
+          "MLT": "https://ted.europa.eu/mt/notice/-/detail/780925-2025",
+          "NLD": "https://ted.europa.eu/nl/notice/-/detail/780925-2025",
+          "POL": "https://ted.europa.eu/pl/notice/-/detail/780925-2025",
+          "POR": "https://ted.europa.eu/pt/notice/-/detail/780925-2025",
+          "RON": "https://ted.europa.eu/ro/notice/-/detail/780925-2025",
+          "SLK": "https://ted.europa.eu/sk/notice/-/detail/780925-2025",
+          "SLV": "https://ted.europa.eu/sl/notice/-/detail/780925-2025",
+          "FIN": "https://ted.europa.eu/fi/notice/-/detail/780925-2025",
+          "SWE": "https://ted.europa.eu/sv/notice/-/detail/780925-2025"
+        },
+        "htmlDirect": {
+          "BUL": "https://ted.europa.eu/bg/notice/780925-2025/html",
+          "SPA": "https://ted.europa.eu/es/notice/780925-2025/html",
+          "CES": "https://ted.europa.eu/cs/notice/780925-2025/html",
+          "DAN": "https://ted.europa.eu/da/notice/780925-2025/html",
+          "DEU": "https://ted.europa.eu/de/notice/780925-2025/html",
+          "EST": "https://ted.europa.eu/et/notice/780925-2025/html",
+          "ELL": "https://ted.europa.eu/el/notice/780925-2025/html",
+          "ENG": "https://ted.europa.eu/en/notice/780925-2025/html",
+          "FRA": "https://ted.europa.eu/fr/notice/780925-2025/html",
+          "GLE": "https://ted.europa.eu/ga/notice/780925-2025/html",
+          "HRV": "https://ted.europa.eu/hr/notice/780925-2025/html",
+          "ITA": "https://ted.europa.eu/it/notice/780925-2025/html",
+          "LAV": "https://ted.europa.eu/lv/notice/780925-2025/html",
+          "LIT": "https://ted.europa.eu/lt/notice/780925-2025/html",
+          "HUN": "https://ted.europa.eu/hu/notice/780925-2025/html",
+          "MLT": "https://ted.europa.eu/mt/notice/780925-2025/html",
+          "NLD": "https://ted.europa.eu/nl/notice/780925-2025/html",
+          "POL": "https://ted.europa.eu/pl/notice/780925-2025/html",
+          "POR": "https://ted.europa.eu/pt/notice/780925-2025/html",
+          "RON": "https://ted.europa.eu/ro/notice/780925-2025/html",
+          "SLK": "https://ted.europa.eu/sk/notice/780925-2025/html",
+          "SLV": "https://ted.europa.eu/sl/notice/780925-2025/html",
+          "FIN": "https://ted.europa.eu/fi/notice/780925-2025/html",
+          "SWE": "https://ted.europa.eu/sv/notice/780925-2025/html"
+        }
+      },
+      "winner-name": {
+        "ita": [
+          "Prysmian Powerlink Srl",
+          "Roda SpA",
+          "Cebat SpA",
+          "Prysmian Powerlink Srl"
+        ],
+        "eng": [
+          "Prysmian Powerlink Srl",
+          "Roda SpA",
+          "Cebat SpA",
+          "Prysmian Powerlink Srl"
+        ]
+      },
+      "notice-title": {
+        "eng": "Italy – Submarine cable – 0000041544 - ELMED - Cables supply and laying for 500 kV HVDC monopolar electrical interconnection between Italy and Tunisia"
+      },
+      "result-value-cur-notice": "EUR",
+      "description-proc": {
+        "ita": "0000041544 - ELMED - Cables supply and laying for 500 kV HVDC monopolar electrical interconnection between Italy and Tunisia",
+        "eng": "0000041544 - ELMED - Cables supply and laying for 500 kV HVDC monopolar electrical interconnection between Italy and Tunisia"
+      }
+    },
+    {
+      "title-proc": {
+        "swe": "Industrimaskiner för utbildningsprojekt"
+      },
+      "notice-type": "can-standard",
+      "publication-number": "867003-2025",
+      "result-value-notice": "10000000",
+      "winner-country": [
+        "SWE",
+        "SWE"
+      ],
+      "winner-size": [
+        "small",
+        "small"
+      ],
+      "procedure-identifier": "14482872-b060-4fc1-8310-38287bae5032",
+      "buyer-country": [
+        "SWE"
+      ],
+      "winner-identifier": [
+        "5560912304",
+        "5562764034"
+      ],
+      "official-language": [
+        "SWE"
+      ],
+      "classification-cpv": [
+        "48900000",
+        "48900000"
+      ],
+      "publication-date": "2025-12-30+01:00",
+      "buyer-name": {
+        "swe": [
+          "Lapplands Kommunalförbund"
+        ]
+      },
+      "links": {
+        "xml": {
+          "MUL": "https://ted.europa.eu/en/notice/867003-2025/xml"
+        },
+        "pdf": {
+          "BUL": "https://ted.europa.eu/bg/notice/867003-2025/pdf",
+          "SPA": "https://ted.europa.eu/es/notice/867003-2025/pdf",
+          "CES": "https://ted.europa.eu/cs/notice/867003-2025/pdf",
+          "DAN": "https://ted.europa.eu/da/notice/867003-2025/pdf",
+          "DEU": "https://ted.europa.eu/de/notice/867003-2025/pdf",
+          "EST": "https://ted.europa.eu/et/notice/867003-2025/pdf",
+          "ELL": "https://ted.europa.eu/el/notice/867003-2025/pdf",
+          "ENG": "https://ted.europa.eu/en/notice/867003-2025/pdf",
+          "FRA": "https://ted.europa.eu/fr/notice/867003-2025/pdf",
+          "GLE": "https://ted.europa.eu/ga/notice/867003-2025/pdf",
+          "HRV": "https://ted.europa.eu/hr/notice/867003-2025/pdf",
+          "ITA": "https://ted.europa.eu/it/notice/867003-2025/pdf",
+          "LAV": "https://ted.europa.eu/lv/notice/867003-2025/pdf",
+          "LIT": "https://ted.europa.eu/lt/notice/867003-2025/pdf",
+          "HUN": "https://ted.europa.eu/hu/notice/867003-2025/pdf",
+          "MLT": "https://ted.europa.eu/mt/notice/867003-2025/pdf",
+          "NLD": "https://ted.europa.eu/nl/notice/867003-2025/pdf",
+          "POL": "https://ted.europa.eu/pl/notice/867003-2025/pdf",
+          "POR": "https://ted.europa.eu/pt/notice/867003-2025/pdf",
+          "RON": "https://ted.europa.eu/ro/notice/867003-2025/pdf",
+          "SLK": "https://ted.europa.eu/sk/notice/867003-2025/pdf",
+          "SLV": "https://ted.europa.eu/sl/notice/867003-2025/pdf",
+          "FIN": "https://ted.europa.eu/fi/notice/867003-2025/pdf",
+          "SWE": "https://ted.europa.eu/sv/notice/867003-2025/pdf"
+        },
+        "pdfs": {
+          "SWE": "https://ted.europa.eu/sv/notice/867003-2025/pdfs"
+        },
+        "html": {
+          "BUL": "https://ted.europa.eu/bg/notice/-/detail/867003-2025",
+          "SPA": "https://ted.europa.eu/es/notice/-/detail/867003-2025",
+          "CES": "https://ted.europa.eu/cs/notice/-/detail/867003-2025",
+          "DAN": "https://ted.europa.eu/da/notice/-/detail/867003-2025",
+          "DEU": "https://ted.europa.eu/de/notice/-/detail/867003-2025",
+          "EST": "https://ted.europa.eu/et/notice/-/detail/867003-2025",
+          "ELL": "https://ted.europa.eu/el/notice/-/detail/867003-2025",
+          "ENG": "https://ted.europa.eu/en/notice/-/detail/867003-2025",
+          "FRA": "https://ted.europa.eu/fr/notice/-/detail/867003-2025",
+          "GLE": "https://ted.europa.eu/ga/notice/-/detail/867003-2025",
+          "HRV": "https://ted.europa.eu/hr/notice/-/detail/867003-2025",
+          "ITA": "https://ted.europa.eu/it/notice/-/detail/867003-2025",
+          "LAV": "https://ted.europa.eu/lv/notice/-/detail/867003-2025",
+          "LIT": "https://ted.europa.eu/lt/notice/-/detail/867003-2025",
+          "HUN": "https://ted.europa.eu/hu/notice/-/detail/867003-2025",
+          "MLT": "https://ted.europa.eu/mt/notice/-/detail/867003-2025",
+          "NLD": "https://ted.europa.eu/nl/notice/-/detail/867003-2025",
+          "POL": "https://ted.europa.eu/pl/notice/-/detail/867003-2025",
+          "POR": "https://ted.europa.eu/pt/notice/-/detail/867003-2025",
+          "RON": "https://ted.europa.eu/ro/notice/-/detail/867003-2025",
+          "SLK": "https://ted.europa.eu/sk/notice/-/detail/867003-2025",
+          "SLV": "https://ted.europa.eu/sl/notice/-/detail/867003-2025",
+          "FIN": "https://ted.europa.eu/fi/notice/-/detail/867003-2025",
+          "SWE": "https://ted.europa.eu/sv/notice/-/detail/867003-2025"
+        },
+        "htmlDirect": {
+          "BUL": "https://ted.europa.eu/bg/notice/867003-2025/html",
+          "SPA": "https://ted.europa.eu/es/notice/867003-2025/html",
+          "CES": "https://ted.europa.eu/cs/notice/867003-2025/html",
+          "DAN": "https://ted.europa.eu/da/notice/867003-2025/html",
+          "DEU": "https://ted.europa.eu/de/notice/867003-2025/html",
+          "EST": "https://ted.europa.eu/et/notice/867003-2025/html",
+          "ELL": "https://ted.europa.eu/el/notice/867003-2025/html",
+          "ENG": "https://ted.europa.eu/en/notice/867003-2025/html",
+          "FRA": "https://ted.europa.eu/fr/notice/867003-2025/html",
+          "GLE": "https://ted.europa.eu/ga/notice/867003-2025/html",
+          "HRV": "https://ted.europa.eu/hr/notice/867003-2025/html",
+          "ITA": "https://ted.europa.eu/it/notice/867003-2025/html",
+          "LAV": "https://ted.europa.eu/lv/notice/867003-2025/html",
+          "LIT": "https://ted.europa.eu/lt/notice/867003-2025/html",
+          "HUN": "https://ted.europa.eu/hu/notice/867003-2025/html",
+          "MLT": "https://ted.europa.eu/mt/notice/867003-2025/html",
+          "NLD": "https://ted.europa.eu/nl/notice/867003-2025/html",
+          "POL": "https://ted.europa.eu/pl/notice/867003-2025/html",
+          "POR": "https://ted.europa.eu/pt/notice/867003-2025/html",
+          "RON": "https://ted.europa.eu/ro/notice/867003-2025/html",
+          "SLK": "https://ted.europa.eu/sk/notice/867003-2025/html",
+          "SLV": "https://ted.europa.eu/sl/notice/867003-2025/html",
+          "FIN": "https://ted.europa.eu/fi/notice/867003-2025/html",
+          "SWE": "https://ted.europa.eu/sv/notice/867003-2025/html"
+        }
+      },
+      "winner-name": {
+        "swe": [
+          "Festo AB"
+        ]
+      },
+      "notice-title": {
+        "eng": "Sweden – Miscellaneous software package and computer systems – Industrimaskiner för utbildningsprojekt"
+      },
+      "result-value-cur-notice": "SEK",
+      "description-proc": {
+        "swe": "Industrimaskiner för utbildningsprojekt"
+      }
+    }
+  ]
+}
