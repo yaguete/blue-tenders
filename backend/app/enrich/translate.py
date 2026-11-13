@@ -31,6 +31,7 @@ def _llm_title(opp: Opportunity) -> None:
         msg = client.messages.create(
             model=settings.classify_model,
             max_tokens=1000,
+            thinking={"type": "disabled"},
             messages=[
                 {
                     "role": "user",

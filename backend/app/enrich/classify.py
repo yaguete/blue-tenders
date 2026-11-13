@@ -88,6 +88,8 @@ def _llm_pick(opp: Opportunity, vertical: Vertical) -> str | None:
         msg = client.messages.create(
             model=settings.classify_model,
             max_tokens=1000,
+            # Haiku 5.5 piensa por defecto y esos tokens salen de max_tokens. Aquí la respuesta es un id.
+            thinking={"type": "disabled"},
             messages=[{"role": "user", "content": json.dumps(prompt)}],
         )
         text = "".join(block.text for block in msg.content if getattr(block, "text", None))
