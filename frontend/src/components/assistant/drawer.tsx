@@ -82,12 +82,13 @@ export function Assistant() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, setOpen]);
 
-  const pill =
+  const askLabel = opportunityId ? t("assistantAskCall") : t("assistantAsk");
+  const documentLabel =
     opportunityId && listed
-      ? `${t("assistantAskCall")} · ${listed === 1 ? t("assistantDocumentOne") : t("assistantDocuments").replace("{count}", String(listed))}`
-      : opportunityId
-        ? t("assistantAskCall")
-        : t("assistantAsk");
+      ? listed === 1
+        ? t("assistantDocumentOne")
+        : t("assistantDocuments").replace("{count}", String(listed))
+      : null;
 
   return (
     <>
@@ -124,15 +125,25 @@ export function Assistant() {
         </div>
       )}
       {!chat.open && (
-        <button
-          ref={pillRef}
-          type="button"
-          className="fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 cursor-pointer items-center gap-2 border border-foreground bg-[oklch(0.94_0_0)] px-4 py-2.5 text-sm text-foreground shadow-lg shadow-foreground/10 transition-transform duration-200 hover:scale-105 motion-reduce:transition-none motion-reduce:hover:scale-100 dark:bg-[oklch(0.28_0_0)] dark:text-white"
-          onClick={() => chat.setOpen(true)}
-        >
-          <MessageCircle className="h-4 w-4" />
-          {pill}
-        </button>
+        <div className="pointer-events-none fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 flex justify-center px-4">
+          <button
+            ref={pillRef}
+            type="button"
+            className="pointer-events-auto flex max-w-full cursor-pointer items-center gap-2 border border-foreground bg-[oklch(0.94_0_0)] px-4 py-2.5 text-sm text-foreground shadow-lg shadow-foreground/10 transition-transform duration-200 hover:scale-105 motion-reduce:transition-none motion-reduce:hover:scale-100 dark:bg-[oklch(0.28_0_0)] dark:text-white"
+            onClick={() => chat.setOpen(true)}
+          >
+            <MessageCircle className="h-4 w-4 shrink-0" />
+            <span className="flex min-w-0 flex-col items-center sm:block">
+              <span className="whitespace-nowrap">{askLabel}</span>
+              {documentLabel ? (
+                <span className="text-xs leading-tight whitespace-nowrap sm:text-sm sm:leading-normal">
+                  <span className="hidden sm:inline"> · </span>
+                  {documentLabel}
+                </span>
+              ) : null}
+            </span>
+          </button>
+        </div>
       )}
     </>
   );
