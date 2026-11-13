@@ -110,7 +110,7 @@ def _from_llm(opp: Opportunity, fallback: Analysis) -> Analysis | None:
         client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
         msg = client.messages.create(
             model=settings.extract_model,
-            max_tokens=1200,
+            max_tokens=4000,
             messages=[{"role": "user", "content": prompt}],
         )
         text = "".join(block.text for block in msg.content if getattr(block, "text", None))
