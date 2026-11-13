@@ -146,7 +146,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         {menuOpen && (
-          <nav id="site-menu" aria-label="Primary" className="relative border-t border-foreground/15 px-4 py-2 sm:hidden">
+          <nav id="site-menu" aria-label="Primary" className="relative px-4 py-2 sm:hidden">
             <NavLinks pathname={pathname} menu onNavigate={() => setMenuOpen(false)} />
           </nav>
         )}
