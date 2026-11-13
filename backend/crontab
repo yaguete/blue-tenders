@@ -11,6 +11,7 @@ CRON_TZ=Europe/Madrid
 # La línea solo se añade si una medición de 90 días encuentra fichas del sector que fts no trae.
 35 7 * * 1-5  /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source doffin
 45 7 * * 1-5  /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source tenderned
+55 7 * * 1-5  /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source aides-territoires
 0  13 * * *    /srv/backend/.venv/bin/python -m app.jobs.scrape
 0  7 * * *    /srv/backend/.venv/bin/python -m app.jobs.alerts --digest daily
 5  7 * * 1    /srv/backend/.venv/bin/python -m app.jobs.alerts --digest weekly

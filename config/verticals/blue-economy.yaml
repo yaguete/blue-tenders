@@ -384,6 +384,13 @@ search_terms:
     offshore-wind: [havvind]
     green-ports: [landstrøm]
     subsea-cables: [sjøkabel]
+  aides-territoires:
+    offshore-wind: ["éolien en mer", "éolien offshore", "éolien flottant"]
+    ocean-energy: [hydrolien, houlomoteur, "énergie houlomotrice", "énergie marémotrice"]
+    offshore-hydrogen: ["hydrogène en mer", "hydrogène offshore", "solaire flottant", "photovoltaïque flottant"]
+    green-ports: ["courant de quai", "alimentation électrique à quai"]
+    fleet-decarbonisation: ["navire électrique", "navire hybride", "décarbonation maritime"]
+    subsea-cables: ["câble sous-marin", "liaison sous-marine", "poste électrique en mer"]
 
 # Umbrales del historial de organizaciones (CORDIS y adjudicaciones de TED).
 # Medidos el 11 nov 2026 contra el volcado de CORDIS y 365 días de TED.

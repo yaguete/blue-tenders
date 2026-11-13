@@ -1,0 +1,89 @@
+{
+  "id": 165655,
+  "slug": "etudes-de-faisabilite-de-projet-de-production-d-electricite-renouvelable-en-outre-mer-et-corse",
+  "url": "/aides/etudes-de-faisabilite-de-projet-de-production-d-electricite-renouvelable-en-outre-mer-et-corse/",
+  "name": "Études de faisabilité de projet de production d'électricité renouvelable en outre-mer et Corse",
+  "name_initial": "Études de faisabilité de projet de production d'électricité renouvelable en outre-mer et Corse",
+  "short_title": null,
+  "financers": [
+    "ADEME"
+  ],
+  "financers_full": [
+    {
+      "id": 22,
+      "name": "ADEME",
+      "logo": "https://aides-territoires-prod-2.s3.fr-par.scw.cloud/aides-territoires-prod/backers/ademe_logo.png"
+    }
+  ],
+  "instructors": [],
+  "instructors_full": [],
+  "programs": [],
+  "description": "<p>Cette aide dédiée à la production d’énergies renouvelables vise la réalisation de projets de production d’électricité à partir des technologies suivantes :<br /></p><ul><li>photovoltaïque en autoconsommation individuelle (ACI) et collective (ACC) ;</li><li>éolien terrestre et en mer ;</li><li>hydrolien fluvial et marin ;</li><li>petite hydroélectricité au fil de l’eau et microhydroélectricité sur conduite d’eau ;</li><li>énergie houlomotrice ;</li><li>énergie thermique des mers ;</li><li>énergie osmotique ;</li><li>station de transfert d’énergie par pompage.</li></ul><p>L’étude de faisabilité, sujette à la présente aide ADEME, concerne <strong>l’évaluation et l’analyse du potentiel d’un projet </strong>(technique, économique, sociale, environnementale, juridique, etc.).</p><p>Elle vise à soutenir le processus décisionnel en révélant de façon objective et rationnelle les forces et les faiblesses du projet, ainsi que les perspectives et les menaces qu’il suppose, tout en précisant les ressources nécessaires pour le mener à bien, et en évaluant, en définitive, les chances de succès.<br /></p>",
+  "eligibility": "<p>Êtes-vous concerné ?</p><p>Cette aide s’adresse aux collectivités, aux associations, aux entreprises (dont développeurs de projets), ainsi qu’aux maîtres d’ouvrage et propriétaires de bâtiments (hors particuliers).</p><p>Quel(les) région(s) ou pays proposent ce dispositif ?</p><p>Corse, Guadeloupe, Guyane, La Réunion, Martinique, Mayotte, Nouvelle-Calédonie, Polynésie française</p><p>Je vérifie mon éligibilité</p><p>Les aides sont octroyées majoritairement via les Directions régionales de l’ADEME. Un contact préalable est conseillé avant toute démarche.</p><p>Pour contacter votre Direction Régionale, cliquez sur « Je contacte l&#039;ADEME » dans la rubrique « Informations utiles » en bas de page. Sélectionnez ensuite « Question sur mon dossier d&#039;aide financière » dans le champ « Votre besoin ».</p><p><a href=\"https://agirpourlatransition.ademe.fr/sites/default/files/Étude%20de%20Faisabilité%20EnR%20électrique%20-%20Conditions%20d%27éligibilité%20et%20de%20financement%20-%202026.pdf\" target=\"_self\">Étude de Faisabilité EnR électrique - Conditions d&#039;éligibilité et de financement - 2026</a></p>",
+  "perimeter_id": 110704,
+  "perimeter": "regions_01_02_03_04_06_94_987_988",
+  "perimeter_code": "695a03457ab50",
+  "perimeter_scale": "Ad-hoc",
+  "region": null,
+  "region_code": null,
+  "mobilization_steps": [
+    "Réflexion / conception",
+    "Mise en œuvre / réalisation",
+    "Usage / valorisation"
+  ],
+  "origin_url": "https://agirpourlatransition.ademe.fr/entreprises/aides-financieres/catalogue/2026/etudes-de-faisabilite-de-projet-de-production-delectricite-renouvelable-en-outre-mer-et-corse",
+  "categories": [
+    "Énergies / Déchets / Transition énergétique"
+  ],
+  "is_call_for_project": false,
+  "application_url": "https://agirpourlatransition.ademe.fr/entreprises/aides-financieres/catalogue/2026/etudes-de-faisabilite-de-projet-de-production-delectricite-renouvelable-en-outre-mer-et-corse?backtosearch=true#collectDocuments",
+  "targeted_audiences": [
+    "Commune",
+    "Intercommunalité / Pays",
+    "Département",
+    "Etablissement public dont services de l'Etat",
+    "Entreprise publique locale (Sem, Spl, SemOp)"
+  ],
+  "aid_types": [
+    "Subvention",
+    "Ingénierie technique"
+  ],
+  "aid_types_full": [
+    {
+      "id": 1,
+      "name": "Subvention",
+      "group": {
+        "id": 1,
+        "name": "Aide financière"
+      }
+    },
+    {
+      "id": 6,
+      "name": "Ingénierie technique",
+      "group": {
+        "id": 2,
+        "name": "Aide en ingénierie"
+      }
+    }
+  ],
+  "is_charged": false,
+  "destinations": [],
+  "start_date": "2026-01-01",
+  "predeposit_date": null,
+  "submission_deadline": "2026-12-31",
+  "subvention_rate_lower_bound": null,
+  "subvention_rate_upper_bound": null,
+  "subvention_comment": null,
+  "loan_amount": null,
+  "recoverable_advance_amount": null,
+  "recurrence": "Ponctuelle",
+  "project_examples": "",
+  "import_data_url": "https://agirpourlatransition.ademe.fr/",
+  "import_data_mention": "Ces données sont mises à disposition par l'ADEME.",
+  "import_share_licence": "openlicence20",
+  "date_created": "2026-01-04T06:05:00+00:00",
+  "date_updated": "2026-11-02T04:08:47+00:00",
+  "project_references": [],
+  "european_aid": null,
+  "is_live": true
+}

@@ -1,3 +1,4 @@
+from app.sources.aides_territoires import AidesTerritoiresSource
 from app.sources.bdns import BdnsSource
 from app.sources.boamp import BoampSource
 from app.sources.boe import BoeSource
@@ -26,6 +27,7 @@ REGISTRY = {
         ContractsFinderSource(),
         BoeSource(),
         BoampSource(),
+        AidesTerritoiresSource(),
         TendernedSource(),
         DoffinSource(),
         *load_scraped_sources(),
