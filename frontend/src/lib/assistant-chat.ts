@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { API_URL } from "@/lib/api";
 
 export type Citation = {
@@ -93,12 +93,23 @@ function load(): Stored {
   }
 }
 
-export function useAssistantChat(opportunityId: string | null) {
+type Archive = {
+  conversationId: string | null;
+  opportunityId: string | null;
+  title: string | null;
+  messages: ChatMessage[];
+};
+
+export function useAssistantChat(opportunityId: string | null, pageTitle: string | null = null) {
   const [open, setOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [boundOpportunity, setBoundOpportunity] = useState<string | null>(null);
+  const [boundTitle, setBoundTitle] = useState<string | null>(null);
+  const [archive, setArchive] = useState<Archive | null>(null);
+  const switched = useRef(false);
+  const hold = useRef(false);
   const [uploads, setUploads] = useState<DocChip[]>([]);
   const [documents, setDocuments] = useState<DocChip[]>([]);
   const [busy, setBusy] = useState(false);
@@ -163,12 +174,15 @@ export function useAssistantChat(opportunityId: string | null) {
   }, [open, opportunityId, refreshDocuments]);
 
   const reset = useCallback(() => {
+    hold.current = false;
+    setArchive(null);
     setMessages([]);
     setConversationId(null);
     setBoundOpportunity(opportunityId);
+    setBoundTitle(pageTitle);
     setUploads([]);
     setError(null);
-  }, [opportunityId]);
+  }, [opportunityId, pageTitle]);
 
   const send = useCallback(
     async (text: string) => {
@@ -180,7 +194,10 @@ export function useAssistantChat(opportunityId: string | null) {
       const reply: ChatMessage = { id: crypto.randomUUID(), role: "assistant", text: "", citations: [] };
       setMessages((current) => [...current, mine, reply]);
       setBusy(true);
-      if (!boundOpportunity) setBoundOpportunity(opportunityId);
+      if (!boundOpportunity) {
+        setBoundOpportunity(opportunityId);
+        setBoundTitle(pageTitle);
+      }
       try {
         const response = await fetch(`${API_URL}/assistant`, {
           method: "POST",
@@ -269,8 +286,44 @@ export function useAssistantChat(opportunityId: string | null) {
         setBusy(false);
       }
     },
-    [boundOpportunity, busy, conversationId, opportunityId, uploads],
+    [boundOpportunity, busy, conversationId, opportunityId, pageTitle, uploads],
   );
+
+  const mismatch = Boolean(boundOpportunity && opportunityId && boundOpportunity !== opportunityId);
+
+  useEffect(() => {
+    if (!open) {
+      switched.current = false;
+      hold.current = false;
+      return;
+    }
+    if (!mismatch || switched.current || hold.current) return;
+    switched.current = true;
+    setArchive({
+      conversationId,
+      opportunityId: boundOpportunity,
+      title: boundTitle,
+      messages,
+    });
+    setMessages([]);
+    setConversationId(null);
+    setBoundOpportunity(opportunityId);
+    setBoundTitle(pageTitle);
+    setUploads([]);
+    setError(null);
+  }, [open, mismatch, conversationId, boundOpportunity, boundTitle, messages, opportunityId, pageTitle]);
+
+  const restore = useCallback(() => {
+    setArchive((current) => {
+      if (!current) return null;
+      hold.current = true;
+      setMessages(current.messages);
+      setConversationId(current.conversationId);
+      setBoundOpportunity(current.opportunityId);
+      setBoundTitle(current.title);
+      return null;
+    });
+  }, []);
 
   const addUpload = useCallback(
     async (file: File) => {
@@ -304,7 +357,7 @@ export function useAssistantChat(opportunityId: string | null) {
     setUploads((current) => current.filter((item) => item.id !== id));
   }, []);
 
-  const mismatch = Boolean(boundOpportunity && opportunityId && boundOpportunity !== opportunityId);
+  const subject = boundOpportunity ? boundTitle || pageTitle : opportunityId ? pageTitle : null;
 
   return {
     open,
@@ -321,6 +374,9 @@ export function useAssistantChat(opportunityId: string | null) {
     addUpload,
     removeUpload,
     mismatch,
+    subject,
+    previousTitle: archive?.title || null,
+    restore,
     refreshDocuments,
   };
 }

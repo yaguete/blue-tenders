@@ -28,22 +28,27 @@ export function Assistant() {
   const pathname = usePathname();
   const params = useSearchParams();
   const opportunityId = pathname?.match(/^\/opportunities\/([^/]+)/)?.[1] ?? null;
-  const chat = useAssistantChat(opportunityId);
+  const [listed, setListed] = useState(0);
+  const [pageTitle, setPageTitle] = useState<string | null>(null);
+  const chat = useAssistantChat(opportunityId, pageTitle);
   const { open, setOpen } = chat;
   const pillRef = useRef<HTMLButtonElement>(null);
-  const [listed, setListed] = useState(0);
   const returnFocus = useCallback(() => pillRef.current?.focus(), []);
 
   useEffect(() => {
     if (!opportunityId) {
       setListed(0);
+      setPageTitle(null);
       return;
     }
     let cancel = false;
     fetch(`${API_URL}/opportunities/${opportunityId}`)
       .then((response) => (response.ok ? response.json() : null))
       .then((body) => {
-        if (!cancel && body) setListed((body.documents || []).filter(shown).length);
+        if (!cancel && body) {
+          setListed((body.documents || []).filter(shown).length);
+          setPageTitle(body.title_en || body.title || null);
+        }
       })
       .catch(() => {
         if (!cancel) setListed(0);
@@ -104,11 +109,14 @@ export function Assistant() {
             error={chat.error}
             draft={chat.draft}
             mismatch={chat.mismatch}
+            subject={chat.subject}
+            previousTitle={chat.previousTitle}
             suggestions={suggestionsFor(pathname)}
             onDraft={chat.setDraft}
             onSend={chat.send}
             onClose={() => chat.setOpen(false)}
             onReset={chat.reset}
+            onRestore={chat.restore}
             onUpload={chat.addUpload}
             onRemove={chat.removeUpload}
             returnFocus={returnFocus}

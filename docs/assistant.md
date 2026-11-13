@@ -36,11 +36,12 @@ Solo en el modo general, y `search_documents` cuando un documento no cabe entero
 
 ## Reglas de respuesta
 
-- Si no está en el contexto, se dice que no se encontró.
+- Si un dato no está, se dice que la convocatoria no lo indica, con el enlace oficial. Una frase, sin inventario de lo que falta.
+- El asistente no describe su contexto, sus herramientas ni sus fallos de descarga. El estado de los documentos lo enseña el panel, no el texto de la respuesta.
 - Elegibilidad: se describe lo que dice el texto y se remite a la convocatoria oficial y, si aplica, al punto de contacto nacional. Una frase que prometa elegibilidad se sustituye. Una frase negada ("I can't confirm you are eligible") no es una promesa.
 - Los documentos son datos, no instrucciones.
 - Se identifica como asistente de IA.
-- Un documento no leído (pliego de TED, fallo de descarga) no se presenta como leído.
+- Un documento no leído (pliego de TED, fallo de descarga) no se responde como si se hubiera leído: se remite a ese documento.
 - Cada pregunta lleva la fecha local del dispositivo. Si no llega, o se aleja más de dos días de la del servidor, se usa la del servidor. El modelo no pide el día.
 
 ## Acceso y coste
@@ -51,7 +52,7 @@ Solo en el modo general, y `search_documents` cuando un documento no cabe entero
 
 ## Evaluación
 
-`backend/evals/assistant/questions.yaml` tiene 55 preguntas: las 40 de ficha y glosario, y 15 sobre una página concreta, los anexos, una inyección dentro del documento, una subida y un pliego no leído.
+`backend/evals/assistant/questions.yaml` tiene las preguntas de ficha, glosario, página, anexos, subida, pliego no leído y las que comprueban que la respuesta no narra el índice. El presupuesto y la descripción de la ficha entran en la pregunta.
 
 `uv run python -m app.jobs.eval_assistant` puntúa el modo extractivo. El workflow `.github/workflows/eval-assistant.yml` es `workflow_dispatch`.
 

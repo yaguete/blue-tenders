@@ -1,7 +1,7 @@
 from datetime import UTC
 
 from app.models.opportunity import Fact, FactOrigin, Opportunity
-from app.quality.text import plain_text
+from app.quality.text import is_meta, is_thin, plain_text
 from app.quality.validate import extractions_agree, quote_in_text, validate_opportunity, verify_fact
 
 
@@ -62,3 +62,21 @@ def test_plain_text_keeps_content_and_plain_numbers():
     assert plain_text("snake_case_field stays") == "snake_case_field stays"
     assert plain_text(None) == ""
     assert plain_text("  spaced   out  ") == "spaced out"
+
+
+def test_meta_summaries_are_caught_and_a_real_topic_summary_is_not():
+    assert is_meta("The provided text is only a title, so this summary cannot cover them")
+    assert is_meta("The text is only a title for a call concerning cables")
+    assert is_meta("The provided text is a single short fragment and no other details are given")
+    assert is_meta("The notice does not specify the budget")
+    assert is_meta("This summary cannot cover scope")
+    assert not is_meta("Project results are expected to improve wave energy devices.")
+
+
+def test_a_title_and_boilerplate_are_thin_sources():
+    assert is_thin("Only a title", "Only a title")
+    assert is_thin("Conforme especificaciones PCAP", "Supply of a lidar")
+    assert not is_thin(
+        "Project results are expected to improve the reliability, availability and survivability of wave energy devices operating at sea.",
+        "Wave energy",
+    )

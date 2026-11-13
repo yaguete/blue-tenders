@@ -6,6 +6,7 @@
 import json
 from datetime import date, datetime
 
+from app.assistant.prompt import call_facts
 from app.catalog import funder_profiles, read_yaml_list
 from app.models.opportunity import Opportunity
 from app.search.query import SearchFilters, search_opportunities
@@ -74,28 +75,45 @@ def search_calls(items: list[Opportunity], question: str, before: str | None = N
     for item in found["items"]:
         if day and item.deadline_at and item.deadline_at.date() >= day:
             continue
-        rows.append(
-            {
-                "id": item.id,
-                "title": item.title_en or item.title,
-                "deadline_at": item.deadline_at.isoformat() if item.deadline_at else None,
-                "url": item.url,
-                "status": item.status.value if item.status else None,
-            }
-        )
+        row = {
+            "id": item.id,
+            "title": item.title_en or item.title,
+            "deadline_at": item.deadline_at.isoformat() if item.deadline_at else None,
+            "url": item.url,
+            "status": item.status.value if item.status else None,
+            "page": f"/opportunities/{item.id}",
+        }
+        summary = _summary(item)
+        if summary:
+            row["summary"] = summary
+        if item.budget_total_eur is not None:
+            row["budget_eur"] = item.budget_total_eur
+        if item.buyer and item.buyer.name:
+            row["buyer"] = item.buyer.name
+        elif item.programme_id:
+            row["programme_id"] = item.programme_id
+        rows.append(row)
     return rows
+
+
+def _summary(item: Opportunity) -> str | None:
+    text = " ".join((item.description or "").split())
+    title = " ".join((item.title or "").split())
+    title_en = " ".join((item.title_en or "").split())
+    if not text or text.casefold() in {title.casefold(), title_en.casefold()}:
+        text = " ".join((item.summary_en or "").split())
+    if not text or text.casefold() in {title.casefold(), title_en.casefold()}:
+        return None
+    if len(text) <= 400:
+        return text
+    cut = text[:399].rsplit(" ", 1)[0]
+    return (cut or text[:399]) + "…"
 
 
 def opportunity_brief(item: Opportunity | None) -> dict:
     if item is None or not item.searchable():
         return {"error": "not a call in the index"}
-    return {
-        "id": item.id,
-        "title": item.title_en or item.title,
-        "summary": item.summary_en or item.description,
-        "deadline_at": item.deadline_at.isoformat() if item.deadline_at else None,
-        "url": item.url,
-    }
+    return {"id": item.id, "about": call_facts(item, text_limit=3000)}
 
 
 def knowledge(question: str) -> list[dict]:

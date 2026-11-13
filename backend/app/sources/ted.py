@@ -51,6 +51,7 @@ _NOTICE_TEXT_FIELDS = [
     "deadline-receipt-tender-date-lot",
     "estimated-value-proc",
     "official-language",
+    "title-lot",
 ]
 _NOTICE_LABELS = {
     "notice-title": "Title",
@@ -63,6 +64,7 @@ _NOTICE_LABELS = {
     "place-of-performance": "Place of performance",
     "deadline-receipt-tender-date-lot": "Deadline",
     "estimated-value-proc": "Estimated value",
+    "title-lot": "Lots",
 }
 _NOTICE_ID = re.compile(r"ted\.europa\.eu/.+?/notice/(?:-/(?:detail/)?)?(\d+-\d{4})")
 PAGE_SIZE = 250  # máximo que acepta la API

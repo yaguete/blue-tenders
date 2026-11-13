@@ -9,6 +9,8 @@
 
 Un paso posterior no pisa un plazo del paso anterior. Si el texto y el campo estructurado dicen cosas distintas, el caso entra en `review_queue` con motivo `conflict`.
 
+El resumen (`summary_en` y el bloque Summary) describe la oportunidad, no el texto de origen. No dice que el texto es corto ni qué datos faltan. Si la fuente no da para más que el título, o es una frase de relleno (`config/knowledge/boilerplate.yaml`), no hay resumen. `app.jobs.fix_summaries` rehace los que ya se guardaron así, sin tocar el hash.
+
 ## Validadores
 
 En `backend/app/quality/validate.py`:

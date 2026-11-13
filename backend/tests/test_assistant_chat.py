@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.assistant.budget import BUDGET_CHARS, cost_usd, pack
+from app.assistant.chat import iter_events, prepare_turn
 from app.assistant.client import DEEPSEEK_BASE, assistant_client
 from app.assistant.documents import section_pages
 from app.assistant.engine import (
@@ -14,7 +15,14 @@ from app.assistant.engine import (
     refuses_eligibility_promise,
     sentence_promises,
 )
-from app.assistant.prompt import build_request, for_provider, today_note
+from app.assistant.prompt import (
+    SYSTEM_CALL,
+    SYSTEM_GENERAL,
+    build_request,
+    call_record,
+    for_provider,
+    today_note,
+)
 from app.assistant.tools import search_calls
 from app.main import app
 from app.models.opportunity import Document, Opportunity, OpportunityKind, OpportunityType
@@ -106,7 +114,7 @@ def test_unread_tender_documents_are_named_as_unread():
         "What do the technical specifications require?",
         link_only=[{"name": "Tender documents", "document_url": "https://buyer.example/pliego"}],
     )
-    assert "not read" in answer.text.lower()
+    assert "tender documents" in answer.text.lower()
     assert "buyer.example" in answer.text
 
 
@@ -474,3 +482,69 @@ def test_uploads_have_limits_a_purge_and_leave_with_the_account(client):
     )
     assert api.delete("/me", headers={"X-Demo-User": "ada"}).status_code == 200
     assert store.uploads_for_user("ada") == []
+
+
+def test_prompts_do_not_narrate_the_machinery():
+    for text in (SYSTEM_CALL, SYSTEM_GENERAL):
+        lowered = text.lower()
+        assert "call record" not in lowered
+        assert "name the documents" not in lowered
+        assert "say what you found" not in lowered
+
+
+def test_general_request_has_no_fake_call():
+    request = build_request(None, "What closes soon?", [], [], [])
+    blob = " ".join(block.get("text") or "" for block in request["messages"][0]["content"])
+    assert "General question" not in blob
+    assert "About this call" not in blob
+
+
+def test_call_record_includes_the_budget_and_skips_a_repeated_title():
+    item = _opp(
+        budget_total_eur=2_100_000,
+        description="AENAON implements two competitive calls for testing services at sea.",
+    )
+    text = call_record(item)
+    assert "2,100,000" in text
+    assert "not stated" not in text
+    assert "Call record" not in text
+    thin = _opp(title="Only a title", description="Only a title")
+    assert "Text:" not in call_record(thin)
+
+
+def test_search_calls_add_a_summary_only_when_the_text_is_not_the_title():
+    rich = _opp(
+        id="rich",
+        external_id="rich",
+        description="Offshore floating wind demonstration with a long expected outcome for the devices.",
+    )
+    thin = _opp(id="thin", external_id="thin", title="Only a title", description="Only a title")
+    rows = {row["id"]: row for row in search_calls([rich, thin], "")}
+    assert "summary" in rows["rich"]
+    assert "summary" not in rows["thin"]
+
+
+def test_a_fetching_document_is_not_prefixed_on_the_answer(tmp_path, monkeypatch):
+    monkeypatch.setattr("app.assistant.chat.has_model", lambda: False)
+    monkeypatch.setattr(settings, "anthropic_api_key", "")
+    monkeypatch.setattr(settings, "deepseek_api_key", "")
+    store = FileStore(tmp_path / "opportunities.json")
+    item = _opp()
+    store.upsert_opportunities([item])
+    store.save_document_file(
+        {
+            "id": "fetching-1",
+            "opportunity_id": item.id,
+            "document_url": "https://example.test/notice.pdf",
+            "name": "Notice (PDF)",
+            "kind": "notice",
+            "access": "fetch",
+            "status": "fetching",
+            "pages": 0,
+            "fetched_at": datetime.now(UTC).isoformat(),
+            "version": "",
+        }
+    )
+    turn = prepare_turn(store, "ada", {"message": "What is the deadline?", "opportunity_id": item.id})
+    text = "".join(event.get("text") or "" for event in iter_events(store, turn) if event["type"] == "delta")
+    assert "I have not read yet" not in text

@@ -106,6 +106,8 @@
   "assistantPaused": "The assistant is paused for today.",
   "assistantError": "The assistant isn't answering. The call and its documents are still on this page.",
   "assistantSwitch": "Ask about this call instead",
+  "assistantAllCalls": "All calls",
+  "assistantPrevious": "Previous conversation: {title}",
   "assistantUpload": "Add document",
   "assistantUploadNotice": "Files you add are sent to our AI provider (outside the EEA) to answer you and kept for 24 hours.",
   "assistantRemove": "Remove",

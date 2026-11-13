@@ -87,7 +87,7 @@ def _extractive(opp, question: str, pages: list[dict], uploads: list[dict], link
     if link_only and any(phrase in q for phrase in _UNREAD):
         urls = ", ".join(row.get("document_url") or row.get("url") or "" for row in link_only)
         return Answer(
-            text=f"I have not read the tender documents. They are on the buyer's site: {urls}".strip(),
+            text=f"The details are in the tender documents: {urls}".strip(),
             citations=[{"url": row.get("document_url"), "label": row.get("name"), "page": None} for row in link_only],
             model="extractive",
         )
@@ -99,9 +99,8 @@ def _extractive(opp, question: str, pages: list[dict], uploads: list[dict], link
             text = f"{extra} This is not a determination of eligibility. Check the official call: {opp.url}".strip()
             return Answer(text=guard_text(text), citations=_cite(ranked[:1], opp), model="extractive")
         if not ranked or any(phrase in q for phrase in _NOT_IN_CALL):
-            names = ", ".join({page.get("name") or "the call document" for page in corpus_pages}) or "the call record"
             return Answer(
-                text=f"I couldn't find this in the call documents. I could read: {names}",
+                text=f"The call text doesn't cover this. Official call: {opp.url}",
                 citations=[{"url": opp.url, "label": "Official call"}],
                 model="extractive",
             )
@@ -131,6 +130,17 @@ def _cite(pages: list[dict], opp: Opportunity) -> list[dict]:
 def _record_only(opp: Opportunity, question: str) -> Answer:
     q = question.lower()
     citations = [{"url": opp.url, "label": "Official call"}]
+    if "budget" in q and opp.budget_total_eur is not None:
+        amount = float(opp.budget_total_eur)
+        shown = f"{int(amount):,}" if amount.is_integer() else f"{amount:,.2f}"
+        return Answer(text=f"The budget is EUR {shown}. Official call: {opp.url}", citations=citations, model="extractive")
+    submitted = next((fact.value for fact in opp.facts if fact.field == "proposals_submitted"), None)
+    if submitted is not None and any(word in q for word in ("proposal", "submitted", "applied")):
+        return Answer(
+            text=f"{submitted} proposals were submitted. Official call: {opp.url}",
+            citations=citations,
+            model="extractive",
+        )
     blocks = list(opp.analysis.blocks) if opp.analysis else []
     corpus = " ".join(
         [opp.summary_en or "", opp.description or ""] + [block.text for block in blocks]
@@ -149,7 +159,7 @@ def _record_only(opp: Opportunity, question: str) -> Answer:
         alias_hit or any(word in corpus for word in re.findall(r"[a-z]{5,}", q))
     ):
         return Answer(
-            text=f"I couldn't find this in the indexed sources. The official call is {opp.url}",
+            text=f"The call doesn't say. Official call: {opp.url}",
             citations=citations,
             model="extractive",
         )
@@ -188,7 +198,11 @@ def answer_general(question: str, items: list[Opportunity]) -> Answer:
             ranked.append((score, item))
     ranked.sort(key=lambda pair: pair[0], reverse=True)
     if not ranked:
-        return Answer(text="I couldn't find this in the indexed sources.", citations=[], model="extractive")
+        return Answer(
+            text="I didn't find a call about that. Try other words or the search filters.",
+            citations=[],
+            model="extractive",
+        )
     lines, citations = [], []
     for _, item in ranked[:3]:
         lines.append(f"{item.title_en or item.title} — {item.url}")

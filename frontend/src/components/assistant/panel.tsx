@@ -16,11 +16,14 @@ export function Panel({
   error,
   draft,
   mismatch,
+  subject,
+  previousTitle,
   suggestions,
   onDraft,
   onSend,
   onClose,
   onReset,
+  onRestore,
   onUpload,
   onRemove,
   returnFocus,
@@ -32,11 +35,14 @@ export function Panel({
   error: string | null;
   draft: string;
   mismatch: boolean;
+  subject: string | null;
+  previousTitle: string | null;
   suggestions: string[];
   onDraft: (value: string) => void;
   onSend: (text: string) => void;
   onClose: () => void;
   onReset: () => void;
+  onRestore: () => void;
   onUpload: (file: File) => void;
   onRemove: (id: string) => void;
   returnFocus: () => void;
@@ -103,9 +109,12 @@ export function Panel({
       className="flex h-full min-h-0 flex-col border border-border bg-background motion-reduce:transition-none"
     >
       <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-        <p id="assistant-title" className="text-sm font-medium">
-          {t("assistantTitle")}
-        </p>
+        <div className="min-w-0">
+          <p id="assistant-title" className="text-sm font-medium">
+            {t("assistantTitle")}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">{subject || t("assistantAllCalls")}</p>
+        </div>
         <div className="flex items-center gap-2">
           {messages.length > 0 && (
             <button type="button" className="cursor-pointer px-2 text-xs text-muted-foreground hover:underline" onClick={onReset}>
@@ -122,6 +131,13 @@ export function Panel({
           </button>
         </div>
       </header>
+      {previousTitle && (
+        <p className="px-4 pt-2 text-xs text-muted-foreground">
+          <button type="button" className="underline" onClick={onRestore}>
+            {t("assistantPrevious").replace("{title}", previousTitle)}
+          </button>
+        </p>
+      )}
       {mismatch && (
         <p className="px-4 pb-2 text-xs text-muted-foreground">
           <button type="button" className="underline" onClick={onReset}>

@@ -1,4 +1,4 @@
-# 40 preguntas. expect: cites | no_promise | not_found | in_glossary
+# Preguntas. expect: cites | no_promise | not_found | in_glossary | unread | page | tender_docs | budget | proposals
 - id: q01
   mode: opportunity
   question: What is the deadline of the pre-proposal?
@@ -309,3 +309,57 @@
       heading: Scope
       name: Topic text
       text: Offshore floating wind demonstration.
+- id: q56
+  mode: opportunity
+  question: What do the technical specifications require for the scope?
+  expect: tender_docs
+  link_only:
+    - name: Tender documents
+      document_url: https://buyer.example/pliego
+  opportunity:
+    title: Technical assistance for PLEMCAT
+    description: Technical assistance for PLEMCAT
+    url: https://ted.europa.eu/example
+- id: q57
+  mode: general
+  question: Blorp qwxj?
+  expect: not_found
+- id: q58
+  mode: opportunity
+  question: What is the budget?
+  expect: budget
+  opportunity:
+    title: AENAON Open Call 1
+    description: AENAON implements two competitive open calls for uptake and testing.
+    url: https://example.test/aenaon
+    budget_total_eur: 2100000
+    language: en
+- id: q59
+  mode: opportunity
+  question: How many proposals were submitted?
+  expect: proposals
+  opportunity:
+    title: Wave energy devices
+    description: Development of innovative power take-off and control systems for wave energy devices with a full expected outcome.
+    url: https://example.test/wave
+    status: closed
+    facts:
+      - field: proposals_submitted
+        value: 15
+        origin: source
+        confidence: 0.8
+- id: q60
+  mode: document
+  question: What is the deadline while a notice is still being read?
+  expect: cites
+  pages:
+    - page: 1
+      heading: Deadline
+      text: The deadline is 5 September 2026.
+- id: q61
+  mode: unread
+  question: What do the tender documents say about the lots?
+  expect: unread
+  link_only:
+    - name: Tender documents
+      document_url: https://buyer.example/lots

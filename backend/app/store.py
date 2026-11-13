@@ -171,6 +171,17 @@ class FileStore(AssistantRecords):
         self.save(data)
         return len(items)
 
+    def save_analysis(self, item: Opportunity) -> None:
+        """Solo el resumen. El hash no cambia, así que el upsert normal conservaría el análisis viejo."""
+        data = self.load()
+        row = item.model_dump(mode="json")
+        for current in data["opportunities"]:
+            if current.get("id") == item.id:
+                current["summary_en"] = row.get("summary_en")
+                current["analysis"] = row.get("analysis")
+                break
+        self.save(data)
+
     def get(self, opportunity_id: str) -> Opportunity | None:
         for item in self.opportunities():
             if item.id == opportunity_id:
@@ -480,6 +491,13 @@ class SupabaseStore(AssistantRecords):
         if history:
             self.client.table("field_history").insert(history).execute()
         return len(rows)
+
+    def save_analysis(self, item: Opportunity) -> None:
+        """Solo el resumen. El hash no cambia, así que el upsert normal conservaría el análisis viejo."""
+        row = item.model_dump(mode="json")
+        self.client.table("opportunities").update(
+            {"summary_en": row.get("summary_en"), "analysis": row.get("analysis")}
+        ).eq("id", item.id).execute()
 
     def get(self, opportunity_id: str) -> Opportunity | None:
         response = (

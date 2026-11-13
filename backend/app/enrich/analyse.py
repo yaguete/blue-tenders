@@ -9,15 +9,22 @@ import json
 from datetime import UTC, datetime
 
 from app.models.opportunity import Analysis, AnalysisBlock, Citation, Opportunity
-from app.quality.text import plain_text
+from app.quality.text import adds_detail, is_meta, is_thin, plain_text
 from app.quality.validate import quote_in_text
 
 
 def analyse(opp: Opportunity) -> Opportunity:
     local = _from_fields(opp)
-    remote = _from_llm(opp, local)
+    remote = None if is_thin(opp.description, opp.title) else _from_llm(opp, local)
+    remote = _without_meta(remote, local)
     opp.analysis = remote or local
-    if opp.analysis and opp.analysis.summary and not opp.summary_en:
+    if (
+        opp.analysis
+        and opp.analysis.summary
+        and not opp.summary_en
+        and not is_meta(opp.analysis.summary)
+        and (opp.language in (None, "en") or not is_thin(opp.description, opp.title))
+    ):
         opp.summary_en = opp.analysis.summary
     if opp.assessment is None and opp.analysis and opp.analysis.summary:
         from app.models.opportunity import Assessment
@@ -26,9 +33,30 @@ def analyse(opp: Opportunity) -> Opportunity:
     return opp
 
 
+def _without_meta(remote: Analysis | None, local: Analysis) -> Analysis | None:
+    if remote is None:
+        return None
+    if is_meta(remote.summary):
+        remote.summary = None
+    remote.blocks = [block for block in remote.blocks if not is_meta(block.text)]
+    if not remote.summary and not remote.blocks:
+        return None
+    if not remote.summary and local.summary and not is_meta(local.summary):
+        remote.summary = local.summary
+    return remote
+
+
 def _from_fields(opp: Opportunity) -> Analysis:
-    source = opp.summary_en or opp.description or opp.title
-    summary = plain_text(" ".join((source or "").split()))
+    description = opp.description or ""
+    if is_thin(description, opp.title) and not adds_detail(description, opp.title):
+        source = ""
+    elif opp.summary_en and not is_meta(opp.summary_en):
+        source = opp.summary_en
+    elif adds_detail(description, opp.title):
+        source = description
+    else:
+        source = ""
+    summary = plain_text(" ".join(source.split()))
     if len(summary) > 480:
         summary = summary[:477].rsplit(" ", 1)[0] + "…"
     blocks: list[AnalysisBlock] = []
@@ -99,8 +127,14 @@ def _from_llm(opp: Opportunity, fallback: Analysis) -> Analysis | None:
         return None
     corpus = (opp.summary_en or "") + "\n" + (opp.description or "")
     prompt = (
-        "Summarise this funding call in English using only the text below. "
+        "Describe this funding opportunity in English for a catalogue. "
         "Return JSON {summary, blocks:[{heading, text, quote}]}. "
+        "summary is one or two sentences, at most 300 characters, in the third person and the present tense. "
+        "Describe the opportunity. Do not mention the text, the notice, the document, what was provided, "
+        "or this summary, and do not say what information is missing. "
+        "If the text says no more than the title, return an empty summary. "
+        'Good: "Supply and installation of a scanning LiDAR to assess offshore wind potential in La Réunion." '
+        'Bad: "The provided text is only a title, so this summary cannot cover scope or budget." '
         "quote must be an exact excerpt. If you cannot quote it, omit the block. "
         "Do not say the reader is eligible.\n\n"
         + corpus[:12000]

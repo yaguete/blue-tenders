@@ -98,16 +98,6 @@ def iter_events(store, turn: dict) -> Iterator[dict]:
     answer.text = guard_text(answer.text)
     if not answer.text:
         answer = Answer(text=ELIGIBILITY_LINE, citations=answer.citations, model=answer.model, usage=answer.usage)
-    pending = []
-    if item is not None:
-        pending = [
-            row.get("name") or "document"
-            for row in store.document_files_for(item.id)
-            if row.get("status") in {"fetching", "failed"}
-        ]
-    if pending and "still loading" not in answer.text and "could not read" not in answer.text:
-        names = ", ".join(pending)
-        answer.text = f"I have not read yet: {names}. {answer.text}"
     _remember(store, turn, answer, int((time.monotonic() - started) * 1000))
     yield from _emit(answer, turn["conversation_id"])
 
@@ -178,7 +168,13 @@ def _documents(client, turn: dict, attached, links) -> Answer:
         names = ", ".join(f"{row.get('name')} ({row.get('document_url')})" for row in links)
         request["messages"][0]["content"].insert(
             -1,
-            {"type": "text", "text": f"Not read, link only: {names}. Say so if the user asks about them."},
+            {
+                "type": "text",
+                "text": (
+                    f"Linked only, not in your context: {names}. "
+                    "If the user asks about their content, say it is in those documents and give the link."
+                ),
+            },
         )
     citations = []
     text, final = _stream_documents(client, request)
@@ -220,7 +216,7 @@ def _read_stream(client, request: dict, tools):
 def _tools(client, store, turn, attached, searchable) -> Answer:
     specs = tool_specs(include_documents=bool(searchable))
     request = build_request(
-        turn["item"] or _bare(turn["question"]),
+        turn["item"],
         turn["question"],
         attached,
         turn["history"],
@@ -257,23 +253,10 @@ def _tools(client, store, turn, attached, searchable) -> Answer:
         )
     text = "".join(block.text for block in final.content if getattr(block, "text", None)).strip()
     return Answer(
-        text=text or "I couldn't find this in the indexed sources.",
+        text=text or "I didn't find a call about that. Try other words or the search filters.",
         citations=[],
         model=settings.assistant_answer_model,
         usage=_usage(getattr(final, "usage", None)),
-    )
-
-
-def _bare(question: str):
-    from app.models.opportunity import Opportunity
-
-    return Opportunity(
-        id="general",
-        source_id="assistant",
-        external_id="general",
-        url="",
-        title="General question",
-        description=question,
     )
 
 
