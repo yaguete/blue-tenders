@@ -7,10 +7,11 @@ Duración 45 min. Grabar solo si la persona lo acepta. Si no, notas.
 "Estoy montando un buscador de financiación para proyectos de economía azul, sobre todo energía en el mar. No vendo nada. Quiero ver cómo buscáis hoy, antes de cerrar la pantalla."
 
 1. Contad la última vez que buscasteis dinero o un socio para un proyecto. ¿Dónde entrasteis? ¿Qué desechasteis y por qué?
-2. ¿Quién decide si os presentáis? ¿Cuánto tardáis en saber si una call vale la pena?
-3. ¿Habéis armado un consorcio? ¿De dónde salieron los otros?
+2. Pensad en la última call a la que os presentasteis. ¿Cuánto antes supisteis que existía? ¿Qué hicisteis en esos días? Anotar días, no la impresión.
+3. ¿Quién decide si os presentáis? ¿Cuánto tardáis en saber si una call vale la pena?
+4. ¿Habéis armado un consorcio? ¿De dónde salieron los otros?
 
-No corregir. No enseñar el producto hasta el punto 4.
+No corregir. No enseñar el producto hasta las cartas.
 
 ## Cartas
 

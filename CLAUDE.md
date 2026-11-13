@@ -43,7 +43,7 @@ Un plazo o un requisito de elegibilidad inventado le cuesta una convocatoria al 
 - Sigue prohibido inventar: una frase como «un mes desde la publicación» no se convierte en fecha, y un campo que no está en la página se queda vacío.
 - Orden de verdad: campo estructurado de API, HTML oficial con selector, regla de programa, extracción con LLM, vacío.
 - El LLM no pisa un plazo estructurado. Si chocan, el caso va a `review_queue`.
-- Lo generado se marca `generated`. Lo copiado del documento, `extracted`. Las páginas vigiladas que hoy solo dejan un borrador pasan a publicar con estas mismas reglas.
+- Lo generado se marca `generated`. Lo copiado del documento, `extracted`. Una página vigilada publica sola cuando cambia el texto, con estas mismas reglas: URL, día en que se vio y cita. Sin plazo inventado.
 
 ## LLM
 

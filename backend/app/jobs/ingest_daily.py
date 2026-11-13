@@ -1,6 +1,6 @@
 """Una fuente por ejecución. La marca de agua cubre el hueco si el día anterior falló.
 
-`watched` no entra: esas páginas tienen su propio trabajo y no se publican solas.
+`watched` no entra aquí: el job `app.jobs.watch` publica esas fichas.
 """
 
 import argparse
@@ -57,7 +57,7 @@ def _default_execute(source: str, since: date, vertical, store=None):
 
 def run_one(source: str, days: int | None = None, *, today: date | None = None, execute=None, store=None) -> int:
     if source == "watched":
-        print("[watched] no se ingiere desde aquí")
+        print("[watched] lo publica app.jobs.watch")
         return 0
     today = today or date.today()
     store = store or get_store()

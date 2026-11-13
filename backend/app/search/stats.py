@@ -29,6 +29,7 @@ def platform_stats(items: list[Opportunity], freshness: dict, today: date | None
     return {
         "open": counts.get("open", 0),
         "closing_soon": counts.get("closing_soon", 0),
+        "upcoming": counts.get("upcoming", 0),
         "closed": counts.get("closed", 0),
         "sources": len(checked),
         "checked_at": max(stamps) if stamps else None,

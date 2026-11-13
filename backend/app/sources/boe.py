@@ -11,7 +11,14 @@ import httpx
 
 from app.keywords import keyword_words, mentions
 from app.keywords import tokens as text_tokens
-from app.models.opportunity import NoticeKind, Opportunity, OpportunityType
+from app.models.opportunity import (
+    Document,
+    Fact,
+    FactOrigin,
+    NoticeKind,
+    Opportunity,
+    OpportunityType,
+)
 from app.sources.base import Source
 from app.vertical import Vertical
 
@@ -25,6 +32,18 @@ def _rows(value) -> list[dict]:
     if isinstance(value, dict):
         return [value]
     return []
+
+
+def pdf_url(raw: dict) -> str | None:
+    """El sumario trae el PDF en `url_pdf.texto`. A veces el campo ya es la URL."""
+    value = raw.get("url_pdf")
+    if isinstance(value, str) and value.startswith("http"):
+        return value
+    if isinstance(value, dict):
+        text = value.get("texto")
+        if isinstance(text, str) and text.startswith("http"):
+            return text
+    return None
 
 
 def items(payload: dict) -> list[dict]:
@@ -70,6 +89,17 @@ class BoeSource(Source):
             raise ValueError("disposición del BOE sin identificador o sin título")
         url = raw.get("url_html") or f"https://www.boe.es/diario_boe/txt.php?id={ident}"
         published = str(raw.get("published_at") or "")[:10]
+        pdf = pdf_url(raw)
+        documents = [Document(url=pdf, name="Notice (PDF)", kind="notice", access="fetch")] if pdf else []
+        facts = [
+            Fact(
+                field="notice_pdf",
+                value=pdf,
+                origin=FactOrigin.source,
+                confidence=0.95,
+                document_url=pdf,
+            )
+        ] if pdf else []
         return Opportunity(
             id=Opportunity.make_id(self.id, ident),
             source_id=self.id,
@@ -82,5 +112,7 @@ class BoeSource(Source):
             country="ES",
             language="es",
             published_at=date.fromisoformat(published) if published else None,
+            documents=documents,
+            facts=facts,
             raw=raw,
         )

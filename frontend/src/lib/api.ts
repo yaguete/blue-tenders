@@ -6,10 +6,12 @@ export type Card = {
   title_en: string | null;
   summary_en: string | null;
   kind: string | null;
+  notice?: string | null;
   status: string | null;
   programme_id: string | null;
   country: string | null;
   deadline_at: string | null;
+  published_at?: string | null;
   budget_total_eur: number | null;
   budget_amount?: number | null;
   budget_currency?: string | null;
@@ -26,6 +28,7 @@ export type Card = {
 export type Stats = {
   open: number;
   closing_soon: number;
+  upcoming: number;
   closed: number;
   sources: number;
   checked_at: string | null;

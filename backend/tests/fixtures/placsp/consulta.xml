@@ -1,0 +1,107 @@
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:cbc="urn:dgpe:names:draft:codice:schema:xsd:CommonBasicComponents-2" xmlns:cac="urn:dgpe:names:draft:codice:schema:xsd:CommonAggregateComponents-2" xmlns:cac-place-ext="urn:dgpe:names:draft:codice-place-ext:schema:xsd:CommonAggregateComponents-2" xmlns:cbc-place-ext="urn:dgpe:names:draft:codice-place-ext:schema:xsd:CommonBasicComponents-2">
+        <id>https://contrataciondelsectorpublico.gob.es/sindicacion/CPM_SectorPublico/20900766</id>
+        <link href="https://contrataciondelestado.es/wps/poc?uri=deeplink:detalle_licitacion&amp;idEvl=G%2FAowvsxIXTi0Kd8%2Brcp6w%3D%3D&amp;isConsPre=1"/>
+        <summary type="text">Id consulta: CP/14672/2026; Órgano de Contratación: Consejería del Área de Hacienda y Contratación del Cabildo Insular de Lanzarote y La Graciosa; Estado: PUB</summary>
+        <title>Contratación de la cesión del derecho de uso y de mantenimiento de una Plataforma de Accesibilidad y Usabilidad Digital, destinada a garantizar el cumplimiento del Real Decreto 1112/2018, de 7 de septiembre</title>
+        <updated>2026-11-12T14:52:12.951+01:00</updated>
+        <cac-place-ext:PreliminaryMarketConsultationStatus>
+            <cbc:PreliminaryMarketConsultationID>CP/14672/2026</cbc:PreliminaryMarketConsultationID>
+            <cbc-place-ext:PreliminaryMarketConsultationStatusCode languageID="es" listURI="http://contrataciondelestado.es/codice/cl/2.09/PreliminaryMarketConsultationStatusCode-2.09.gc">PUB</cbc-place-ext:PreliminaryMarketConsultationStatusCode>
+            <cbc:ConditionTypeCode languageID="es" listURI="http://contrataciondelestado.es/codice/cl/2.09/PreliminaryMarketConsultationTypeCode-2.09.gc">A</cbc:ConditionTypeCode>
+            <cbc:ConditionsText>Los cuestionarios cumplimentados deberán remitirse a la dirección de correo electrónico organodecontratacion@cabildodelanzarote.com </cbc:ConditionsText>
+            <cbc:PlannedDate>2026-11-13</cbc:PlannedDate>
+            <cbc:LimitDate>2026-12-30</cbc:LimitDate>
+            <cbc:ConsultationName>Contratación de la cesión del derecho de uso y de mantenimiento de una Plataforma de Accesibilidad y Usabilidad Digital, destinada a garantizar el cumplimiento del Real Decreto 1112/2018, de 7 de septiembre</cbc:ConsultationName>
+            <cac-place-ext:LocatedContractingParty>
+                <cbc:ContractingPartyTypeCode listURI="http://contrataciondelestado.es/codice/cl/2.10/ContractingAuthorityCode-2.10.gc">3</cbc:ContractingPartyTypeCode>
+                <cbc:ActivityCode listURI="http://contrataciondelestado.es/codice/cl/2.10/ContractingAuthorityActivityCode-2.10.gc">1</cbc:ActivityCode>
+                <cbc:BuyerProfileURIID>https://contrataciondelestado.es/wps/poc?uri=deeplink:perfilContratante&amp;idBp=EthoM%2Fp7NLkaF6cS8TCh%2FA%3D%3D</cbc:BuyerProfileURIID>
+                <cac:Party>
+                    <cac:PartyIdentification>
+                        <cbc:ID schemeName="DIR3">L03350007</cbc:ID>
+                    </cac:PartyIdentification>
+                    <cac:PartyIdentification>
+                        <cbc:ID schemeName="NIF">P3500002E</cbc:ID>
+                    </cac:PartyIdentification>
+                    <cac:PartyIdentification>
+                        <cbc:ID schemeName="ID_PLATAFORMA">31772850221045</cbc:ID>
+                    </cac:PartyIdentification>
+                    <cac:PartyName>
+                        <cbc:Name>Consejería del Área de Hacienda y Contratación del Cabildo Insular de Lanzarote y La Graciosa</cbc:Name>
+                    </cac:PartyName>
+                    <cac:PostalAddress>
+                        <cbc:CityName>ARRECIFE</cbc:CityName>
+                        <cbc:PostalZone>35500</cbc:PostalZone>
+                        <cac:AddressLine>
+                            <cbc:Line>AVDA. FRED OLSEN S/N</cbc:Line>
+                        </cac:AddressLine>
+                        <cac:Country>
+                            <cbc:IdentificationCode listURI="http://contrataciondelestado.es/codice/cl/2.08/CountryIdentificationCode-2.08.gc">ES</cbc:IdentificationCode>
+                            <cbc:Name>España</cbc:Name>
+                        </cac:Country>
+                    </cac:PostalAddress>
+                    <cac:Contact>
+                        <cbc:Name>Consejería del Área de Hacienda y Contratación del Cabildo Insular de Lanzarote y La Graciosa</cbc:Name>
+                        <cbc:Telephone>928598500</cbc:Telephone>
+                        <cbc:ElectronicMail>organodecontratacion@cabildodelanzarote.com</cbc:ElectronicMail>
+                    </cac:Contact>
+                </cac:Party>
+                <cac-place-ext:ParentLocatedParty>
+                    <cac:PartyName>
+                        <cbc:Name>Cabildo Insular de Lanzarote y La Graciosa</cbc:Name>
+                    </cac:PartyName>
+                    <cac-place-ext:ParentLocatedParty>
+                        <cac:PartyName>
+                            <cbc:Name>Las Palmas</cbc:Name>
+                        </cac:PartyName>
+                        <cac-place-ext:ParentLocatedParty>
+                            <cac:PartyName>
+<cbc:Name>Canarias</cbc:Name>
+                            </cac:PartyName>
+                            <cac-place-ext:ParentLocatedParty>
+<cac:PartyName>
+    <cbc:Name>ENTIDADES LOCALES</cbc:Name>
+</cac:PartyName>
+<cac-place-ext:ParentLocatedParty>
+    <cac:PartyName>
+        <cbc:Name>Sector Público</cbc:Name>
+    </cac:PartyName>
+</cac-place-ext:ParentLocatedParty>
+                            </cac-place-ext:ParentLocatedParty>
+                        </cac-place-ext:ParentLocatedParty>
+                    </cac-place-ext:ParentLocatedParty>
+                </cac-place-ext:ParentLocatedParty>
+            </cac-place-ext:LocatedContractingParty>
+            <cac:ProcurementProject>
+                <cbc:Name>Suministro cesión del derecho de uso y de mantenimiento de una Plataforma de Accesibilidad y Usabilidad Digital y asistencia integral en materia de accesibilidad para el Cabildo Insular de Lanzarote y La Graciosa</cbc:Name>
+                <cbc:TypeCode listURI="http://contrataciondelestado.es/codice/cl/2.08/ContractCode-2.08.gc">1</cbc:TypeCode>
+            </cac:ProcurementProject>
+            <cac:TenderingProcess>
+                <cbc:ProcedureCode listURI="https://contrataciondelestado.es/codice/cl/2.07/SyndicationTenderingProcessCode-2.07.gc">1</cbc:ProcedureCode>
+            </cac:TenderingProcess>
+            <cac-place-ext:ValidNoticeInfo>
+                <cbc-place-ext:NoticeTypeCode listURI="http://contrataciondelestado.es/codice/cl/2.11/TenderingNoticeTypeCode-2.11.gc">DOC_CON</cbc-place-ext:NoticeTypeCode>
+                <cac-place-ext:AdditionalPublicationStatus>
+                    <cbc-place-ext:PublicationMediaName>Perfil del Contratante</cbc-place-ext:PublicationMediaName>
+                    <cac-place-ext:AdditionalPublicationDocumentReference>
+                        <cbc:IssueDate>2026-11-12</cbc:IssueDate>
+                    </cac-place-ext:AdditionalPublicationDocumentReference>
+                </cac-place-ext:AdditionalPublicationStatus>
+            </cac-place-ext:ValidNoticeInfo>
+            <cac-place-ext:GeneralDocument>
+                <cac-place-ext:GeneralDocumentDocumentReference>
+                    <cbc:ID>2026-b7d6dcda-319c-4cc0-843e-7193e8ae59ed</cbc:ID>
+                    <cbc:DocumentTypeCode listURI="http://contrataciondelestado.es/codice/cl/2.09/PreliminaryMarketConsultationDocument-2.09.gc">2</cbc:DocumentTypeCode>
+                    <cac:Attachment>
+                        <cac:ExternalReference>
+                            <cbc:URI>https://contrataciondelestado.es/wps/wcm/connect/PLACE_es/Site/area/docAccCmpnt?srv=cmpnt&amp;cmpntname=GetDocumentsById&amp;source=library&amp;DocumentIdParam=2026-b7d6dcda-319c-4cc0-843e-7193e8ae59ed</cbc:URI>
+                            <cbc:FileName>Documento de información detallada de la consulta</cbc:FileName>
+                        </cac:ExternalReference>
+                    </cac:Attachment>
+                </cac-place-ext:GeneralDocumentDocumentReference>
+            </cac-place-ext:GeneralDocument>
+            <cac:Language>
+                <cbc:ID>es</cbc:ID>
+            </cac:Language>
+        </cac-place-ext:PreliminaryMarketConsultationStatus>
+    </entry>

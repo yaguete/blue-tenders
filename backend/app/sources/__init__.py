@@ -7,7 +7,7 @@ from app.sources.curated import CuratedSource
 from app.sources.doffin import DoffinSource
 from app.sources.eu_ft import EuFtSource
 from app.sources.fts import FtsSource
-from app.sources.placsp import PlacspRegionalSource, PlacspSource
+from app.sources.placsp import PlacspConsultasSource, PlacspRegionalSource, PlacspSource
 from app.sources.scraped import load_scraped_sources
 from app.sources.ted import TedSource
 from app.sources.tenderned import TendernedSource
@@ -20,6 +20,7 @@ REGISTRY = {
         EuFtSource(),
         PlacspSource(),
         PlacspRegionalSource(),
+        PlacspConsultasSource(),
         BdnsSource(),
         CuratedSource(),
         WatchedSource(),

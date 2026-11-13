@@ -229,6 +229,7 @@ class Opportunity(BaseModel):
         winners = ""
         award = ""
         call_title = ""
+        notice_pdf = ""
         for fact in self.facts:
             if fact.field == "winners":
                 winners = json.dumps(fact.value, ensure_ascii=False, sort_keys=True)
@@ -236,6 +237,8 @@ class Opportunity(BaseModel):
                 award = str(fact.value)
             elif fact.field == "call_title":
                 call_title = str(fact.value)
+            elif fact.field == "notice_pdf":
+                notice_pdf = str(fact.value or "")
         parts = [
             self.title,
             self.description or "",
@@ -254,6 +257,8 @@ class Opportunity(BaseModel):
             parts.append(award)
         if call_title:
             parts.append(call_title)
+        if notice_pdf:
+            parts.append(notice_pdf)
         return hashlib.sha256("\n".join(parts).encode()).hexdigest()[:16]
 
     @staticmethod

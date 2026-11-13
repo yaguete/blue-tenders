@@ -28,6 +28,7 @@ const OPEN = "deadline=open&deadline=closing_soon";
 export function useLandingData() {
   const [stats, setStats] = useState<LoadState<Stats>>(loading);
   const [calls, setCalls] = useState<LoadState<LandingSearch>>(loading);
+  const [upcoming, setUpcoming] = useState<LoadState<LandingSearch>>(loading);
   const [vertical, setVertical] = useState<LoadState<LandingVertical>>(loading);
   const [sectorCounts, setSectorCounts] = useState<Record<string, LoadState<number>>>({});
 
@@ -46,6 +47,7 @@ export function useLandingData() {
 
     load<Stats>("/opportunities/stats", setStats);
     load<LandingSearch>(`/opportunities?${OPEN}&limit=100`, setCalls);
+    load<LandingSearch>("/opportunities?deadline=upcoming&limit=6", setUpcoming);
     load<LandingVertical>("/vertical", setVertical);
 
     return () => {
@@ -74,5 +76,5 @@ export function useLandingData() {
     };
   }, [vertical]);
 
-  return { stats, calls, vertical, sectorCounts };
+  return { stats, calls, upcoming, vertical, sectorCounts };
 }

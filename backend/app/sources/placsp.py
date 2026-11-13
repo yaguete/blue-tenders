@@ -10,7 +10,15 @@ from datetime import date, datetime
 
 import httpx
 
-from app.models.opportunity import Budget, Buyer, Document, Opportunity, OpportunityType
+from app.models.opportunity import (
+    Budget,
+    Buyer,
+    Document,
+    Fact,
+    FactOrigin,
+    Opportunity,
+    OpportunityType,
+)
 from app.sources.base import Source
 from app.vertical import Vertical
 
@@ -23,6 +31,12 @@ FEED_URL = (
 REGIONAL_FEED_URL = (
     "https://contrataciondelsectorpublico.gob.es/sindicacion/sindicacion_1044/"
     "licitacionesPerfilesContratanteCompleto3.atom"
+)
+# Consultas preliminares. El fichero es la actualización del día anterior
+# (datos abiertos de Hacienda, sindicacion_1403). Comprobado el 13 nov 2026.
+CONSULTAS_FEED_URL = (
+    "https://contrataciondelsectorpublico.gob.es/sindicacion/sindicacion_1403/"
+    "CPM_SectorPublico.atom"
 )
 _CLOSED = {"ADJ", "RES", "ANUL"}
 
@@ -239,3 +253,103 @@ class PlacspRegionalSource(PlacspSource):
 
     def __init__(self):
         super().__init__(REGIONAL_FEED_URL)
+
+
+class PlacspConsultasSource(PlacspSource):
+    """Consulta previa al pliego. No es la licitación: el plazo de respuesta no es un cierre."""
+
+    id = "placsp-consultas"
+    # Un día sin consultas del sector no es una fuente caída. Un HTML sí rompe el feed.
+    volume_alert = False
+
+    def __init__(self):
+        super().__init__(CONSULTAS_FEED_URL)
+
+    def to_tender(self, raw: dict) -> Opportunity:
+        entry = ET.fromstring(raw["xml"])
+        external = _find_text(entry, "PreliminaryMarketConsultationID") or _find_text(entry, "id")
+        title = _find_text(entry, "title") or _find_text(entry, "ConsultationName")
+        if not title:
+            for node in entry.iter():
+                if _local(node.tag) == "ProcurementProject":
+                    title = _find_text(node, "Name")
+                    break
+        if not external or not title:
+            raise ValueError("consulta de PLACSP sin identificador o sin título")
+        link = None
+        for node in entry.iter():
+            if _local(node.tag) == "link" and node.attrib.get("href"):
+                link = node.attrib["href"]
+                break
+        published = _parse_dt(_find_text(entry, "updated")) or _parse_dt(_find_text(entry, "IssueDate"))
+        if published is None:
+            raise ValueError(f"consulta de PLACSP {external} sin fecha")
+        party = None
+        for node in entry.iter():
+            if _local(node.tag) == "PartyName":
+                party = _find_text(node, "Name")
+                break
+        cpv = [
+            node.text.strip()
+            for node in entry.iter()
+            if _local(node.tag) == "ItemClassificationCode" and node.text and node.text.strip()
+        ]
+        nuts = _find_text(entry, "CountrySubentityCode")
+        return Opportunity(
+            id=Opportunity.make_id(self.id, external),
+            source_id=self.id,
+            external_id=external,
+            url=link or "https://contrataciondelestado.es/",
+            type=OpportunityType.prior_information_notice,
+            title=title,
+            description=_find_text(entry, "summary"),
+            buyer=Buyer(name=party, country="ES") if party else None,
+            country="ES",
+            region=nuts,
+            nuts=[nuts] if nuts else [],
+            cpv=list(dict.fromkeys(cpv)),
+            language="es",
+            published_at=published.date(),
+            documents=_consultation_documents(entry, link),
+            facts=_response_fact(entry, link),
+            raw={"external_id": external},
+        )
+
+
+def _response_fact(entry: ET.Element, link: str | None) -> list[Fact]:
+    """El límite para contestar va citado. No se convierte en plazo de la licitación."""
+    limit = _find_text(entry, "LimitDate")
+    if not limit:
+        return []
+    parsed = _parse_dt(limit)
+    return [
+        Fact(
+            field="response_by",
+            value=parsed.date().isoformat() if parsed else None,
+            origin=FactOrigin.source,
+            confidence=0.9,
+            quote=limit,
+            document_url=link,
+        )
+    ]
+
+
+def _consultation_documents(entry: ET.Element, link: str | None) -> list[Document]:
+    documents = [Document(url=link, name="Notice", kind="html", access="fetch")] if link else []
+    seen = {link} if link else set()
+    for node in entry.iter():
+        if _local(node.tag) != "GeneralDocument":
+            continue
+        uri = _find_text(node, "URI")
+        if not uri or not uri.startswith("http") or uri in seen:
+            continue
+        seen.add(uri)
+        documents.append(
+            Document(
+                url=uri,
+                name=_find_text(node, "FileName") or "Consultation document",
+                kind="html",
+                access="fetch",
+            )
+        )
+    return documents

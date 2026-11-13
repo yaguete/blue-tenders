@@ -130,3 +130,33 @@ def test_real_fixtures_keep_currency_deadline_and_skip_awards():
     assert notice.published_at is not None
     assert notice.published_at.isoformat() == "2026-11-13"
     assert notice.deadline_at is None
+    assert notice.documents == []
+
+
+def test_boe_attaches_the_pdf_the_summary_already_gives():
+    notice = BoeSource().to_tender(
+        {
+            "identificador": "BOE-B-2026-28317",
+            "titulo": "Anuncio de la Autoridad Portuaria de Santander",
+            "published_at": "2026-09-01",
+            "url_html": "https://www.boe.es/diario_boe/txt.php?id=BOE-B-2026-28317",
+            "url_pdf": {
+                "texto": "https://www.boe.es/boe/dias/2026/09/01/pdfs/BOE-B-2026-28317.pdf",
+            },
+        }
+    )
+    assert notice.url.endswith("BOE-B-2026-28317")
+    assert notice.deadline_at is None
+    assert [doc.url for doc in notice.documents] == [
+        "https://www.boe.es/boe/dias/2026/09/01/pdfs/BOE-B-2026-28317.pdf"
+    ]
+    assert notice.documents[0].name == "Notice (PDF)"
+    assert notice.documents[0].access == "fetch"
+    plain = BoeSource().to_tender(
+        {
+            "identificador": "BOE-B-2026-1",
+            "titulo": "Bases",
+            "url_pdf": "https://www.boe.es/boe/dias/2026/11/13/pdfs/BOE-B-2026-1.pdf",
+        }
+    )
+    assert plain.documents[0].url.endswith("BOE-B-2026-1.pdf")

@@ -19,7 +19,15 @@ def test_stats_is_not_captured_by_the_detail_route():
         response = client.get("/opportunities/stats")
     assert response.status_code == 200
     body = response.json()
-    assert set(body) == {"open", "closing_soon", "closed", "sources", "checked_at", "open_budget_eur"}
+    assert set(body) == {
+        "open",
+        "closing_soon",
+        "upcoming",
+        "closed",
+        "sources",
+        "checked_at",
+        "open_budget_eur",
+    }
 
 
 def test_negative_offset_is_rejected():

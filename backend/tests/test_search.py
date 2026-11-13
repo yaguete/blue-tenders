@@ -71,6 +71,43 @@ def test_deadline_buckets_are_exclusive_and_closing_soon_is_sixty_days():
     assert {item.id for item in only_open["items"]} == {"later"}
 
 
+def test_a_prior_information_notice_is_upcoming_until_it_closes():
+    from app.models.opportunity import OpportunityType
+
+    today = __import__("datetime").date(2026, 11, 11)
+    fresh = _item(
+        "fresh",
+        type=OpportunityType.prior_information_notice,
+        deadline_at=None,
+        published_at=today,
+    )
+    # Un PIN con plazo cercano sigue siendo «upcoming»: el plazo no lo mete en la lista de trabajo.
+    soon = _item(
+        "soon-pin",
+        type=OpportunityType.prior_information_notice,
+        deadline_at=datetime(2026, 12, 1, tzinfo=UTC),
+        published_at=today,
+    )
+    stale = _item(
+        "stale",
+        type=OpportunityType.prior_information_notice,
+        deadline_at=None,
+        published_at=__import__("datetime").date(2026, 1, 1),
+    )
+    found = search_opportunities([fresh, soon, stale], SearchFilters(), today=today)
+    assert found["counts"]["deadline"] == {"upcoming": 2, "closed": 1}
+    work = search_opportunities(
+        [fresh, soon, stale],
+        SearchFilters(deadline=["open", "closing_soon"]),
+        today=today,
+    )
+    assert work["total"] == 0
+    upcoming = search_opportunities([fresh, soon, stale], SearchFilters(deadline=["upcoming"]), today=today)
+    assert {item.id for item in upcoming["items"]} == {"fresh", "soon-pin"}
+    closed = search_opportunities([fresh, soon, stale], SearchFilters(deadline=["closed"]), today=today)
+    assert {item.id for item in closed["items"]} == {"stale"}
+
+
 def test_kind_counts_ignore_the_selected_tab_and_follow_the_query():
     from app.models.opportunity import OpportunityKind
 
@@ -217,6 +254,7 @@ def test_platform_stats_follow_the_unfiltered_deadline_counts():
     assert stats["closed"] == counts["closed"]
     assert stats["open"] == 1
     assert stats["closing_soon"] == 1
+    assert stats["upcoming"] == 0
     assert stats["closed"] == 1
     assert stats["open_budget_eur"] == 150
     assert stats["sources"] == 0

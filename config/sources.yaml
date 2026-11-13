@@ -5,6 +5,8 @@ priority:
   eu-ft: 90
   placsp: 80
   placsp-regional: 70
+  # Por debajo de la licitación: si algún día comparten clave, se queda el pliego.
+  placsp-consultas: 30
   fts: 60
   contracts-finder: 50
   boamp: 40

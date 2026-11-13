@@ -30,6 +30,20 @@ export function shownBudget(
   return "—";
 }
 
+/** A calendar date, not a timestamp. `2026-11-13` stays that day in any timezone. */
+export function calendarDay(iso: string | null | undefined): string {
+  if (!iso) return "No date published";
+  const [year, month, day] = iso.slice(0, 10).split("-").map(Number);
+  if (!year || !month || !day) return "No date published";
+  return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(year, month - 1, day));
+}
+
+export function openOrUpcomingCount(stats: { open: number; closing_soon: number; upcoming?: number }): number {
+  return stats.open + stats.closing_soon + (stats.upcoming ?? 0);
+}
+
+export const openOrUpcomingHref = "/search?deadline=open&deadline=closing_soon&deadline=upcoming";
+
 export function when(iso: string | null | undefined): string {
   if (!iso) return "No date published";
   const date = new Date(iso);

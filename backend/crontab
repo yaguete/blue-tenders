@@ -2,6 +2,8 @@ CRON_TZ=Europe/Madrid
 15 6 * * *    /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source eu-ft
 30 6 * * *    /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source bdns
 45 6,13 * * * /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source placsp
+# Consultas preliminares: el ATOM es la actualización del día anterior, no hace falta dos pasadas.
+5  8 * * *    /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source placsp-consultas
 # placsp-regional (sindicacion_1044) exige certificado de cliente: responde HTML con un 200.
 # Lo autonómico ya llega por el feed estatal.
 15 7 * * *    /srv/backend/.venv/bin/python -m app.jobs.ingest_daily --source boamp

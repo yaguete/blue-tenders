@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { LoadingState } from "@/components/loading-state";
 import { api } from "@/lib/api";
 import { addCompare, comparePath, useCompareIds } from "@/lib/compare";
-import { money, shortTitle, shownBudget, when } from "@/lib/format";
+import { calendarDay, money, shortTitle, shownBudget, when } from "@/lib/format";
 import { t } from "@/lib/i18n";
 
 type Block = {
@@ -56,9 +56,11 @@ type Detail = {
   title_en: string | null;
   url: string;
   kind: string;
+  notice?: string | null;
   programme_id: string | null;
   funder_id: string | null;
   deadline_at: string | null;
+  published_at?: string | null;
   budget_total_eur: number | null;
   budget: { amount: number | null; currency: string | null; amount_eur: number | null } | null;
   amount_min_eur: number | null;
@@ -199,6 +201,11 @@ export default function OpportunityPage() {
             value={item.consortium_required == null ? "Not specified" : item.consortium_required ? "Required" : "Not required"}
           />
         </dl>
+        {item.notice === "pin" && item.published_at && (
+          <p className="text-sm text-muted-foreground">
+            {t("seenOn").replace("{date}", calendarDay(item.published_at))}
+          </p>
+        )}
         <ScrapedFrom item={item} />
         {closed && topic && (
           <div className="space-y-1 text-sm text-muted-foreground">
@@ -213,10 +220,10 @@ export default function OpportunityPage() {
             rel="noreferrer"
             className="inline-flex bg-primary px-3 py-1.5 text-sm text-primary-foreground"
           >
-            {topic ? t("openOnPortal") : t("officialCall")}
+            {item.notice === "pin" ? t("officialPage") : topic ? t("openOnPortal") : t("officialCall")}
           </a>
           <p className="text-sm">
-            {!closed && (
+            {!closed && item.deadline_at && (
               <>
                 <a
                   className="underline"

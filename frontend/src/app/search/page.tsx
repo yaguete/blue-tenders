@@ -8,7 +8,7 @@ import { LoadingState } from "@/components/loading-state";
 import { StatBox } from "@/components/stat-box";
 import { api, type Card, type SearchResponse, type Stats } from "@/lib/api";
 import { comparePath, toggleCompare, useCompareIds } from "@/lib/compare";
-import { checkedAt, daysLeft, metaLine, moneyCompact, shortTitle, shownBudget, when } from "@/lib/format";
+import { calendarDay, checkedAt, daysLeft, metaLine, moneyCompact, openOrUpcomingCount, shortTitle, shownBudget, when } from "@/lib/format";
 import { t } from "@/lib/i18n";
 
 const KINDS = [
@@ -25,12 +25,14 @@ const KIND_IDS = KINDS.map(([id]) => id);
 const DEADLINES = [
   ["open", "deadlineOpen"],
   ["closing_soon", "deadlineClosing"],
+  ["upcoming", "deadlineUpcoming"],
   ["closed", "deadlineClosed"],
 ] as const;
 
 const DEADLINE_IDS = DEADLINES.map(([id]) => id);
 const PAGE = 20;
-const DEFAULT_DEADLINES = DEADLINE_IDS.filter((id) => id !== "closed");
+// Upcoming stays out of the working list until someone asks for it.
+const DEFAULT_DEADLINES = ["open", "closing_soon"];
 const NONE = "none";
 
 function readList(params: URLSearchParams, key: string, all: readonly string[]): string[] {
@@ -291,10 +293,15 @@ function SearchScreen() {
         <div className="mb-6 grid grid-cols-3 gap-3">
           <StatBox
             label={t("statsOpen")}
-            value={stats ? figures.format(stats.open + stats.closing_soon) : "—"}
+            value={stats ? figures.format(openOrUpcomingCount(stats)) : "—"}
             note={openNote || undefined}
             onClick={() =>
-              commit({ q: "", selected: [...KIND_IDS], countries: null, deadlines: [...DEFAULT_DEADLINES] })
+              commit({
+                q: "",
+                selected: [...KIND_IDS],
+                countries: null,
+                deadlines: stats && stats.upcoming > 0 ? [...DEFAULT_DEADLINES, "upcoming"] : [...DEFAULT_DEADLINES],
+              })
             }
           />
           <StatBox
@@ -556,14 +563,21 @@ function SelectedToCompare({ ids }: { ids: string[] }) {
 }
 
 function Row({ item, picking, onOpen }: { item: Card; picking: boolean; onOpen: (id: string) => void }) {
-  const left = daysLeft(item.deadline_at);
+  const upcoming = item.notice === "pin";
+  const left = upcoming ? null : daysLeft(item.deadline_at);
   const urgent = left?.startsWith("Closes in") && Number(left.replace(/\D/g, "")) < 15;
   const title = shortTitle(item.title, item.title_en);
+  const whenLabel = item.deadline_at
+    ? when(item.deadline_at)
+    : upcoming
+      ? calendarDay(item.published_at)
+      : when(item.deadline_at);
   return (
     <li data-result-id={item.id} className="grid grid-cols-[1fr_auto] gap-4 py-4">
       <div>
         <p className="font-mono text-xs text-muted-foreground">
           {metaLine(item.kind, item.programme_id || item.country)}
+          {upcoming && <span className="ml-2 text-status-open">{t("deadlineUpcoming")}</span>}
         </p>
         {picking ? (
           <button
@@ -584,9 +598,9 @@ function Row({ item, picking, onOpen }: { item: Card; picking: boolean; onOpen: 
       </div>
       <div className="text-right">
         <p className={`tabular font-mono text-sm ${urgent ? "text-status-urgent" : "text-status-open"}`}>
-          {left || item.status}
+          {upcoming ? t("deadlineUpcoming") : left || item.status}
         </p>
-        <p className="tabular font-mono text-xs text-muted-foreground">{when(item.deadline_at)}</p>
+        <p className="tabular font-mono text-xs text-muted-foreground">{whenLabel}</p>
         <p className="tabular mt-2 font-mono text-sm">
           {shownBudget(item.budget_total_eur || item.amount_max_eur, item.budget_amount, item.budget_currency)}
         </p>

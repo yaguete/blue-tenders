@@ -5,7 +5,7 @@ import { landingCount } from "@/components/landing/format";
 import type { LoadState } from "@/components/landing/use-landing-data";
 import type { Stats } from "@/lib/api";
 import { clearCompare } from "@/lib/compare";
-import { checkedAt } from "@/lib/format";
+import { checkedAt, openOrUpcomingCount, openOrUpcomingHref } from "@/lib/format";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -22,8 +22,8 @@ export function StatsStrip({ stats }: { stats: LoadState<Stats> }) {
   const cells: Cell[] = [
     {
       label: t("statsOpen"),
-      value: data ? landingCount(data.open + data.closing_soon) : "—",
-      href: "/search",
+      value: data ? landingCount(openOrUpcomingCount(data)) : "—",
+      href: openOrUpcomingHref,
     },
     {
       label: t("landingStatClosing"),

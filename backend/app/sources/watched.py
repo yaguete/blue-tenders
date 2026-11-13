@@ -1,4 +1,8 @@
-"""Páginas vigiladas. Se compara el texto, no los bytes, y un cambio no se publica."""
+"""Páginas vigiladas. Un cambio de texto publica una ficha de información previa.
+
+Se compara el texto visible, no los bytes. No hay plazo: la fecha es el día en que
+se vio el cambio, y la cita es el texto nuevo.
+"""
 
 import hashlib
 import re
@@ -9,18 +13,27 @@ import httpx
 import yaml
 from selectolax.lexbor import LexborHTMLParser as HTMLParser
 
-from app.models.opportunity import Opportunity
+from app.enrich.watched_draft import change_quote
+from app.models.opportunity import Document, Fact, FactOrigin, Opportunity, OpportunityType
 from app.settings import settings
-from app.sources.base import Source
+from app.sources.base import SOURCE_SUBSECTORS, Source
 from app.vertical import Vertical
 
 _SPACE = re.compile(r"\s+")
+# El diff se hace contra el texto guardado. 20 000 se comía el final de una
+# página de noticias y esas palabras parecían nuevas en el siguiente cambio.
+_SNAPSHOT_BODY = 60_000
 
 
 def visible_text(html: str, selector: str | None) -> str:
+    """El selector puede casar con varias noticias. Se leen todas, no solo la primera."""
     tree = HTMLParser(html)
-    node = tree.css_first(selector) if selector else tree.body
-    raw = node.text(separator=" ", strip=True) if node is not None else tree.text(separator=" ")
+    if selector:
+        nodes = tree.css(selector)
+        raw = " ".join(node.text(separator=" ", strip=True) for node in nodes)
+    else:
+        node = tree.body
+        raw = node.text(separator=" ", strip=True) if node is not None else tree.text(separator=" ")
     return _SPACE.sub(" ", raw or "").strip()
 
 
@@ -34,6 +47,8 @@ def changed(previous: str | None, current: str) -> bool:
 class WatchedSource(Source):
     id = "watched"
     kind = "html"
+    # Un lunes sin cambios es lo normal, no una fuente caída.
+    volume_alert = False
 
     def fetch(self, since: date, vertical: Vertical) -> Iterable[dict]:
         del since, vertical
@@ -57,17 +72,66 @@ class WatchedSource(Source):
                 previous = store.snapshot(page["id"])
                 if previous and previous.get("text_hash") == digest:
                     continue
-                store.save_snapshot(page["id"], digest, text[:20000], datetime.now(UTC).isoformat())
-                if previous:
-                    yield {
-                        "id": page["id"],
-                        "url": page["url"],
-                        "title": page.get("title") or page["url"],
-                        "text": text,
-                        "previous": previous.get("body") or "",
-                    }
+                store.save_snapshot(page["id"], digest, text[:_SNAPSHOT_BODY], datetime.now(UTC).isoformat())
+                if not previous:
+                    continue
+                payload = {
+                    "id": page["id"],
+                    "url": page["url"],
+                    "title": page.get("title") or page["url"],
+                    "text": text,
+                    "previous": previous.get("body") or "",
+                    "detected_at": datetime.now(UTC).isoformat(),
+                }
+                if page.get("language"):
+                    payload["language"] = str(page["language"])
+                if page.get("country"):
+                    payload["country"] = str(page["country"])
+                subsectors = [str(item) for item in page.get("subsectors") or []]
+                if subsectors:
+                    payload[SOURCE_SUBSECTORS] = subsectors
+                yield payload
 
     def to_tender(self, raw: dict) -> Opportunity:
-        raise ValueError(
-            f"página vigilada {raw.get('id')} pendiente de revisión; no se indexa"
+        page_id = str(raw.get("id") or "").strip()
+        url = str(raw.get("url") or "").strip()
+        title = str(raw.get("title") or "").strip()
+        detected = _detected(raw.get("detected_at"))
+        if not page_id or not url or not title or detected is None:
+            raise ValueError(f"página vigilada {page_id or url or '?'} sin url, título o fecha")
+        quote = change_quote(str(raw.get("text") or ""), str(raw.get("previous") or ""))
+        subsectors = raw.get(SOURCE_SUBSECTORS)
+        kept = {SOURCE_SUBSECTORS: list(subsectors)} if isinstance(subsectors, list) and subsectors else {}
+        return Opportunity(
+            id=Opportunity.make_id(self.id, page_id),
+            source_id=self.id,
+            external_id=page_id,
+            url=url,
+            type=OpportunityType.prior_information_notice,
+            title=title,
+            description=quote or None,
+            country=raw.get("country") or None,
+            language=raw.get("language") or None,
+            published_at=detected.date(),
+            documents=[Document(url=url, name="Official page", kind="html", access="fetch")],
+            facts=[
+                Fact(
+                    field="seen_at",
+                    value=detected.date().isoformat(),
+                    origin=FactOrigin.scraped,
+                    confidence=0.7,
+                    quote=quote[:500] or None,
+                    document_url=url,
+                )
+            ],
+            raw=kept,
         )
+
+
+def _detected(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value))
+    except ValueError:
+        return None

@@ -1,3 +1,45 @@
-# Estas dos páginas publican solas desde config/scraped/ (cinea, mercator).
-# Un cambio de hash ya no deja un borrador: el plazo leído con selector es un Fact scraped.
-[]
+# Un cambio del texto visible publica una ficha de información previa: la URL,
+# el día en que se vio y una cita del texto nuevo. Sin plazo.
+#
+# `subsectors` salta el prefiltro: la página entera ya es del sector. Estas no lo
+# declaran. Un cambio que no nombra el vertical no se publica. El work programme
+# y la home de SBEP hablan de muchas cosas más.
+#
+# ADEME no está. agirpourlatransition.ademe.fr y ademe.fr respondieron 403 el
+# 13 nov 2026, y lo ya publicado entra por aides-territoires.
+#
+# Licencia: cada ficha cita la URL de la página. No se copia el documento.
+
+- id: sbep
+  url: https://bluepartnership.eu/
+  # El bloque de noticias, donde sale el preanuncio de la siguiente call.
+  selector: ".block-sbep-custom-news-all-block"
+  title: Sustainable Blue Economy Partnership
+  language: en
+
+- id: fundo-azul
+  url: https://www.dgpm.mm.gov.pt/fundo-azul-anuncios
+  selector: main
+  title: Fundo Azul — anúncios
+  language: pt
+  country: PT
+
+- id: mission-ocean
+  url: https://research-and-innovation.ec.europa.eu/funding/funding-opportunities/funding-programmes-and-open-calls/horizon-europe/eu-missions-horizon-europe/restore-our-ocean-and-waters_en
+  selector: main
+  title: EU Mission Restore our Ocean and Waters
+  language: en
+
+- id: horizon-work-programmes
+  url: https://research-and-innovation.ec.europa.eu/funding/funding-opportunities/funding-programmes-and-open-calls/horizon-europe/horizon-europe-work-programmes_en
+  selector: main
+  title: Horizon Europe work programmes
+  language: en
+
+- id: puertos-estado
+  url: https://www.puertos.es/comunicacion
+  # Cada nota es un article. El listado cambia cuando anuncian una inversión.
+  selector: article
+  title: Puertos del Estado — comunicación
+  language: es
+  country: ES

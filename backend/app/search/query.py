@@ -5,7 +5,7 @@ from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
 
 from app.keywords import keyword_words, plain, tokens
-from app.models.opportunity import Opportunity, OpportunityStatus, compute_status
+from app.models.opportunity import NoticeKind, Opportunity, OpportunityStatus, compute_status
 
 # «Se cierra pronto» son 60 días: dos meses justos, contados en días como el resto de plazos.
 CLOSING_SOON_DAYS = 60
@@ -473,11 +473,17 @@ def _match(item: Opportunity, filters: SearchFilters, today: date) -> bool:
 
 
 def deadline_bucket(item: Opportunity, today: date) -> str:
-    """Una convocatoria está en un solo grupo: cerrada, se cierra en 60 días, o abierta.
+    """Una convocatoria está en un solo grupo.
 
-    El grupo se decide por la fecha, no por una etiqueta guardada. Lo que se abre más
-    adelante y cierra dentro de esos 60 días cuenta como «se cierra pronto».
+    La información previa (PIN, consulta, página vigilada) es «upcoming» mientras
+    siga abierta: aún no es una convocatoria con plazo. Si ya se cerró, sale de ahí.
+    El resto se decide por la fecha. Lo que se abre más adelante y cierra dentro de
+    60 días cuenta como «se cierra pronto».
     """
+    if item.notice == NoticeKind.pin:
+        if item.status == OpportunityStatus.closed:
+            return "closed"
+        return "upcoming"
     deadline = item.deadline_at.date() if item.deadline_at else None
     if deadline is not None and today <= deadline <= today + timedelta(days=CLOSING_SOON_DAYS):
         return "closing_soon"
