@@ -4,13 +4,14 @@ from app.main import app
 
 
 def test_search_returns_the_seeded_call():
-    client = TestClient(app)
-    health = client.get("/health").json()
-    assert health["ok"] is True
-    assert "sources" in health
-    body = client.get("/opportunities").json()
-    assert body["total"] >= 1
-    assert any(item["programme_id"] == "sbep" for item in body["items"])
+    # Con `with` arranca el lifespan, que siembra la demo cuando el almacén está vacío (CI).
+    with TestClient(app) as client:
+        health = client.get("/health").json()
+        assert health["ok"] is True
+        assert "sources" in health
+        body = client.get("/opportunities").json()
+        assert body["total"] >= 1
+        assert any(item["programme_id"] == "sbep" for item in body["items"])
 
 
 def test_legacy_tenders_redirect():
