@@ -1,5 +1,10 @@
+import threading
+import time
+
+import pytest
 from fastapi.testclient import TestClient
 
+from app.api import opportunities as api
 from app.main import app
 
 
@@ -40,3 +45,45 @@ def test_legacy_tenders_redirect():
     response = client.get("/tenders", follow_redirects=False)
     assert response.status_code == 308
     assert response.headers["location"].endswith("/opportunities")
+
+
+class _SlowStore:
+    def __init__(self, fail: bool = False):
+        self.calls = 0
+        self.fail = fail
+
+    def opportunities(self):
+        self.calls += 1
+        time.sleep(0.2)
+        if self.fail:
+            raise TimeoutError("statement timeout")
+        return ["fresh"]
+
+
+@pytest.fixture
+def empty_cache(monkeypatch):
+    monkeypatch.setattr(api, "_CACHE", {"at": 0.0, "items": None})
+
+
+def test_concurrent_requests_read_the_table_once(monkeypatch, empty_cache):
+    store = _SlowStore()
+    monkeypatch.setattr(api, "get_store", lambda: store)
+    results = []
+    threads = [
+        threading.Thread(target=lambda: results.append(api.cached_opportunities())) for _ in range(8)
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert store.calls == 1
+    assert results == [["fresh"]] * 8
+
+
+def test_failed_reload_serves_the_previous_copy(monkeypatch, empty_cache):
+    api._CACHE.update({"at": time.monotonic() - api._CACHE_TTL - 1, "items": ["old"]})
+    store = _SlowStore(fail=True)
+    monkeypatch.setattr(api, "get_store", lambda: store)
+    assert api.cached_opportunities() == ["old"]
+    assert api.cached_opportunities() == ["old"]
+    assert store.calls == 1

@@ -1,5 +1,6 @@
 """Búsqueda y ficha. Público, sin cuenta."""
 
+import threading
 import time
 from datetime import UTC, date, datetime
 from html import unescape
@@ -18,16 +19,37 @@ from app.vertical import load_vertical
 
 _CACHE: dict = {"at": 0.0, "items": None}
 _STATS_CACHE: dict = {"at": 0.0, "body": None}
+_CACHE_TTL = 300
+_RETRY_AFTER = 30
+_LOAD_LOCK = threading.Lock()
 
 
 def cached_opportunities():
-    now = time.monotonic()
-    if _CACHE["items"] is not None and now - _CACHE["at"] < 300:
-        return _CACHE["items"]
-    items = get_store().opportunities()
-    _CACHE["at"] = now
-    _CACHE["items"] = items
-    return items
+    """Una sola lectura de la tabla a la vez.
+
+    Con varias a la vez, Postgres corta cada una a los 8 s (`statement_timeout` del rol de la
+    API) y el caché no se llena nunca. Mientras una recarga, el resto sirve la copia anterior.
+    """
+    stale = _CACHE["items"]
+    if stale is not None and time.monotonic() - _CACHE["at"] < _CACHE_TTL:
+        return stale
+    if not _LOAD_LOCK.acquire(blocking=stale is None):
+        return stale
+    try:
+        if _CACHE["items"] is not None and time.monotonic() - _CACHE["at"] < _CACHE_TTL:
+            return _CACHE["items"]
+        try:
+            items = get_store().opportunities()
+        except Exception:
+            if stale is None:
+                raise
+            _CACHE["at"] = time.monotonic() - _CACHE_TTL + _RETRY_AFTER
+            return stale
+        _CACHE["at"] = time.monotonic()
+        _CACHE["items"] = items
+        return items
+    finally:
+        _LOAD_LOCK.release()
 
 
 def cached_stats() -> dict:
