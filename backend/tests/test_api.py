@@ -14,6 +14,19 @@ def test_search_returns_the_seeded_call():
         assert any(item["programme_id"] == "sbep" for item in body["items"])
 
 
+def test_stats_is_not_captured_by_the_detail_route():
+    with TestClient(app) as client:
+        response = client.get("/opportunities/stats")
+    assert response.status_code == 200
+    body = response.json()
+    assert set(body) == {"open", "closing_soon", "closed", "sources", "checked_at", "open_budget_eur"}
+
+
+def test_negative_offset_is_rejected():
+    client = TestClient(app)
+    assert client.get("/opportunities", params={"offset": -1}).status_code == 422
+
+
 def test_legacy_tenders_redirect():
     client = TestClient(app)
     response = client.get("/tenders", follow_redirects=False)

@@ -21,6 +21,15 @@ export type Card = {
   fit?: { level: string; line: string };
 };
 
+export type Stats = {
+  open: number;
+  closing_soon: number;
+  closed: number;
+  sources: number;
+  checked_at: string | null;
+  open_budget_eur: number;
+};
+
 export type SearchResponse = {
   total: number;
   counts?: { all: number; kind: Record<string, number>; deadline?: Record<string, number> };

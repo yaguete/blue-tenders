@@ -31,6 +31,7 @@ class SearchFilters:
     deadline: list[str] = field(default_factory=list)
     exclude_unknown: bool = False
     limit: int = 20
+    offset: int = 0
 
     def __post_init__(self) -> None:
         if isinstance(self.country, str):
@@ -71,15 +72,15 @@ def search_opportunities(
         bucket = deadline_bucket(item, today)
         deadline_counts[bucket] = deadline_counts.get(bucket, 0) + 1
     if filters.q:
-        matched.sort(key=lambda item: _score(item, filters.q or ""), reverse=True)
+        matched.sort(key=lambda item: (-_score(item, filters.q or ""), item.id))
     else:
-        matched.sort(key=_deadline_key)
+        matched.sort(key=lambda item: (_deadline_key(item), item.id))
 
     return {
         "total": len(matched),
         "counts": {"all": len(in_tabs), "kind": kind_counts, "deadline": deadline_counts},
         "unknown": _unknown_counts(fresh, filters),
-        "items": matched[: filters.limit],
+        "items": matched[filters.offset : filters.offset + filters.limit],
         "facets": {
             "kind": _facet(fresh, lambda item: item.kind.value if item.kind else None),
             "status": _facet(fresh, lambda item: item.status.value if item.status else None),

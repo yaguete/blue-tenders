@@ -13,9 +13,11 @@ from app.models.opportunity import Opportunity, compute_status
 from app.partners.track_record import track_record_for
 from app.quality.text import plain_text
 from app.search.query import SearchFilters, match_reason, search_opportunities, suggest_relaxation
+from app.search.stats import platform_stats
 from app.vertical import load_vertical
 
 _CACHE: dict = {"at": 0.0, "items": None}
+_STATS_CACHE: dict = {"at": 0.0, "body": None}
 
 
 def cached_opportunities():
@@ -26,6 +28,19 @@ def cached_opportunities():
     _CACHE["at"] = now
     _CACHE["items"] = items
     return items
+
+
+def cached_stats() -> dict:
+    """La frescura pagina `ingest_runs` entera. No hace falta repetirlo en cada visita."""
+    now = time.monotonic()
+    if _STATS_CACHE["body"] is not None and now - _STATS_CACHE["at"] < 300:
+        return _STATS_CACHE["body"]
+    body = platform_stats(cached_opportunities(), get_store().source_freshness())
+    _STATS_CACHE["at"] = now
+    _STATS_CACHE["body"] = body
+    return body
+
+
 from app.store import get_store
 
 router = APIRouter(prefix="/opportunities", tags=["opportunities"])
@@ -50,6 +65,7 @@ def _filters(
     deadline: list[str],
     exclude_unknown: bool,
     limit: int,
+    offset: int,
 ) -> SearchFilters:
     return SearchFilters(
         q=q,
@@ -70,6 +86,7 @@ def _filters(
         deadline=deadline,
         exclude_unknown=exclude_unknown,
         limit=limit,
+        offset=offset,
     )
 
 
@@ -93,6 +110,7 @@ def search(
     deadline: Annotated[list[str] | None, Query()] = None,
     exclude_unknown: bool = False,
     limit: Annotated[int, Query(le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
     profile_subsector: Annotated[list[str] | None, Query()] = None,
     profile_country: str | None = None,
     profile_entity: str | None = None,
@@ -102,7 +120,7 @@ def search(
     filters = _filters(
         q, kind or [], status or [], subsector or [], programme_id or [], country or [], entity_type,
         consortium_required, mission_ocean, amount_min, amount_max, cofunding_min, sea_basin or [],
-        trl, closing_within_days, deadline or [], exclude_unknown, limit,
+        trl, closing_within_days, deadline or [], exclude_unknown, limit, offset,
     )
     found = search_opportunities(items, filters)
     profile = None
@@ -123,6 +141,8 @@ def search(
             row["fit"] = fit
         rows.append(row)
     if profile:
+        # Solo reordena esta página. Con offset, las páginas no encajan entre sí.
+        # /search no manda profile_*.
         rows.sort(key=lambda row: {"strong": 0, "possible": 1, "check": 2, "likely_ineligible": 3}.get(
             (row.get("fit") or {}).get("level"), 2
         ))
@@ -139,6 +159,11 @@ def search(
         "suggestion": suggestion,
         "items": [row for row in rows if (row.get("fit") or {}).get("level") != "likely_ineligible"],
     }
+
+
+@router.get("/stats")
+def stats() -> dict:
+    return cached_stats()
 
 
 @router.get("/{opportunity_id}")

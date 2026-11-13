@@ -5,9 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useId, useRef, useState } from "react";
 import { CallPreview } from "@/components/call-preview";
 import { LoadingState } from "@/components/loading-state";
-import { api, type Card, type SearchResponse } from "@/lib/api";
+import { StatBox } from "@/components/stat-box";
+import { api, type Card, type SearchResponse, type Stats } from "@/lib/api";
 import { comparePath, toggleCompare, useCompareIds } from "@/lib/compare";
-import { daysLeft, metaLine, money, shortTitle, when } from "@/lib/format";
+import { checkedAt, daysLeft, metaLine, money, moneyCompact, shortTitle, when } from "@/lib/format";
 import { t } from "@/lib/i18n";
 
 const KINDS = [
@@ -28,6 +29,7 @@ const DEADLINES = [
 ] as const;
 
 const DEADLINE_IDS = DEADLINES.map(([id]) => id);
+const PAGE = 20;
 const DEFAULT_DEADLINES = DEADLINE_IDS.filter((id) => id !== "closed");
 const NONE = "none";
 
@@ -42,7 +44,7 @@ function readDeadlines(params: URLSearchParams): string[] {
   const values = params.getAll("deadline");
   if (values.length === 0) return [...DEFAULT_DEADLINES];
   if (values.length === 1 && values[0] === NONE) return [];
-  return values.filter((value) => DEADLINE_IDS.includes(value));
+  return values.filter((value) => (DEADLINE_IDS as readonly string[]).includes(value));
 }
 
 function writeDeadlines(params: URLSearchParams, selected: string[]) {
@@ -101,6 +103,25 @@ function sameList(left: string[], right: string[]): boolean {
   return a.every((value, index) => value === b[index]);
 }
 
+function resultQuery(offset: number, query: string, kindsKey: string, placesKey: string, datesKey: string): string {
+  const params = new URLSearchParams();
+  if (query) params.set("q", query);
+  if (placesKey !== "*" && placesKey !== "") {
+    placesKey.split(",").forEach((value) => params.append("country", value));
+  }
+  const chosen = kindsKey ? kindsKey.split(",") : [];
+  if (chosen.length > 0 && chosen.length < KIND_IDS.length) {
+    chosen.forEach((value) => params.append("kind", value));
+  }
+  const dates = datesKey ? datesKey.split(",") : [];
+  if (dates.length > 0 && dates.length < DEADLINE_IDS.length) {
+    dates.forEach((value) => params.append("deadline", value));
+  }
+  params.set("limit", String(PAGE));
+  params.set("offset", String(offset));
+  return params.toString();
+}
+
 function sameCountries(left: string[] | null, right: string[] | null): boolean {
   if (left === null || right === null) return left === right;
   return sameList(left, right);
@@ -112,9 +133,16 @@ function SearchScreen() {
   const queryString = params.toString();
   const [q, setQ] = useState(() => params.get("q") ?? "");
   const [selected, setSelected] = useState<string[]>(() => readList(params, "kind", KIND_IDS));
-  const [data, setData] = useState<SearchResponse | null>(null);
+  const [rows, setRows] = useState<Card[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
+  const [counts, setCounts] = useState<SearchResponse["counts"]>();
+  const [facets, setFacets] = useState<SearchResponse["facets"]>();
+  const [suggestion, setSuggestion] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [statsFailed, setStatsFailed] = useState(false);
   const [countries, setCountries] = useState<string[] | null>(() => readCountries(params));
   const [deadlines, setDeadlines] = useState<string[]>(() => readDeadlines(params));
   const [seen, setSeen] = useState(queryString);
@@ -122,6 +150,10 @@ function SearchScreen() {
   const countryKey = countries === null ? "*" : [...countries].sort().join(",");
   const deadlineKey = [...deadlines].sort().join(",");
   const skipUrl = useRef(queryString);
+  const request = useRef(0);
+  const listRef = useRef<HTMLUListElement>(null);
+  const focusId = useRef<string | null>(null);
+  const figures = new Intl.NumberFormat("en");
 
   if (seen !== queryString && queryString !== skipUrl.current) {
     const incoming = new URLSearchParams(queryString);
@@ -154,50 +186,136 @@ function SearchScreen() {
   }
 
   useEffect(() => {
-    const chosen = selectionKey ? selectionKey.split(",") : [];
-    const params = new URLSearchParams();
-    if (q) params.set("q", q);
-    if (countryKey !== "*" && countryKey !== "") {
-      countryKey.split(",").forEach((value) => params.append("country", value));
-    }
-    if (chosen.length > 0 && chosen.length < KIND_IDS.length) {
-      chosen.forEach((value) => params.append("kind", value));
-    }
-    const chosenDeadlines = deadlineKey ? deadlineKey.split(",") : [];
-    if (chosenDeadlines.length > 0 && chosenDeadlines.length < DEADLINE_IDS.length) {
-      chosenDeadlines.forEach((value) => params.append("deadline", value));
-    }
+    const id = ++request.current;
+    const query = resultQuery(0, q, selectionKey, countryKey, deadlineKey);
     const handle = setTimeout(() => {
       setLoading(true);
-      api<SearchResponse>(`/opportunities?${params.toString()}`)
+      setRows([]);
+      setTotal(null);
+      api<SearchResponse>(`/opportunities?${query}`)
         .then((body) => {
-          setData(body);
+          if (request.current !== id) return;
+          setRows(body.items);
+          setTotal(body.total);
+          setCounts(body.counts);
+          setFacets(body.facets);
+          setSuggestion(body.suggestion);
           setError(null);
         })
-        .catch((err: Error) => setError(err.message))
-        .finally(() => setLoading(false));
+        .catch((err: Error) => {
+          if (request.current !== id) return;
+          setError(err.message);
+        })
+        .finally(() => {
+          if (request.current !== id) return;
+          setLoading(false);
+        });
     }, 200);
     return () => clearTimeout(handle);
   }, [q, selectionKey, countryKey, deadlineKey]);
 
+  useEffect(() => {
+    api<Stats>("/opportunities/stats")
+      .then(setStats)
+      .catch(() => setStatsFailed(true));
+  }, []);
+
+  useEffect(() => {
+    const id = focusId.current;
+    if (!id) return;
+    focusId.current = null;
+    listRef.current
+      ?.querySelector<HTMLElement>(`[data-result-id="${id}"] a, [data-result-id="${id}"] button`)
+      ?.focus();
+  }, [rows]);
+
+  function showMore() {
+    const id = request.current;
+    const offset = rows.length;
+    setLoadingMore(true);
+    api<SearchResponse>(`/opportunities?${resultQuery(offset, q, selectionKey, countryKey, deadlineKey)}`)
+      .then((body) => {
+        if (request.current !== id) return;
+        setRows((current) => {
+          const seen = new Set(current.map((row) => row.id));
+          const extra = body.items.filter((row) => !seen.has(row.id));
+          const next = [...current, ...extra];
+          if (next.length >= body.total && extra[0]) focusId.current = extra[0].id;
+          return next;
+        });
+        setTotal(body.total);
+        setError(null);
+      })
+      .catch((err: Error) => {
+        if (request.current !== id) return;
+        setError(err.message);
+      })
+      .finally(() => {
+        if (request.current !== id) return;
+        setLoadingMore(false);
+      });
+  }
+
   const countryOptions = [
-    ...(data?.facets?.country || [])
+    ...(facets?.country || [])
       .map((row) => ({ id: row.value, name: countryLabel(row.value), count: row.count }))
       .sort((a, b) => a.name.localeCompare(b.name)),
-    { id: "uncategorized", name: t("uncategorized"), count: data?.facets?.country_missing || 0 },
+    { id: "uncategorized", name: t("uncategorized"), count: facets?.country_missing || 0 },
   ].filter((option) => option.count > 0);
   const countrySelection = countries === null ? countryOptions.map((option) => option.id) : countries;
-  const matches =
-    countries?.length === 0 || selected.length === 0 || deadlines.length === 0 ? [] : (data?.items ?? []);
+  const blocked = countries?.length === 0 || selected.length === 0 || deadlines.length === 0;
+  const matches = blocked ? [] : rows;
   const compareIds = useCompareIds();
   const items = matches.filter((item) => !compareIds.includes(item.id));
   const picking = compareIds.length > 0;
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const openNote =
+    stats &&
+    [
+      stats.open_budget_eur > 0 ? t("statsBudget").replace("{amount}", moneyCompact(stats.open_budget_eur)) : null,
+      stats.closing_soon > 0
+        ? (stats.closing_soon === 1 ? t("statsClosingNoteOne") : t("statsClosingNote")).replace(
+            "{count}",
+            figures.format(stats.closing_soon),
+          )
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
 
   return (
     <div className="space-y-10">
       {compareIds.length > 0 && <SelectedToCompare ids={compareIds} />}
       <section>
+      {!statsFailed && (
+        <div className="mb-6 grid grid-cols-3 gap-3">
+          <StatBox
+            label={t("statsOpen")}
+            value={stats ? figures.format(stats.open + stats.closing_soon) : "—"}
+            note={openNote || undefined}
+            onClick={() =>
+              commit({ q: "", selected: [...KIND_IDS], countries: null, deadlines: [...DEFAULT_DEADLINES] })
+            }
+          />
+          <StatBox
+            label={t("statsPast")}
+            value={stats ? figures.format(stats.closed) : "—"}
+            note={stats ? t("statsPastNote") : undefined}
+            onClick={() => commit({ q: "", selected: [...KIND_IDS], countries: null, deadlines: ["closed"] })}
+          />
+          {(!stats || stats.checked_at) && (
+            <StatBox
+              label={t("statsSources")}
+              value={stats ? figures.format(stats.sources) : "—"}
+              note={
+                stats?.checked_at
+                  ? t("statsChecked").replace("{when}", checkedAt(stats.checked_at))
+                  : undefined
+              }
+            />
+          )}
+        </div>
+      )}
       <label className="block text-sm" htmlFor="q">
         Search
       </label>
@@ -226,7 +344,7 @@ function SearchScreen() {
           options={KINDS.map(([id, label]) => ({
             id,
             name: label,
-            count: data?.counts?.kind[id] || 0,
+            count: counts?.kind?.[id] || 0,
           })).filter((option) => option.count > 0)}
         />
         <MultiFilter
@@ -238,20 +356,37 @@ function SearchScreen() {
           options={DEADLINES.map(([id, label]) => ({
             id,
             name: t(label),
-            count: data?.counts?.deadline?.[id] || 0,
+            count: counts?.deadline?.[id] || 0,
           })).filter((option) => option.count > 0)}
         />
       </div>
       {loading && <LoadingState label={t("loading")} className="mt-6" />}
       {error && <p className="mt-6 text-sm text-status-urgent">{t("error")}</p>}
-      {!loading && matches.length === 0 && (
-        <p className="mt-6 text-sm">{selected.length === 0 || deadlines.length === 0 ? t("empty") : data?.suggestion || t("empty")}</p>
+      {!loading && total != null && total > 0 && !blocked && (
+        <p className="mt-6 text-sm text-muted-foreground">
+          {rows.length < total
+            ? t("showingOf").replace("{shown}", figures.format(rows.length)).replace("{total}", figures.format(total))
+            : t("resultsCount").replace("{total}", figures.format(total))}
+        </p>
       )}
-      <ul className="mt-6 divide-y divide-border">
+      {!loading && matches.length === 0 && (
+        <p className="mt-6 text-sm">{blocked ? t("empty") : suggestion || t("empty")}</p>
+      )}
+      <ul ref={listRef} className="mt-3 divide-y divide-border">
         {items?.map((item) => (
           <Row key={item.id} item={item} picking={picking} onOpen={setPreviewId} />
         ))}
       </ul>
+      {!blocked && total != null && rows.length < total && (
+        <button
+          type="button"
+          disabled={loadingMore}
+          onClick={showMore}
+          className="mt-4 cursor-pointer text-sm underline disabled:cursor-default disabled:no-underline"
+        >
+          {loadingMore ? t("showMoreLoading") : t("showMore")}
+        </button>
+      )}
     </section>
       {previewId && <CallPreview id={previewId} onClose={() => setPreviewId(null)} />}
     </div>
@@ -427,7 +562,7 @@ function Row({ item, picking, onOpen }: { item: Card; picking: boolean; onOpen: 
   const urgent = left?.startsWith("Closes in") && Number(left.replace(/\D/g, "")) < 15;
   const title = shortTitle(item.title, item.title_en);
   return (
-    <li className="grid grid-cols-[1fr_auto] gap-4 py-4">
+    <li data-result-id={item.id} className="grid grid-cols-[1fr_auto] gap-4 py-4">
       <div>
         <p className="font-mono text-xs text-muted-foreground">
           {metaLine(item.kind, item.programme_id || item.country)}

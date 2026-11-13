@@ -181,6 +181,65 @@ def test_a_known_phrase_stays_together():
     assert match_reason(tagged, "north sea") == "Classified in north_sea"
 
 
+def test_pages_cover_the_search_without_repeating():
+    day = __import__("datetime").date(2026, 11, 11)
+    same = datetime(2026, 12, 1, tzinfo=UTC)
+    items = [
+        _item("b", deadline_at=same),
+        _item("a", deadline_at=same),
+        _item("c", deadline_at=datetime(2026, 12, 2, tzinfo=UTC)),
+    ]
+    first = search_opportunities(items, SearchFilters(limit=2, offset=0), today=day)
+    second = search_opportunities(items, SearchFilters(limit=2, offset=2), today=day)
+    assert [item.id for item in first["items"]] == ["a", "b"]
+    assert [item.id for item in second["items"]] == ["c"]
+    assert first["total"] == second["total"] == 3
+    whole = search_opportunities(items, SearchFilters(limit=20), today=day)
+    assert first["total"] == whole["total"]
+
+
+def test_platform_stats_follow_the_unfiltered_deadline_counts():
+    from app.models.opportunity import OpportunityType
+    from app.search.stats import platform_stats
+
+    day = __import__("datetime").date(2026, 11, 11)
+    items = [
+        _item("later", deadline_at=datetime(2027, 3, 1, tzinfo=UTC), budget_total_eur=100),
+        _item("soon", deadline_at=datetime(2026, 12, 1, tzinfo=UTC), budget_total_eur=50),
+        _item("past", deadline_at=datetime(2026, 1, 1, tzinfo=UTC), budget_total_eur=999),
+        _item("award", type=OpportunityType.award),
+        _item("hidden", listed=False),
+    ]
+    counts = search_opportunities(items, SearchFilters(), today=day)["counts"]["deadline"]
+    stats = platform_stats(items, {}, day)
+    assert stats["open"] == counts.get("open", 0)
+    assert stats["closing_soon"] == counts["closing_soon"]
+    assert stats["closed"] == counts["closed"]
+    assert stats["open"] == 1
+    assert stats["closing_soon"] == 1
+    assert stats["closed"] == 1
+    assert stats["open_budget_eur"] == 150
+    assert stats["sources"] == 0
+    assert stats["checked_at"] is None
+
+
+def test_platform_stats_counts_checked_sources_and_skips_curated():
+    from app.search.stats import platform_stats
+
+    freshness = {
+        "curated": {"status": "ok", "finished_at": "2026-11-13T11:00:00+00:00"},
+        "ted": {"status": "ok", "finished_at": "2026-11-13T09:30:00+00:00"},
+        "eu-ft": {"status": "ok", "finished_at": "2026-11-13T10:37:00+00:00"},
+        "placsp-regional": {"status": "failed", "finished_at": "2026-11-13T12:00:00+00:00"},
+    }
+    stats = platform_stats([], freshness, __import__("datetime").date(2026, 11, 13))
+    assert stats["sources"] == 2
+    assert stats["checked_at"] == "2026-11-13T10:37:00+00:00"
+    none = platform_stats([], {"ted": {"status": "failed", "finished_at": "2026-11-13T09:30:00+00:00"}})
+    assert none["sources"] == 0
+    assert none["checked_at"] is None
+
+
 def test_empty_search_suggests_a_filter_to_drop():
     items = [_item("offshore wind", subsectors=["offshore-wind"])]
     filters = SearchFilters(subsector=["ocean-energy"], exclude_unknown=True)
