@@ -30,7 +30,7 @@ def _llm_title(opp: Opportunity) -> None:
         client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
         msg = client.messages.create(
             model=settings.classify_model,
-            max_tokens=200,
+            max_tokens=1000,
             messages=[
                 {
                     "role": "user",

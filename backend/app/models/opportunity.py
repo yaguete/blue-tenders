@@ -10,7 +10,7 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class OpportunityType(str, Enum):
@@ -191,6 +191,12 @@ class Opportunity(BaseModel):
     review_status: str | None = None
     listed: bool = True
     raw: dict = Field(default_factory=dict, exclude=True)
+
+    @field_validator("raw", mode="before")
+    @classmethod
+    def empty_raw(cls, value: Any) -> dict:
+        # Al guardar en Supabase el campo no se escribe, así que vuelve como null.
+        return value if isinstance(value, dict) else {}
 
     @model_validator(mode="after")
     def fill_derived(self) -> "Opportunity":

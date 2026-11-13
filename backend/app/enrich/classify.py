@@ -87,7 +87,7 @@ def _llm_pick(opp: Opportunity, vertical: Vertical) -> str | None:
         client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
         msg = client.messages.create(
             model=settings.classify_model,
-            max_tokens=200,
+            max_tokens=1000,
             messages=[{"role": "user", "content": json.dumps(prompt)}],
         )
         text = "".join(block.text for block in msg.content if getattr(block, "text", None))
