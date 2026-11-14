@@ -29,6 +29,9 @@ SYSTEM_CALL = (
 If the detail is only in tender documents that are linked and not included, say it is in those documents and give their link.
 If a deadline in a document disagrees with the deadline in the call data, say so and give the official link.
 When you use a document, cite its page.
+You also know the organisations shown on the call's Blue Tender page: similar past projects and their partners, consortia from the same sector that end soon, and similar contract awards.
+Use them when the user asks about partners, consortia, competitors or who did similar work. They come from CORDIS and EU award notices, not from the call documents: do not cite a page for them.
+They are not a recommendation, and taking part in a past project says nothing about eligibility for this call.
 """
 )
 
@@ -169,6 +172,129 @@ def call_facts(opp, *, text_limit: int = 3500) -> list[str]:
     return lines
 
 
+# Tope del bloque de organizaciones. El caso más grande medido (40 consorcios de offshore-wind)
+# ocupa unos 20.000 caracteres; esto solo protege de un vertical que crezca.
+_PARTNERS_LIMIT = 40_000
+_PROGRAMMES = {"h2020": "Horizon 2020", "horizon-europe": "Horizon Europe"}
+_EVIDENCE = {"same_topic": "same call topic", "same_cpv": "same CPV", "similar_text": "similar scope"}
+
+
+def _partners_text(partners: list[dict]) -> str:
+    """Coordinador primero, luego quien repite o ya sale en el historial, como en la ficha."""
+    ordered = sorted(
+        partners,
+        key=lambda partner: (
+            partner.get("role") != "coordinator",
+            not (partner.get("relevant") or partner.get("also")),
+            partner.get("org_name") or "",
+        ),
+    )
+    return "; ".join(_partner_text(partner) for partner in ordered)
+
+
+def _partner_text(partner: dict) -> str:
+    details = [partner.get("country")]
+    role = partner.get("role")
+    if role and role not in {"participant", "winner"}:
+        details.append(role)
+    if partner.get("sme"):
+        details.append("SME")
+    if partner.get("relevant"):
+        details.append("also among the similar projects")
+    also = [name for name in partner.get("also") or [] if name]
+    if also:
+        details.append("also in " + ", ".join(also))
+    shown = "; ".join(str(part) for part in details if part)
+    return f"{partner.get('org_name')} ({shown})" if shown else str(partner.get("org_name"))
+
+
+def _project_head(project: dict, *, ends: str | None) -> str:
+    name = project.get("acronym") or project.get("title") or project.get("id")
+    title = project.get("title") if project.get("acronym") else None
+    details = [
+        _PROGRAMMES.get(project.get("programme_id") or "", project.get("programme_id")),
+        project.get("buyer"),
+        ends,
+        _EVIDENCE.get(project.get("evidence") or ""),
+    ]
+    amount = project.get("amount_eur")
+    if amount is not None:
+        line = f"EUR {_money(amount)} awarded"
+        if project.get("base_amount_eur") is not None:
+            line += f" (base EUR {_money(project['base_amount_eur'])})"
+        details.append(line)
+    if project.get("contract_end"):
+        details.append(f"contract ends {str(project['contract_end'])[:10]}")
+    head = f"- {name}" + (f" — {_clip(title, 120)}" if title else "")
+    shown = ", ".join(str(part) for part in details if part)
+    return head + (f" ({shown})" if shown else "")
+
+
+def partners_note(track: dict | None, ending: dict | None, awards: list[dict] | None) -> str:
+    """Lo que la ficha enseña sobre organizaciones, en texto compacto para el modelo.
+
+    Historial (proyectos parecidos o adjudicaciones), consorcios que acaban y quién ganó.
+    Sin datos, nada: un bloque vacío no se manda.
+    """
+    sections = []
+    track = track or {}
+    projects = track.get("projects")
+    awarded = track.get("source") == "ted_awards"
+    if track.get("status") == "ok" and projects:
+        heading = (
+            "Similar contract awards (EU award notices), most similar first. Winners after each:"
+            if awarded
+            else "Similar past projects (CORDIS), most similar first. Partners after each:"
+        )
+        lines = [heading]
+        for project in projects:
+            year = project.get("end_year")
+            # En CORDIS es el año de fin del proyecto; en una adjudicación, el de publicación.
+            ends = (str(year) if awarded else f"end year {year}") if year else None
+            partners = _partners_text(project.get("partners") or [])
+            lines.append(_project_head(project, ends=ends) + (f". {'Winners' if awarded else 'Partners'}: {partners}" if partners else ""))
+        total = track.get("projects_total") or len(projects)
+        if total > len(projects):
+            lines.append(f"These are the {len(projects)} most similar of {total}.")
+        sections.append("\n".join(lines))
+    elif track.get("status") == "no_match":
+        sections.append("Similar past projects or awards: none found.")
+    ending = ending or {}
+    consortia = ending.get("consortia")
+    months = ending.get("window_months")
+    if ending.get("status") == "ok" and consortia:
+        lines = [
+            (
+                f"Consortia from the same sector whose project ends in the next {months} months, "
+                "by end date (CORDIS). Partners after each:"
+            )
+        ]
+        for consortium in consortia:
+            partners = _partners_text(consortium.get("partners") or [])
+            lines.append(
+                _project_head(consortium, ends=f"ends {consortium.get('end_date')}") + (f". Partners: {partners}" if partners else "")
+            )
+        sections.append("\n".join(lines))
+    elif ending.get("status") == "no_match":
+        sections.append(f"Consortia from the same sector ending in the next {months} months: none found.")
+    rows = [row for row in awards or [] if row.get("title")]
+    if rows:
+        lines = ["Award notices for this call:"]
+        for row in rows:
+            details = [row.get("winner")]
+            if row.get("amount_eur") is not None:
+                details.append(f"EUR {_money(row['amount_eur'])}")
+            shown = ", ".join(str(part) for part in details if part)
+            lines.append(f"- {row['title']}" + (f" ({shown})" if shown else ""))
+        sections.append("\n".join(lines))
+    if not sections:
+        return ""
+    text = "Organisations around this call:\n\n" + "\n\n".join(sections)
+    if len(text) <= _PARTNERS_LIMIT:
+        return text
+    return text[: _PARTNERS_LIMIT - 1] + "…"
+
+
 def call_record(opp) -> str:
     text = "About this call:\n" + "\n".join(call_facts(opp))
     if len(text) <= 4000:
@@ -216,10 +342,13 @@ def build_request(
     history: list[dict],
     searchable: list[dict],
     today: str = "",
+    partners: str = "",
 ) -> dict:
     """Cuerpo de la llamada. `cache_control` va en el sistema y en el último documento.
 
-    Sin convocatoria (`opp` vacío) no se añade un registro falso.
+    Sin convocatoria (`opp` vacío) no se añade un registro falso. `partners` es lo que la
+    ficha enseña sobre organizaciones (`partners_note`): va tras los datos de la
+    convocatoria, con su propio corte de caché (el cuarto y último que admite la API).
     """
     shared = [doc for doc in attached if not doc.get("opportunity_id")]
     own = [doc for doc in attached if doc.get("opportunity_id")]
@@ -236,6 +365,8 @@ def build_request(
     content = [*blocks]
     if opp is not None:
         content.append({"type": "text", "text": call_record(opp)})
+        if partners:
+            content.append({"type": "text", "text": partners, "cache_control": {"type": "ephemeral"}})
     if searchable:
         names = ", ".join(doc.get("name") or "document" for doc in searchable)
         content.append(
@@ -275,7 +406,19 @@ def for_provider(request: dict, *, deepseek: bool) -> dict:
         "\nWhen you use a page, name the document and its page number. "
         "Page markers look like '--- page N ---'."
     )
-    return {"system": system, "messages": [_plain_message(message) for message in request["messages"]]}
+    return {"system": system, "messages": [_plain_message(_no_cache(message)) for message in request["messages"]]}
+
+
+def _no_cache(message: dict) -> dict:
+    """DeepSeek guarda su caché solo. El corte de Anthropic no se le manda."""
+    content = message.get("content")
+    if not isinstance(content, list):
+        return message
+    blocks = [
+        {key: value for key, value in block.items() if key != "cache_control"} if isinstance(block, dict) else block
+        for block in content
+    ]
+    return {**message, "content": blocks}
 
 
 def _plain_message(message: dict) -> dict:

@@ -17,7 +17,13 @@ from app.assistant.budget import cost_usd, pack
 from app.assistant.client import assistant_client, call_kwargs, has_model, uses_deepseek
 from app.assistant.documents import load_ready, prepare
 from app.assistant.engine import Answer, answer_about_opportunity, answer_general, guard_text
-from app.assistant.prompt import ELIGIBILITY_LINE, build_request, page_from_citation, today_note
+from app.assistant.prompt import (
+    ELIGIBILITY_LINE,
+    build_request,
+    page_from_citation,
+    partners_note,
+    today_note,
+)
 from app.assistant.tools import MAX_ROUNDS, dump, run_tool, tool_specs
 from app.settings import settings
 
@@ -73,7 +79,28 @@ def prepare_turn(store, user_id: str, body: dict) -> dict:
         "history": history[-HISTORY_LIMIT:],
         "uploads": uploads,
         "today": today_note(body.get("today"), body.get("timezone")),
+        "partners": _partners(store, item) if item is not None else "",
     }
+
+
+def _partners(store, item) -> str:
+    """Lo mismo que la ficha: historial, consorcios que acaban y quién ganó.
+
+    Lee el historial guardado, como la ficha. Si algo falla, el chat sigue sin ese bloque.
+    """
+    try:
+        from app.models.opportunity import OpportunityKind
+        from app.partners.track_record import ending_soon_for, track_record_for
+        from app.vertical import load_vertical
+
+        vertical = load_vertical()
+        track = track_record_for(item, store, vertical)
+        # La ficha solo enseña quién acaba en una subvención.
+        ending = ending_soon_for(item, store, vertical, track=track) if item.kind == OpportunityKind.grant else None
+        return partners_note(track, ending, store.awards_for(item.call_id))
+    except Exception as exc:  # noqa: BLE001  el chat no cae por el historial
+        print(f"[assistant] partners skip: {exc}")
+        return ""
 
 
 @dataclass
@@ -234,7 +261,13 @@ def _model_events(store, turn, attached, searchable, links, outcome: _Outcome) -
 
 def _documents_events(client, turn, attached, links, outcome: _Outcome) -> Iterator[dict]:
     request = build_request(
-        turn["item"], turn["question"], attached, turn["history"], [], turn.get("today") or ""
+        turn["item"],
+        turn["question"],
+        attached,
+        turn["history"],
+        [],
+        turn.get("today") or "",
+        turn.get("partners") or "",
     )
     if links:
         names = ", ".join(f"{row.get('name')} ({row.get('document_url')})" for row in links)
@@ -309,6 +342,7 @@ def _tools_events(client, store, turn, attached, searchable, outcome: _Outcome) 
         turn["history"],
         searchable,
         turn.get("today") or "",
+        turn.get("partners") or "",
     )
     messages = request["messages"]
     items = store.opportunities()
