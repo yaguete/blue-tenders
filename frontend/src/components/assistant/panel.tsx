@@ -177,7 +177,7 @@ export function Panel({
       </div>
       <div
         data-assistant-scroll
-        className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-y-contain px-4 py-3"
+        className={`min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-y-contain px-4 pt-3 ${messages.length === 0 ? "pb-0" : "pb-3"}`}
         onScroll={(event) => {
           const node = event.currentTarget;
           stickRef.current = node.scrollHeight - node.scrollTop - node.clientHeight < 48;
@@ -219,7 +219,7 @@ export function Panel({
         {error === "error" && <p className="text-sm text-status-urgent">{t("assistantError")}</p>}
       </div>
       <form
-        className="border-t border-border px-4 py-3"
+        className={`px-4 pb-3 ${messages.length === 0 ? "pt-2" : "pt-3"}`}
         onSubmit={(event) => {
           event.preventDefault();
           onSend(draft);
