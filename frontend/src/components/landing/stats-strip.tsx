@@ -19,7 +19,15 @@ type Cell = {
 export function StatsStrip({ stats }: { stats: LoadState<Stats> }) {
   if (stats.status === "error") return null;
   const data = stats.status === "ready" ? stats.data : null;
+  const indexed = data
+    ? data.open + data.closing_soon + (data.upcoming ?? 0) + data.closed
+    : null;
   const cells: Cell[] = [
+    {
+      label: t("landingStatIndexed"),
+      value: indexed != null ? landingCount(indexed) : "—",
+      href: "/search?deadline=open&deadline=closing_soon&deadline=upcoming&deadline=closed",
+    },
     {
       label: t("statsOpen"),
       value: data ? landingCount(openOrUpcomingCount(data)) : "—",
@@ -29,12 +37,6 @@ export function StatsStrip({ stats }: { stats: LoadState<Stats> }) {
       label: t("landingStatClosing"),
       value: data ? landingCount(data.closing_soon) : "—",
       href: "/search?deadline=closing_soon",
-    },
-    {
-      label: t("statsPast"),
-      value: data ? landingCount(data.closed) : "—",
-      note: data ? t("statsPastNote") : undefined,
-      href: "/search?deadline=closed",
     },
     {
       label: t("statsSources"),

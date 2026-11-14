@@ -12,7 +12,7 @@ import time
 from datetime import date, timedelta
 
 from app.models.opportunity import OpportunityKind
-from app.partners.score import prepare_corpus, rank_track_record
+from app.partners.score import prepare_corpus, track_record_views
 from app.store import FileStore
 
 _CORDIS = ("cordis-h2020", "cordis-horizon-europe")
@@ -78,9 +78,18 @@ def ending_soon_for(
 
 
 def _relevant_keys(track: dict | None) -> set[str]:
-    """La misma clave que `rank_track_record`: pic, o el nombre si no hay pic."""
+    """Los socios de los proyectos parecidos que enseña la ficha. Clave: pic, o el nombre.
+
+    Un registro anterior sin `projects` usa la lista por organización.
+    """
     if not track or track.get("status") != "ok":
         return set()
+    if track.get("projects") is not None:
+        return {
+            partner.get("pic") or partner.get("org_name")
+            for project in track["projects"]
+            for partner in project.get("partners") or []
+        }
     return {org.get("pic") or org.get("org_name") for org in track.get("items") or []}
 
 
@@ -236,6 +245,10 @@ def _stored_is_current(item, store, vertical) -> bool:
     saved = store.saved_track_record(item.id)
     if not saved or not saved.get("inputs_hash"):
         return False
+    # Un historial guardado antes de agrupar por proyecto (o por adjudicación) no vale: la ficha
+    # lo enseña agrupado, y la lista por organización viene cortada en 30.
+    if saved.get("status") == "ok" and saved.get("projects") is None:
+        return False
     from app.partners.precompute import inputs_hash
 
     return saved.get("inputs_hash") == inputs_hash(item, store, vertical)
@@ -249,6 +262,8 @@ def _from_saved(saved: dict) -> dict:
         total=int(saved.get("total") or 0),
         loaded_at=saved.get("loaded_at"),
         since=saved.get("since"),
+        projects=saved.get("projects"),
+        projects_total=saved.get("projects_total"),
     )
 
 
@@ -261,10 +276,16 @@ def _from_cordis(item, store, vertical) -> dict:
     if _needs_english(item):
         return _payload("not_comparable", "cordis", loaded_at=stamp)
     rows, corpus = _cordis(store)
-    ranked, total = rank_track_record(
-        item, rows, cfg=vertical.track_record, kind="cordis", corpus=corpus
+    views = track_record_views(item, rows, cfg=vertical.track_record, kind="cordis", corpus=corpus)
+    return _payload(
+        "ok" if views["items"] else "no_match",
+        "cordis",
+        items=views["items"],
+        total=views["total"],
+        loaded_at=stamp,
+        projects=views["projects"],
+        projects_total=views["projects_total"],
     )
-    return _payload("ok" if ranked else "no_match", "cordis", items=ranked, total=total, loaded_at=stamp)
 
 
 def _from_awards(item, store, vertical) -> dict:
@@ -273,16 +294,16 @@ def _from_awards(item, store, vertical) -> dict:
     rows, corpus = _awards(store)
     if not meta.get("loaded_at") and not rows:
         return _payload("not_loaded", "ted_awards")
-    ranked, total = rank_track_record(
-        item, rows, cfg=vertical.track_record, kind="awards", corpus=corpus
-    )
+    views = track_record_views(item, rows, cfg=vertical.track_record, kind="awards", corpus=corpus)
     return _payload(
-        "ok" if ranked else "no_match",
+        "ok" if views["items"] else "no_match",
         "ted_awards",
-        items=ranked,
-        total=total,
+        items=views["items"],
+        total=views["total"],
         loaded_at=meta.get("loaded_at"),
         since=meta.get("since"),
+        projects=views["projects"],
+        projects_total=views["projects_total"],
     )
 
 
@@ -334,8 +355,22 @@ def _as_date(value) -> date | None:
         return None
 
 
-def _payload(status: str, source: str, *, items=None, total: int = 0, loaded_at=None, since=None) -> dict:
+def _payload(
+    status: str,
+    source: str,
+    *,
+    items=None,
+    total: int = 0,
+    loaded_at=None,
+    since=None,
+    projects=None,
+    projects_total=None,
+) -> dict:
+    """`items` va por organización: lo usa el espejo normalizado. `projects`, por proyecto
+    parecido (o adjudicación) con todos sus socios: lo que enseña la ficha."""
     rows = items or []
+    if projects is None and status != "ok":
+        projects, projects_total = [], 0
     return {
         "status": status,
         "source": source,
@@ -343,6 +378,8 @@ def _payload(status: str, source: str, *, items=None, total: int = 0, loaded_at=
         "loaded_at": loaded_at,
         "since": since,
         "items": rows,
+        "projects": projects,
+        "projects_total": projects_total,
     }
 
 

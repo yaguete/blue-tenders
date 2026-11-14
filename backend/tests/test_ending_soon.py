@@ -252,6 +252,16 @@ def test_two_partners_of_one_project_share_a_consortium(tmp_path):
     unmarked = ending_soon_for(_grant(), store, load_vertical(), today=TODAY)
     assert unmarked["relevant_total"] is None
     assert all(partner["relevant"] is False for partner in unmarked["consortia"][0]["partners"])
+    # Con el historial por proyecto, relevante es cualquier socio de un proyecto parecido
+    # que enseña la ficha, aunque no entre en la lista por organización.
+    by_project = {
+        "status": "ok",
+        "items": [{"pic": "111", "org_name": "Wind Lab"}],
+        "projects": [{"id": "he:9", "partners": [{"pic": "222", "org_name": "Blade Co"}]}],
+    }
+    body = ending_soon_for(_grant(), store, load_vertical(), track=by_project, today=TODAY)
+    partners = {partner["org_name"]: partner["relevant"] for partner in body["consortia"][0]["partners"]}
+    assert partners == {"Wind Lab": False, "Blade Co": True}
 
 
 def test_a_saved_ending_without_consortia_is_recomputed(tmp_path):

@@ -124,11 +124,14 @@ def test_detail_reads_the_saved_record_from_supabase(monkeypatch):
             "inputs_hash": current,
             "loaded_at": "2026-11-11T00:00:00+00:00",
             "items": [{"org_name": "Saved Lab", "pic": "9", "score": 1, "projects": []}],
+            "projects": [{"id": "p1", "acronym": "SAVED", "partners": [{"org_name": "Saved Lab", "pic": "9"}]}],
+            "projects_total": 1,
         },
     )
     monkeypatch.setattr("app.api.opportunities.get_store", lambda: store)
     body = detail(item.id)
     assert body["track_record"]["items"][0]["org_name"] == "Saved Lab"
+    assert body["track_record"]["projects"][0]["acronym"] == "SAVED"
     rewritten = Opportunity(**{**item.model_dump(), "title": "saved-call rewritten", "content_hash": None})
     store.client.table("opportunities").upsert([rewritten.model_dump(mode="json")]).execute()
     body = detail(item.id)
@@ -139,3 +142,27 @@ def _loaded_supabase(store: SupabaseStore) -> None:
     store.save_track_record_source(
         "cordis-h2020", content_hash="dump-1", loaded_at="2026-11-11T00:00:00+00:00", projects=0
     )
+
+
+def test_a_saved_cordis_record_without_projects_is_recomputed(tmp_path):
+    """La forma anterior (por organización, cortada en 30) no se enseña: va en vivo y queda pendiente."""
+    from app.partners.track_record import track_record_for
+
+    store = FileStore(tmp_path / "opportunities.json")
+    _loaded(store)
+    item = _open("old-shape")
+    store.upsert_opportunities([item])
+    store.save_track_record(
+        item.id,
+        {
+            "source": "cordis",
+            "status": "ok",
+            "total": 1,
+            "inputs_hash": inputs_hash(item, store, load_vertical()),
+            "items": [{"org_name": "OLD LAB", "pic": "1", "score": 1, "projects": []}],
+        },
+    )
+    shown = track_record_for(store.get(item.id), store, load_vertical())
+    assert [org["org_name"] for org in shown["items"]] != ["OLD LAB"]
+    assert shown["projects"] == []
+    assert item.id in store.pending_track_records()

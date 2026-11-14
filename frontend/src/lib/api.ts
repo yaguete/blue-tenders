@@ -34,6 +34,7 @@ export type Stats = {
   sources: number;
   checked_at: string | null;
   open_budget_eur: number;
+  wrapping_up: number;
 };
 
 export type SearchResponse = {

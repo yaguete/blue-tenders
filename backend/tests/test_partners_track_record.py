@@ -10,7 +10,7 @@ from app.models.opportunity import (
     OpportunityKind,
     OpportunityType,
 )
-from app.partners.score import rank_track_record, specific_cpv
+from app.partners.score import rank_track_record, specific_cpv, track_record_views
 from app.partners.track_record import track_record_for
 from app.sources.ted import TedSource
 from app.store import FileStore, SupabaseStore
@@ -345,3 +345,101 @@ def test_a_placsp_award_shows_its_winner_against_the_call_budget(tmp_path):
     missing = track_record_for(viewed, alone, load_vertical())
     assert missing["items"][0]["projects"][0]["base_amount_eur"] is None
     assert missing["items"][0]["projects"][0]["amount_eur"] == 499_000
+
+
+def test_projects_keep_every_partner_and_the_cap_counts_projects():
+    """La ficha agrupa por proyecto. El tope corta proyectos, nunca socios de un proyecto."""
+    cfg = load_vertical().track_record.model_copy(update={"limit": 1})
+    wind = _grant()
+    partners = [
+        _row(org_name=f"Partner {index}", pic=str(100 + index), role="participant")
+        for index in range(5)
+    ]
+    coordinator = _row(org_name="Wind Lab", pic="111", role="coordinator")
+    second = _row(
+        org_name="Wind Lab",
+        pic="111",
+        acronym="TOWER",
+        title="Offshore wind decommissioning of towers",
+        url="https://cordis.europa.eu/project/id/2",
+        project_id="horizon-europe:2",
+        topics=["HORIZON-CL5-2021-D3-03-01"],
+        topic_title="",
+    )
+    views = track_record_views(wind, [coordinator, *partners, second], cfg=cfg, kind="cordis")
+    assert views["projects_total"] == 2
+    assert len(views["projects"]) == 1
+    project = views["projects"][0]
+    assert project["evidence"] == "same_topic"
+    assert {partner["org_name"] for partner in project["partners"]} == {"Wind Lab"} | {
+        f"Partner {index}" for index in range(5)
+    }
+    lab = next(partner for partner in project["partners"] if partner["pic"] == "111")
+    assert lab["also"] == ["TOWER"]
+    assert all(partner["also"] == [] for partner in project["partners"] if partner["pic"] != "111")
+    # El espejo normalizado sigue por organización, con su propio tope.
+    assert len(views["items"]) == 1
+    assert views["total"] == 6
+
+
+def test_an_award_with_several_winners_is_one_card_with_the_amount_once():
+    """Un acuerdo marco con varios adjudicatarios: una tarjeta, el importe una vez."""
+    cfg = load_vertical().track_record
+    tender = Opportunity(
+        id="cables",
+        source_id="ted",
+        external_id="cables",
+        url="https://ted.europa.eu/cables",
+        title="Supply of subsea power cables",
+        title_en="Supply of subsea power cables",
+        type=OpportunityType.tender,
+        kind=OpportunityKind.tender,
+        cpv=["31321000"],
+        subsectors=["subsea-cables"],
+        call_id="MINE",
+        language="en",
+    )
+    award = {
+        "title": "Underground cables HV Spain 2026",
+        "objective": "high voltage power cables",
+        "url": "https://ted.europa.eu/award-1",
+        "role": "winner",
+        "end_year": 2026,
+        "subsectors": ["subsea-cables"],
+        "project_id": "award-1",
+        "cpv": ["31321000"],
+        "call_id": "OTHER",
+        "buyer": "ENDESA",
+        "amount_eur": 15_142_134,
+        "base_amount_eur": None,
+        "contract_end": None,
+        "country": "ES",
+        "activity_type": "medium",
+        "sme": False,
+        "demo": False,
+    }
+    rows = [
+        {**award, "org_name": "Prysmian", "pic": "p"},
+        {**award, "org_name": "Hengtong", "pic": "h"},
+        {**award, "org_name": "Cabelte", "pic": "c", "country": "PT"},
+        {
+            **award,
+            "org_name": "Prysmian",
+            "pic": "p",
+            "project_id": "award-2",
+            "url": "https://ted.europa.eu/award-2",
+            "title": "Subsea cable repair",
+            "amount_eur": 900_000,
+            "call_id": "OTHER-2",
+        },
+    ]
+    views = track_record_views(tender, rows, cfg=cfg, kind="awards")
+    assert views["projects_total"] == 2
+    framework = next(project for project in views["projects"] if project["id"] == "award-1")
+    assert framework["evidence"] == "same_cpv"
+    assert framework["buyer"] == "ENDESA"
+    assert framework["amount_eur"] == 15_142_134
+    assert sorted(partner["org_name"] for partner in framework["partners"]) == ["Cabelte", "Hengtong", "Prysmian"]
+    assert all("amount_eur" not in partner for partner in framework["partners"])
+    prysmian = next(partner for partner in framework["partners"] if partner["pic"] == "p")
+    assert prysmian["also"] == ["Subsea cable repair"]

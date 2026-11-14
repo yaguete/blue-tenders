@@ -34,6 +34,7 @@ def test_stats_is_not_captured_by_the_detail_route():
         "sources",
         "checked_at",
         "open_budget_eur",
+        "wrapping_up",
     }
 
 

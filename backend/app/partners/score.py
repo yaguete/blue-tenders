@@ -297,16 +297,19 @@ def _opportunity_tokens(opportunity) -> set[str]:
     return _tokens(text)
 
 
-def rank_track_record(
+def _scored_rows(
     opportunity,
     participations: list[dict],
     *,
     cfg=None,
     kind: str = "cordis",
-    limit: int | None = None,
     corpus: PreparedCorpus | None = None,
-) -> tuple[list[dict], int]:
-    """Organizaciones con evidencia, y cuántas había antes del límite."""
+) -> list[tuple[dict, float, str]]:
+    """Cada participación con su puntuación y su evidencia. Sin evidencia, fuera.
+
+    La puntuación es del proyecto (texto y tema), no del socio: todos los socios de un
+    proyecto parecido salen con la misma.
+    """
     seen = set()
     rows = []
     for row in participations:
@@ -323,7 +326,7 @@ def rank_track_record(
     idf = corpus.idf if corpus is not None else None
     default = corpus.default if corpus is not None else 1.0
     opp_tokens = _opportunity_tokens(opportunity) if cfg is not None else None
-    by_org: dict[str, dict] = {}
+    scored_rows = []
     for row in rows:
         stats = corpus.projects.get(_doc_key(row)) if corpus is not None else None
         scored = score_project(
@@ -337,6 +340,17 @@ def rank_track_record(
         evidence = _evidence(opportunity, row, scored["parts"], cfg, kind) if cfg is not None else "listed"
         if evidence is None:
             continue
+        scored_rows.append((row, scored["score"], evidence))
+    return scored_rows
+
+
+def _limit(cfg, limit: int | None) -> int:
+    return cfg.limit if cfg is not None and limit is None else (limit if limit is not None else 30)
+
+
+def _rank_orgs(scored_rows: list[tuple[dict, float, str]], cfg=None, limit: int | None = None) -> tuple[list[dict], int]:
+    by_org: dict[str, dict] = {}
+    for row, score, evidence in scored_rows:
         key = row.get("pic") or row["org_name"]
         bucket = by_org.setdefault(
             key,
@@ -363,7 +377,7 @@ def rank_track_record(
                 "amount_eur": row.get("amount_eur"),
                 "base_amount_eur": row.get("base_amount_eur"),
                 "contract_end": row.get("contract_end"),
-                "score": scored["score"],
+                "score": score,
                 "evidence": evidence,
             }
         )
@@ -383,8 +397,114 @@ def rank_track_record(
             bucket["org_name"] or "",
         )
     )
-    cap = cfg.limit if cfg is not None and limit is None else (limit if limit is not None else 30)
-    return ranked[:cap], len(ranked)
+    return ranked[: _limit(cfg, limit)], len(ranked)
+
+
+_PARTNER_ALSO = 3
+# Mismo tema de convocatoria (CORDIS) o mismo CPV específico (adjudicaciones): va antes que el texto.
+_STRONG_EVIDENCE = {"same_topic", "same_cpv"}
+
+
+def _rank_projects(
+    scored_rows: list[tuple[dict, float, str]], cfg=None, limit: int | None = None
+) -> tuple[list[dict], int]:
+    """Proyectos parecidos con todos sus socios. El tope es de proyectos, no de socios.
+
+    En licitaciones, un «proyecto» es una adjudicación y sus socios, los adjudicatarios:
+    un acuerdo marco puede tener decenas, y el importe es de la adjudicación, no de cada uno.
+    `also` dice en qué otros proyectos parecidos está cada socio: quien repite es la pista
+    más fuerte, y al agrupar por proyecto quedaría escondido.
+    """
+    by_project: dict[str, dict] = {}
+    org_projects: dict[str, list[str]] = {}
+    for row, score, evidence in scored_rows:
+        project_id = row.get("project_id") or row.get("url") or row.get("acronym")
+        if not project_id:
+            continue
+        project = by_project.setdefault(
+            project_id,
+            {
+                "id": project_id,
+                "acronym": row.get("acronym"),
+                "title": row.get("title"),
+                "url": row.get("url"),
+                "programme_id": row.get("programme_id"),
+                "end_year": row.get("end_year"),
+                "end_date": row.get("end_date"),
+                "buyer": row.get("buyer"),
+                "amount_eur": row.get("amount_eur"),
+                "base_amount_eur": row.get("base_amount_eur"),
+                "contract_end": row.get("contract_end"),
+                "score": round(score, 4),
+                "evidence": evidence,
+                "partners": [],
+            },
+        )
+        if evidence in _STRONG_EVIDENCE:
+            project["evidence"] = evidence
+        project["score"] = max(project["score"], round(score, 4))
+        key = row.get("pic") or row["org_name"]
+        project["partners"].append(
+            {
+                "org_name": row["org_name"],
+                "country": row.get("country"),
+                "activity_type": row.get("activity_type"),
+                "pic": row.get("pic"),
+                "sme": row.get("sme"),
+                "demo": bool(row.get("demo")),
+                "role": row.get("role"),
+            }
+        )
+        org_projects.setdefault(key, []).append(project_id)
+    ranked = sorted(
+        by_project.values(),
+        key=lambda project: (
+            project["evidence"] not in _STRONG_EVIDENCE,
+            -project["score"],
+            project.get("acronym") or project.get("title") or "",
+        ),
+    )
+    order = {project["id"]: index for index, project in enumerate(ranked)}
+    for project in ranked:
+        for partner in project["partners"]:
+            others = sorted(
+                {other for other in org_projects.get(partner.get("pic") or partner["org_name"], []) if other != project["id"]},
+                key=lambda other: order[other],
+            )
+            partner["also"] = [
+                by_project[other].get("acronym") or by_project[other].get("title") for other in others[:_PARTNER_ALSO]
+            ]
+    return ranked[: _limit(cfg, limit)], len(ranked)
+
+
+def rank_track_record(
+    opportunity,
+    participations: list[dict],
+    *,
+    cfg=None,
+    kind: str = "cordis",
+    limit: int | None = None,
+    corpus: PreparedCorpus | None = None,
+) -> tuple[list[dict], int]:
+    """Organizaciones con evidencia, y cuántas había antes del límite."""
+    scored_rows = _scored_rows(opportunity, participations, cfg=cfg, kind=kind, corpus=corpus)
+    return _rank_orgs(scored_rows, cfg, limit)
+
+
+def track_record_views(
+    opportunity,
+    participations: list[dict],
+    *,
+    cfg=None,
+    kind: str = "cordis",
+    corpus: PreparedCorpus | None = None,
+) -> dict:
+    """Las dos vistas con una sola puntuación: organizaciones (el espejo normalizado)
+    y proyectos (la ficha)."""
+    scored_rows = _scored_rows(opportunity, participations, cfg=cfg, kind=kind, corpus=corpus)
+    items, total = _rank_orgs(scored_rows, cfg)
+    projects, projects_total = _rank_projects(scored_rows, cfg)
+    return {"items": items, "total": total, "projects": projects, "projects_total": projects_total}
 
 
 def rank_organisations(opportunity, participations: list[dict], limit: int = 30) -> list[dict]:

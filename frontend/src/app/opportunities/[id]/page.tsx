@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Calendar, ChevronDown, Columns2, FileText, Globe, SquareArrowOutUpRight } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { LoadingState } from "@/components/loading-state";
 import { api } from "@/lib/api";
 import { addCompare, comparePath, useCompareIds } from "@/lib/compare";
@@ -72,6 +72,31 @@ type Partner = {
   projects: Project[];
 };
 
+type TrackPartner = {
+  org_name: string;
+  country: string | null;
+  activity_type: string | null;
+  pic: string | null;
+  sme?: boolean | null;
+  role: string | null;
+  also?: string[];
+};
+
+type TrackProject = {
+  id: string;
+  acronym: string | null;
+  title: string | null;
+  url: string | null;
+  programme_id: string | null;
+  end_year: number | null;
+  evidence: string | null;
+  buyer?: string | null;
+  amount_eur?: number | null;
+  base_amount_eur?: number | null;
+  contract_end?: string | null;
+  partners: TrackPartner[];
+};
+
 type TrackRecord = {
   status: "ok" | "no_match" | "not_loaded" | "not_comparable";
   source: "cordis" | "ted_awards";
@@ -79,6 +104,20 @@ type TrackRecord = {
   loaded_at: string | null;
   since: string | null;
   items: Partner[];
+  projects?: TrackProject[] | null;
+  projects_total?: number | null;
+};
+
+/** Un socio en una tarjeta de proyecto: del historial (`also`) o de los que acaban (`relevant`). */
+type CardPartner = {
+  org_name: string;
+  country: string | null;
+  activity_type: string | null;
+  pic: string | null;
+  sme?: boolean | null;
+  role: string | null;
+  relevant?: boolean;
+  also?: string[];
 };
 
 type Detail = {
@@ -135,16 +174,11 @@ export default function OpportunityPage() {
   const [original, setOriginal] = useState(false);
   const [compareNote, setCompareNote] = useState<string | null>(null);
   const [trackOpen, setTrackOpen] = useState(false);
-  const [endingOpen, setEndingOpen] = useState(false);
 
   useEffect(() => {
     setTrackOpen(false);
-    setEndingOpen(false);
     api<Detail>(`/opportunities/${params.id}`)
-      .then((body) => {
-        setItem(body);
-        setEndingOpen(body.ending_soon?.status === "ok");
-      })
+      .then(setItem)
       .catch((err: Error) => setError(err.message));
   }, [params.id]);
 
@@ -344,29 +378,19 @@ export default function OpportunityPage() {
         </section>
       )}
 
+      {item.kind === "grant" && item.ending_soon && <EndingSoonSection item={item} />}
+
       <TrackRecordSection item={item} open={trackOpen} onToggle={() => setTrackOpen((value) => !value)} />
-
-      {item.kind === "grant" && item.ending_soon && (
-        <EndingSoonSection item={item} open={endingOpen} onToggle={() => setEndingOpen((value) => !value)} />
-      )}
-
-      <footer className="space-y-1 font-mono text-xs text-muted-foreground">
-        <p>
-          <a className="underline" href={item.url}>
-            {sourceLabel(item.source_id)}
-          </a>
-        </p>
-        {item.track_record && (item.track_record.status === "ok" || item.track_record.status === "no_match") && (
-          <p>{attribution(item.track_record)}</p>
-        )}
-      </footer>
     </article>
   );
 }
 
 function TrackRecordSection({ item, open, onToggle }: { item: Detail; open: boolean; onToggle: () => void }) {
+  const record = item.track_record;
+  if (record?.projects != null) return <TrackProjectsSection record={record} />;
   const partners = item.track_record?.items ?? item.partners;
   const count = item.track_record?.total ?? partners.length;
+  if (count === 0) return null;
   const title = (count === 1 ? t("trackRecordTitleOne") : t("trackRecordTitle")).replace("{count}", String(count));
   const message = trackMessage(item);
   return (
@@ -406,7 +430,7 @@ function TrackRecordSection({ item, open, onToggle }: { item: Detail; open: bool
                       ) : (
                         project.acronym || project.title
                       )}
-                      {project.role ? ` · ${project.role}` : ""}
+                      {roleLabel(project.role) ? ` · ${roleLabel(project.role)}` : ""}
                       {project.programme_id ? ` · ${programmeLabel(project.programme_id)}` : ""}
                       {project.end_year ? <span className="tabular"> · {project.end_year}</span> : ""}
                       {project.buyer ? ` · ${project.buyer}` : ""}
@@ -439,7 +463,172 @@ function TrackRecordSection({ item, open, onToggle }: { item: Detail; open: bool
   );
 }
 
-function EndingSoonSection({ item, open, onToggle }: { item: Detail; open: boolean; onToggle: () => void }) {
+function TrackProjectsSection({ record }: { record: TrackRecord }) {
+  const [showAll, setShowAll] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const projects = record.projects ?? [];
+  const total = record.projects_total ?? projects.length;
+  if (total === 0) return null;
+  // Licitaciones: cada tarjeta es una adjudicación y sus adjudicatarios, a la vista sin clic.
+  const awards = record.source === "ted_awards";
+  const visible = showAll ? projects : projects.slice(0, 10);
+  const summary = awards
+    ? [
+        (total === 1 ? t("trackRecordAwardsOne") : t("trackRecordAwards")).replace("{count}", String(total)),
+        (record.total === 1 ? t("trackRecordWinnersOne") : t("trackRecordWinners")).replace("{count}", String(record.total)),
+      ].join(" · ")
+    : [
+        (total === 1 ? t("trackRecordProjectsOne") : t("trackRecordProjects")).replace("{count}", String(total)),
+        (record.total === 1 ? t("endingSoonOrgsOne") : t("endingSoonOrgs")).replace("{count}", String(record.total)),
+      ].join(" · ");
+  return (
+    <section>
+      <h2 className="text-lg font-semibold">{t("trackRecordHeading")}</h2>
+      <p className="mt-2 font-mono text-xs text-muted-foreground">{summary}</p>
+      <ul className="mt-4 space-y-3">
+        {visible.map((project) => (
+          <ProjectCard
+            key={project.id}
+            mode={awards ? "preview" : "accordion"}
+            winners={awards}
+            name={project.acronym || project.title || project.id}
+            url={project.url}
+            title={project.acronym ? project.title : null}
+            aside={evidenceLabel(project.evidence)}
+            meta={
+              awards
+                ? [
+                    project.buyer ?? null,
+                    project.end_year ? String(project.end_year) : null,
+                    awardAmount(project),
+                    project.contract_end ? t("ends").replace("{date}", dateOnly(project.contract_end)) : null,
+                  ]
+                : [
+                    project.programme_id ? programmeLabel(project.programme_id) : null,
+                    project.end_year ? String(project.end_year) : null,
+                    coordinatorLine(project.partners),
+                  ]
+            }
+            partners={project.partners}
+            expanded={Boolean(expanded[project.id])}
+            onToggle={() => setExpanded((current) => ({ ...current, [project.id]: !current[project.id] }))}
+          />
+        ))}
+      </ul>
+      {!showAll && projects.length > 10 && (
+        <button type="button" onClick={() => setShowAll(true)} className="mt-3 cursor-pointer text-sm underline">
+          {t(awards ? "trackRecordShowAllAwards" : "trackRecordShowAll").replace("{count}", String(projects.length))}
+        </button>
+      )}
+      {total > projects.length && (
+        <p className="mt-3 font-mono text-xs text-muted-foreground">
+          {t("trackRecordShowingProjects")
+            .replace("{shown}", String(projects.length))
+            .replace("{total}", String(total))}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function awardAmount(project: TrackProject): string | null {
+  if (project.amount_eur == null) return null;
+  const amount = `EUR ${project.amount_eur.toLocaleString("en-GB")}`;
+  if (project.base_amount_eur == null) return amount;
+  return `${amount} (${t("baseBudget").replace("{amount}", project.base_amount_eur.toLocaleString("en-GB"))})`;
+}
+
+function coordinatorLine(partners: CardPartner[]): string | null {
+  const coordinator = partners.find((partner) => partner.role === "coordinator");
+  if (!coordinator) return null;
+  const name = coordinator.country ? `${coordinator.org_name} (${coordinator.country})` : coordinator.org_name;
+  return t("trackRecordCoordinator").replace("{name}", name);
+}
+
+function ConsortiaFilter({
+  value,
+  allCount,
+  relevantCount,
+  onChange,
+}: {
+  value: "all" | "relevant";
+  allCount: number;
+  relevantCount: number;
+  onChange: (value: "all" | "relevant") => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const listId = useId();
+  const group = useId();
+  const options = [
+    { id: "all" as const, name: t("endingSoonAllConsortia").replace("{count}", String(allCount)) },
+    { id: "relevant" as const, name: t("endingSoonOnlyConsortia").replace("{count}", String(relevantCount)) },
+  ];
+  const summary = options.find((option) => option.id === value)?.name ?? options[0].name;
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointer(event: MouseEvent) {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={root} className="relative mt-2 w-fit text-sm">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={listId}
+        title={summary}
+        onClick={() => setOpen((current) => !current)}
+        className="cursor-pointer truncate border border-border bg-card px-2 py-1 text-left text-sm hover:bg-muted"
+      >
+        {summary}
+      </button>
+      {open && (
+        <div id={listId} className="absolute left-0 z-20 mt-1 w-max border border-border bg-card p-2 shadow-sm">
+          {options.map((option) => (
+            <label key={option.id} className="flex cursor-pointer items-center gap-2 whitespace-nowrap px-1 py-1 hover:bg-muted">
+              <input
+                type="radio"
+                name={group}
+                checked={value === option.id}
+                onChange={() => {
+                  onChange(option.id);
+                  setOpen(false);
+                }}
+                className="sr-only"
+              />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className="size-4 shrink-0" aria-hidden>
+                <path
+                  fill="currentColor"
+                  fillRule="evenodd"
+                  d={
+                    value === option.id
+                      ? "M256 42.667c117.821 0 213.334 95.513 213.334 213.333c0 117.821-95.513 213.334-213.334 213.334c-117.82 0-213.333-95.513-213.333-213.334C42.667 138.18 138.18 42.667 256 42.667m0 42.667c-94.256 0-170.666 76.41-170.666 170.666c0 94.257 76.41 170.667 170.666 170.667c94.257 0 170.667-76.41 170.667-170.667c0-94.256-76.41-170.666-170.667-170.666m0 64c58.91 0 106.667 47.756 106.667 106.666S314.911 362.667 256 362.667c-58.91 0-106.666-47.756-106.666-106.667c0-58.91 47.756-106.666 106.666-106.666"
+                      : "M256 42.667c117.821 0 213.334 95.513 213.334 213.333c0 117.821-95.513 213.334-213.334 213.334c-117.82 0-213.333-95.513-213.333-213.334C42.667 138.18 138.18 42.667 256 42.667m0 42.667c-94.256 0-170.666 76.41-170.666 170.666c0 94.257 76.41 170.667 170.666 170.667c94.257 0 170.667-76.41 170.667-170.667c0-94.256-76.41-170.666-170.667-170.666"
+                  }
+                />
+              </svg>
+              <span>{option.name}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EndingSoonSection({ item }: { item: Detail }) {
   const record = item.ending_soon;
   const [month, setMonth] = useState<string | null>(null);
   const [relevantOnly, setRelevantOnly] = useState(false);
@@ -447,19 +636,9 @@ function EndingSoonSection({ item, open, onToggle }: { item: Detail; open: boole
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   if (!record) return null;
   const consortia = record.consortia ?? [];
-  const consortiaTotal = record.consortia_total ?? consortia.length;
   const months = String(record.window_months);
-  const title = (consortiaTotal === 1 ? t("endingSoonConsortiaOne") : t("endingSoonConsortia"))
-    .replace("{count}", String(consortiaTotal))
-    .replace("{months}", months);
-  const orgs = (record.total === 1 ? t("endingSoonOrgsOne") : t("endingSoonOrgs")).replace(
-    "{count}",
-    String(record.total),
-  );
-  const relevant =
-    record.relevant_total == null
-      ? null
-      : t("endingSoonRelevantCount").replace("{count}", String(record.relevant_total));
+  const title = t("endingSoonHeading").replace("{months}", months);
+  const relevantCount = consortia.filter((consortium) => consortium.partners.some((partner) => partner.relevant)).length;
   const message =
     record.status === "not_loaded"
       ? t("endingSoonNotLoaded")
@@ -473,31 +652,23 @@ function EndingSoonSection({ item, open, onToggle }: { item: Detail; open: boole
   const visible = month || showAll ? shown : shown.slice(0, 10);
   return (
     <section>
-      <h2 className="text-lg font-semibold">
-        <button
-          type="button"
-          aria-expanded={open}
-          onClick={onToggle}
-          className="inline-flex cursor-pointer items-center gap-2 text-left"
-        >
-          <span>{title}</span>
-          <ChevronDown
-            className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
-            aria-hidden
-          />
-        </button>
-      </h2>
-      {open && (
-        <>
-          <p className="mt-2 font-mono text-xs text-muted-foreground">
-            {orgs}
-            {relevant ? ` · ${relevant}` : ""}
-          </p>
-          {message && <p className="mt-3 text-sm text-muted-foreground">{message}</p>}
+      <h2 className="text-lg font-semibold">{title}</h2>
+      {record.status === "ok" && (
+        <ConsortiaFilter
+          value={relevantOnly ? "relevant" : "all"}
+          allCount={consortia.length}
+          relevantCount={relevantCount}
+          onChange={(next) => {
+            setRelevantOnly(next === "relevant");
+            setMonth(null);
+          }}
+        />
+      )}
+      {message && <p className="mt-3 text-sm text-muted-foreground">{message}</p>}
           {record.status === "ok" && (
             <>
-              <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
-                <div className="flex min-w-0 flex-1 items-end gap-1" role="group" aria-label={t("endingSoonMonths")}>
+              <div className="mt-4">
+                <div className="flex min-w-0 items-end gap-1" role="group" aria-label={t("endingSoonMonths")}>
                   {columns.map((column) => {
                     const count = listed.filter((consortium) => consortium.end_date.startsWith(column.key)).length;
                     const pressed = month === column.key;
@@ -524,25 +695,18 @@ function EndingSoonSection({ item, open, onToggle }: { item: Detail; open: boole
                     );
                   })}
                 </div>
-                {record.relevant_total != null && record.relevant_total > 0 && (
-                  <button
-                    type="button"
-                    aria-pressed={relevantOnly}
-                    onClick={() => {
-                      setRelevantOnly((value) => !value);
-                      setMonth(null);
-                    }}
-                    className={`cursor-pointer border border-border px-2 py-1 text-sm ${relevantOnly ? "bg-accent-wash" : "bg-card"}`}
-                  >
-                    {t("endingSoonOnlyRelevant")}
-                  </button>
-                )}
               </div>
               <ul className="mt-4 space-y-3">
                 {visible.map((consortium) => (
-                  <ConsortiumCard
+                  <ProjectCard
                     key={consortium.id}
-                    consortium={consortium}
+                    mode="preview"
+                    name={consortium.acronym || consortium.title || consortium.id}
+                    url={consortium.url}
+                    title={consortium.acronym ? consortium.title : null}
+                    aside={t("ends").replace("{date}", dateOnly(consortium.end_date))}
+                    meta={[consortium.programme_id ? programmeLabel(consortium.programme_id) : null]}
+                    partners={consortium.partners}
                     expanded={Boolean(expanded[consortium.id])}
                     onToggle={() => setExpanded((current) => ({ ...current, [consortium.id]: !current[consortium.id] }))}
                   />
@@ -559,67 +723,97 @@ function EndingSoonSection({ item, open, onToggle }: { item: Detail; open: boole
               )}
             </>
           )}
-          <p className="mt-3 font-mono text-xs text-muted-foreground">{t("endingSoonFoot")}</p>
-        </>
-      )}
+      <p className="mt-3 font-mono text-xs text-muted-foreground">{t("endingSoonFoot")}</p>
     </section>
   );
 }
 
-function ConsortiumCard({
-  consortium,
+/**
+ * Un proyecto y sus socios. `preview` enseña 6 socios y «+N more» (los que acaban);
+ * `accordion` los esconde tras el número de socios (el historial).
+ */
+function ProjectCard({
+  mode,
+  winners = false,
+  name,
+  url,
+  title,
+  aside,
+  meta,
+  partners: raw,
   expanded,
   onToggle,
 }: {
-  consortium: Consortium;
+  mode: "preview" | "accordion";
+  /** Adjudicatarios de una licitación: el número dice «winners». */
+  winners?: boolean;
+  name: string;
+  url: string | null;
+  title: string | null;
+  aside: string | null;
+  meta: (string | null)[];
+  partners: CardPartner[];
   expanded: boolean;
   onToggle: () => void;
 }) {
-  const partners = [...consortium.partners].sort((left, right) => {
-    const rank = (partner: EndingPartner) => (partner.role === "coordinator" ? 0 : partner.relevant ? 1 : 2);
+  const partners = [...raw].sort((left, right) => {
+    const rank = (partner: CardPartner) =>
+      partner.role === "coordinator" ? 0 : partner.relevant || (partner.also?.length ?? 0) > 0 ? 1 : 2;
     return rank(left) - rank(right) || (left.org_name || "").localeCompare(right.org_name || "");
   });
-  const shown = expanded ? partners : partners.slice(0, 6);
   const count = partners.length;
-  const name = consortium.acronym || consortium.title;
+  const countKeys = winners
+    ? (["trackRecordWinnersOne", "trackRecordWinners"] as const)
+    : (["endingSoonPartnersOne", "endingSoonPartners"] as const);
+  const countLabel = t(count === 1 ? countKeys[0] : countKeys[1]).replace("{count}", String(count));
+  const accordion = mode === "accordion";
+  const shown = accordion ? (expanded ? partners : []) : expanded ? partners : partners.slice(0, 6);
+  const listId = useId();
+  const line = [...meta, accordion ? null : countLabel].filter(Boolean).join(" · ");
   return (
     <li className="border border-border bg-card px-4 py-3 text-sm">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        {consortium.url ? (
-          <a href={consortium.url} className="font-medium underline" target="_blank" rel="noreferrer">
+        {url ? (
+          <a href={url} className="font-medium underline" target="_blank" rel="noreferrer">
             {name}
           </a>
         ) : (
           <span className="font-medium">{name}</span>
         )}
-        <span className="tabular font-mono text-xs text-muted-foreground">
-          {t("ends").replace("{date}", dateOnly(consortium.end_date))}
-        </span>
+        {aside && <span className="tabular font-mono text-xs text-muted-foreground">{aside}</span>}
       </div>
-      {consortium.acronym && consortium.title && (
-        <p className="mt-1 truncate text-muted-foreground">{consortium.title}</p>
+      {title && <p className="mt-1 truncate text-muted-foreground">{title}</p>}
+      {line && <p className="mt-1 font-mono text-xs text-muted-foreground">{line}</p>}
+      {accordion && (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          aria-controls={listId}
+          onClick={onToggle}
+          className="mt-2 inline-flex cursor-pointer items-center gap-1 text-xs underline"
+        >
+          {countLabel}
+          <ChevronDown className={`size-3.5 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} aria-hidden />
+        </button>
       )}
-      <p className="mt-1 font-mono text-xs text-muted-foreground">
-        {[
-          consortium.programme_id ? programmeLabel(consortium.programme_id) : null,
-          (count === 1 ? t("endingSoonPartnersOne") : t("endingSoonPartners")).replace("{count}", String(count)),
-        ]
-          .filter(Boolean)
-          .join(" · ")}
-      </p>
-      <ul className="mt-2 space-y-1 text-muted-foreground">
-        {shown.map((partner) => (
-          <li key={partner.pic || partner.org_name}>
-            <span className="text-foreground">{partner.org_name}</span>
-            {partner.country ? ` · ${partner.country}` : ""}
-            {partner.activity_type ? ` · ${activityLabel(partner.activity_type)}` : ""}
-            {partner.sme ? ` · ${t("trackRecordSme")}` : ""}
-            {roleLabel(partner.role) ? ` · ${roleLabel(partner.role)}` : ""}
-            {partner.relevant ? ` · ${t("endingSoonRelevant")}` : ""}
-          </li>
-        ))}
-      </ul>
-      {count > 6 && (
+      {shown.length > 0 && (
+        <ul id={listId} className="mt-2 space-y-1 text-muted-foreground">
+          {shown.map((partner) => (
+            <li key={partner.pic || partner.org_name}>
+              <span className="text-foreground">{partner.org_name}</span>
+              {partner.country ? ` · ${partner.country}` : ""}
+              {partner.activity_type ? ` · ${activityLabel(partner.activity_type)}` : ""}
+              {partner.sme ? ` · ${t("trackRecordSme")}` : ""}
+              {roleLabel(partner.role) ? ` · ${roleLabel(partner.role)}` : ""}
+              {partner.relevant ? ` · ${t("endingSoonRelevant")}` : ""}
+              {partner.also && partner.also.length > 0 ? (
+                <span className="text-accent-ink"> · {t("trackRecordAlso").replace("{projects}", partner.also.join(", "))}</span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
+      {!accordion && count > 6 && (
         <button type="button" onClick={onToggle} className="mt-2 cursor-pointer text-xs underline">
           {expanded ? t("endingSoonShowFewer") : t("endingSoonMore").replace("{count}", String(count - 6))}
         </button>
@@ -646,7 +840,7 @@ function monthColumns(windowMonths: number): { key: string; short: string; full:
 }
 
 function roleLabel(role: string | null): string | null {
-  if (!role || role === "participant") return null;
+  if (!role || role === "participant" || role === "winner") return null;
   const key = `role${role}`;
   const label = t(key);
   return label === key ? role : label;
@@ -859,21 +1053,6 @@ function evidenceLabel(evidence: string | null): string | null {
   if (evidence === "same_cpv") return t("trackRecordSameCpv");
   if (evidence === "similar_text") return t("trackRecordSimilar");
   return null;
-}
-
-function sourceLabel(sourceId: string): string {
-  if (sourceId === "ted") return t("sourceTed");
-  if (sourceId === "eu-ft") return t("sourceEuFt");
-  if (sourceId === "placsp" || sourceId === "placsp-regional") return t("sourcePlacsp");
-  if (sourceId === "bdns") return t("sourceBdns");
-  if (sourceId === "curated") return t("sourceCurated");
-  return sourceId;
-}
-
-function attribution(record: TrackRecord): string {
-  if (record.source === "ted_awards") return t("attributionTed");
-  const date = record.loaded_at ? dateOnly(record.loaded_at) : "—";
-  return t("attributionCordis").replace("{date}", date);
 }
 
 function dateOnly(iso: string): string {

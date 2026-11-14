@@ -123,15 +123,15 @@ function resultQuery(
   const params = new URLSearchParams();
   if (query) params.set("q", query);
   if (wrappingUp) params.set("wrapping_up", "true");
-  if (placesKey !== "*" && placesKey !== "") {
+  if (!wrappingUp && placesKey !== "*" && placesKey !== "") {
     placesKey.split(",").forEach((value) => params.append("country", value));
   }
   const chosen = kindsKey ? kindsKey.split(",") : [];
-  if (chosen.length > 0 && chosen.length < KIND_IDS.length) {
+  if (!wrappingUp && chosen.length > 0 && chosen.length < KIND_IDS.length) {
     chosen.forEach((value) => params.append("kind", value));
   }
   const dates = datesKey ? datesKey.split(",") : [];
-  if (dates.length > 0 && dates.length < DEADLINE_IDS.length) {
+  if (!wrappingUp && dates.length > 0 && dates.length < DEADLINE_IDS.length) {
     dates.forEach((value) => params.append("deadline", value));
   }
   params.set("limit", String(PAGE));
@@ -261,7 +261,9 @@ function SearchScreen() {
     const id = request.current;
     const offset = rows.length;
     setLoadingMore(true);
-    api<SearchResponse>(`/opportunities?${resultQuery(offset, q, selectionKey, countryKey, deadlineKey, wrappingUp)}`)
+    api<SearchResponse>(
+      `/opportunities?${resultQuery(offset, q, selectionKey, countryKey, deadlineKey, wrappingUp)}`,
+    )
       .then((body) => {
         if (request.current !== id) return;
         setRows((current) => {
@@ -291,7 +293,8 @@ function SearchScreen() {
     { id: "uncategorized", name: t("uncategorized"), count: facets?.country_missing || 0 },
   ].filter((option) => option.count > 0);
   const countrySelection = countries === null ? countryOptions.map((option) => option.id) : countries;
-  const blocked = countries?.length === 0 || selected.length === 0 || deadlines.length === 0;
+  const blocked =
+    !wrappingUp && (countries?.length === 0 || selected.length === 0 || deadlines.length === 0);
   const matches = blocked ? [] : rows;
   const compareIds = useCompareIds();
   const items = matches.filter((item) => !compareIds.includes(item.id));
@@ -331,10 +334,11 @@ function SearchScreen() {
             }
           />
           <StatBox
-            label={t("statsPast")}
-            value={stats ? figures.format(stats.closed) : "—"}
-            note={stats ? t("statsPastNote") : undefined}
-            onClick={() => commit({ q: "", selected: [...KIND_IDS], countries: null, deadlines: ["closed"] })}
+            label={t("statsWrapping")}
+            value={stats ? figures.format(stats.wrapping_up ?? 0) : "—"}
+            note={stats ? t("statsWrappingNote") : undefined}
+            title={t("wrappingUpHint")}
+            onClick={() => commit({ wrappingUp: !wrappingUp })}
           />
           {(!stats || stats.checked_at) && (
             <StatBox
@@ -358,53 +362,57 @@ function SearchScreen() {
         className="mt-1 w-full border border-border bg-background px-3 py-2 text-sm"
       />
       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-        <MultiFilter
-          name={t("country")}
-          allLabel={t("allCountries")}
-          emptyLabel={t("noCountries")}
-          selected={countrySelection}
-          onChange={(next) => commit({ countries: next.length === countryOptions.length ? null : next })}
-          options={countryOptions}
-        />
-        <MultiFilter
-          name={t("type")}
-          allLabel={t("allTypes")}
-          emptyLabel={t("noTypes")}
-          selected={selected}
-          onChange={(next) => commit({ selected: next })}
-          options={KINDS.map(([id, label]) => ({
-            id,
-            name: label,
-            count: counts?.kind?.[id] || 0,
-          })).filter((option) => option.count > 0)}
-        />
-        <MultiFilter
-          name={t("deadline")}
-          allLabel={t("allDeadlines")}
-          emptyLabel={t("noDeadlines")}
-          selected={deadlines}
-          onChange={(next) => commit({ deadlines: next })}
-          options={DEADLINES.map(([id, label]) => ({
-            id,
-            name: t(label),
-            count: counts?.deadline?.[id] || 0,
-          })).filter((option) => option.count > 0)}
-        />
-        <button
-          type="button"
-          aria-pressed={wrappingUp}
-          title={t("wrappingUpHint")}
-          onClick={() => commit({ wrappingUp: !wrappingUp })}
-          className={`cursor-pointer border border-border px-2 py-1 text-sm ${wrappingUp ? "bg-accent-wash" : "bg-card"}`}
-        >
-          {t("wrappingUpFilter")}
-        </button>
+            {!wrappingUp && (
+              <>
+            <MultiFilter
+              name={t("country")}
+              allLabel={t("allCountries")}
+              emptyLabel={t("noCountries")}
+              selected={countrySelection}
+              onChange={(next) => commit({ countries: next.length === countryOptions.length ? null : next })}
+              options={countryOptions}
+            />
+            <MultiFilter
+              name={t("type")}
+              allLabel={t("allTypes")}
+              emptyLabel={t("noTypes")}
+              selected={selected}
+              onChange={(next) => commit({ selected: next })}
+              options={KINDS.map(([id, label]) => ({
+                id,
+                name: label,
+                count: counts?.kind?.[id] || 0,
+              })).filter((option) => option.count > 0)}
+            />
+            <MultiFilter
+              name={t("deadline")}
+              allLabel={t("allDeadlines")}
+              emptyLabel={t("noDeadlines")}
+              selected={deadlines}
+              onChange={(next) => commit({ deadlines: next })}
+              options={DEADLINES.map(([id, label]) => ({
+                id,
+                name: t(label),
+                count: counts?.deadline?.[id] || 0,
+              })).filter((option) => option.count > 0)}
+            />
+              </>
+            )}
+            <SingleFilter
+              name={t("partners")}
+              value={wrappingUp ? "wrapping" : "any"}
+              onChange={(next) => commit({ wrappingUp: next === "wrapping" })}
+              options={[
+                { id: "any", name: t("partnersAny") },
+                { id: "wrapping", name: t("partnersWrapping") },
+              ]}
+            />
       </div>
       {loading && <LoadingState label={t("loading")} className="mt-6" />}
       {error && <p className="mt-6 text-sm text-status-urgent">{t("error")}</p>}
       {!loading && total != null && total > 0 && !blocked && (
         <p className="mt-6 text-sm text-muted-foreground">
-          {rows.length < total
+          {wrappingUp || rows.length < total
             ? t("showingOf").replace("{shown}", figures.format(rows.length)).replace("{total}", figures.format(total))
             : t("resultsCount").replace("{total}", figures.format(total))}
         </p>
@@ -443,6 +451,124 @@ function countryLabel(code: string): string {
   } catch {
     return code;
   }
+}
+
+function ChoiceBox({ checked, radio = false }: { checked: boolean; radio?: boolean }) {
+  if (radio) {
+    return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className="size-4 shrink-0" aria-hidden>
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d={
+            checked
+              ? "M256 42.667c117.821 0 213.334 95.513 213.334 213.333c0 117.821-95.513 213.334-213.334 213.334c-117.82 0-213.333-95.513-213.333-213.334C42.667 138.18 138.18 42.667 256 42.667m0 42.667c-94.256 0-170.666 76.41-170.666 170.666c0 94.257 76.41 170.667 170.666 170.667c94.257 0 170.667-76.41 170.667-170.667c0-94.256-76.41-170.666-170.667-170.666m0 64c58.91 0 106.667 47.756 106.667 106.666S314.911 362.667 256 362.667c-58.91 0-106.666-47.756-106.666-106.667c0-58.91 47.756-106.666 106.666-106.666"
+              : "M256 42.667c117.821 0 213.334 95.513 213.334 213.333c0 117.821-95.513 213.334-213.334 213.334c-117.82 0-213.333-95.513-213.333-213.334C42.667 138.18 138.18 42.667 256 42.667m0 42.667c-94.256 0-170.666 76.41-170.666 170.666c0 94.257 76.41 170.667 170.666 170.667c94.257 0 170.667-76.41 170.667-170.667c0-94.256-76.41-170.666-170.667-170.666"
+          }
+        />
+      </svg>
+    );
+  }
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      className="size-4 shrink-0"
+      aria-hidden
+    >
+      {checked ? (
+        <>
+          <path d="M21 10.656V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.344" />
+          <path d="m9 11 3 3L22 4" />
+        </>
+      ) : (
+        <rect width="18" height="18" x="3" y="3" rx="2" />
+      )}
+    </svg>
+  );
+}
+
+const choiceRow = "flex cursor-pointer items-center gap-2 whitespace-nowrap px-1 py-1 hover:bg-muted";
+
+function SingleFilter({
+  name,
+  options,
+  value,
+  onChange,
+}: {
+  name: string;
+  options: { id: string; name: string }[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const listId = useId();
+  const group = useId();
+  const summary = options.find((option) => option.id === value)?.name ?? name;
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointer(event: MouseEvent) {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    function onOther(event: Event) {
+      if ((event as CustomEvent<string>).detail !== listId) setOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("multi-filter-open", onOther);
+    window.dispatchEvent(new CustomEvent("multi-filter-open", { detail: listId }));
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("multi-filter-open", onOther);
+    };
+  }, [open, listId]);
+
+  return (
+    <div ref={root} className="relative">
+      <button
+        type="button"
+        aria-label={name}
+        aria-expanded={open}
+        aria-controls={listId}
+        title={summary}
+        onClick={() => setOpen((current) => !current)}
+        className="cursor-pointer truncate border border-border bg-card px-2 py-1 text-left text-sm hover:bg-muted"
+      >
+        {summary}
+      </button>
+      {open && (
+        <div id={listId} className="absolute left-0 z-20 mt-1 min-w-full border border-border bg-card p-2 shadow-sm">
+          {options.map((option) => (
+            <label key={option.id} className={choiceRow}>
+              <input
+                type="radio"
+                name={group}
+                checked={value === option.id}
+                onChange={() => {
+                  onChange(option.id);
+                  setOpen(false);
+                }}
+                className="sr-only"
+              />
+              <ChoiceBox radio checked={value === option.id} />
+              <span>{option.name}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function MultiFilter({
@@ -515,21 +641,25 @@ function MultiFilter({
       </button>
       {open && (
         <div id={listId} className="absolute left-0 z-20 mt-1 min-w-full border border-border bg-card p-2 shadow-sm">
-          <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap px-1 py-1">
+          <label className={choiceRow}>
             <input
               type="checkbox"
               checked={allOn}
               onChange={() => onChange(allOn ? [] : options.map((option) => option.id))}
+              className="sr-only"
             />
+            <ChoiceBox checked={allOn} />
             <span>{allLabel}</span>
           </label>
           {options.map((option) => (
-            <label key={option.id} className="flex cursor-pointer items-center gap-2 whitespace-nowrap px-1 py-1">
+            <label key={option.id} className={choiceRow}>
               <input
                 type="checkbox"
                 checked={selected.includes(option.id)}
                 onChange={() => toggle(option.id)}
+                className="sr-only"
               />
+              <ChoiceBox checked={selected.includes(option.id)} />
               <span>
                 {option.name} ({option.count})
               </span>

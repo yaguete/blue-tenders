@@ -68,7 +68,13 @@ def cached_stats() -> dict:
     now = time.monotonic()
     if _STATS_CACHE["body"] is not None and now - _STATS_CACHE["at"] < 300:
         return _STATS_CACHE["body"]
-    body = platform_stats(cached_opportunities(), get_store().source_freshness())
+    items = cached_opportunities()
+    body = platform_stats(items, get_store().source_freshness())
+    counts = wrapping_up_counts(
+        cached_endings(), date.today(), load_vertical().track_record.ending_window_months
+    )
+    grants = {item.id for item in items if item.kind == OpportunityKind.grant}
+    body["wrapping_up"] = sum(1 for opportunity_id in counts if opportunity_id in grants)
     _STATS_CACHE["at"] = now
     _STATS_CACHE["body"] = body
     return body
