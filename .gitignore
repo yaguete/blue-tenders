@@ -12,3 +12,4 @@ data/
 *.log
 /logs
 .cursor/plans/
+backend/supabase/.temp/
