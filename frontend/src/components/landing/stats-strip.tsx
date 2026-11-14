@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Hourglass, Library, Radar, Sunrise, type LucideIcon } from "lucide-react";
 import { landingCount } from "@/components/landing/format";
 import type { LoadState } from "@/components/landing/use-landing-data";
 import type { Stats } from "@/lib/api";
@@ -14,6 +15,7 @@ type Cell = {
   value: string;
   note?: string;
   href?: string;
+  icon: LucideIcon;
 };
 
 export function StatsStrip({ stats }: { stats: LoadState<Stats> }) {
@@ -27,21 +29,25 @@ export function StatsStrip({ stats }: { stats: LoadState<Stats> }) {
       label: t("landingStatIndexed"),
       value: indexed != null ? landingCount(indexed) : "—",
       href: "/search?deadline=open&deadline=closing_soon&deadline=upcoming&deadline=closed",
+      icon: Library,
     },
     {
       label: t("statsOpen"),
       value: data ? landingCount(openOrUpcomingCount(data)) : "—",
       href: openOrUpcomingHref,
+      icon: Sunrise,
     },
     {
       label: t("landingStatClosing"),
       value: data ? landingCount(data.closing_soon) : "—",
       href: "/search?deadline=closing_soon",
+      icon: Hourglass,
     },
     {
       label: t("statsSources"),
       value: data ? landingCount(data.sources) : "—",
       note: data?.checked_at ? checkedAt(data.checked_at) : undefined,
+      icon: Radar,
     },
   ];
 
@@ -57,9 +63,13 @@ export function StatsStrip({ stats }: { stats: LoadState<Stats> }) {
             cell.href &&
               "block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring",
           );
+          const Icon = cell.icon;
           const body = (
             <>
-              <p className="text-sm text-muted-foreground">{cell.label}</p>
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Icon className="size-4 shrink-0" aria-hidden />
+                {cell.label}
+              </p>
               <p className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <span className="text-[40px] leading-none font-semibold tabular-nums">{cell.value}</span>
                 {cell.note && <span className="text-sm text-muted-foreground">{cell.note}</span>}
