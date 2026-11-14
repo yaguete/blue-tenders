@@ -2,6 +2,7 @@
 
 No convierte una frase en fecha. El anuncio entra como información previa.
 Un 404 es un día sin diario (domingo o festivo), no un fallo de la fuente.
+Una formalización o adjudicación no entra: cierra un proceso, no anuncia una convocatoria.
 """
 
 from collections.abc import Iterable
@@ -58,6 +59,16 @@ def items(payload: dict) -> list[dict]:
     return found
 
 
+def is_award(title: str) -> bool:
+    """Formalizaciones y adjudicaciones en el BOE empiezan por un encabezado fijo.
+
+    Igual que BOAMP descarta `ATTRIBUTION` y Find a Tender los `tag` de award:
+    el proceso ya cerró, no es señal de lo que viene.
+    """
+    normalized = (title or "").strip().lower()
+    return normalized.startswith(("anuncio de formalización de contrato", "anuncio de adjudicaci"))
+
+
 class BoeSource(Source):
     id = "boe"
     kind = "api"
@@ -75,7 +86,10 @@ class BoeSource(Source):
                     continue
                 response.raise_for_status()
                 for item in items(response.json()):
-                    blob = text_tokens(f"{item.get('titulo') or ''} {item.get('texto') or ''}")
+                    title = str(item.get("titulo") or "")
+                    if is_award(title):
+                        continue
+                    blob = text_tokens(f"{title} {item.get('texto') or ''}")
                     if any(mentions(blob, keyword) for keyword in words):
                         row = dict(item)
                         row["published_at"] = day.isoformat()

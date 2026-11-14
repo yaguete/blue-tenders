@@ -736,8 +736,9 @@ function Row({ item, picking, onOpen }: { item: Card; picking: boolean; onOpen: 
   const title = shortTitle(item.title, item.title_en);
   const whenLabel = item.deadline_at
     ? when(item.deadline_at)
-    : upcoming
-      ? calendarDay(item.published_at)
+    : upcoming && item.published_at
+      ? // A PIN has no deadline; this slot shows when it was seen. Say so, or it reads like one.
+        t("seenDate").replace("{date}", calendarDay(item.published_at))
       : when(item.deadline_at);
   return (
     <li data-result-id={item.id} className="grid grid-cols-[1fr_auto] gap-4 py-4">

@@ -1,6 +1,6 @@
 from app.models.opportunity import Fact, FactOrigin, NoticeKind, Opportunity, OpportunityType
 from app.sources.boamp import BoampSource, boamp_decision
-from app.sources.boe import BoeSource, items
+from app.sources.boe import BoeSource, is_award, items
 from app.sources.contracts_finder import ContractsFinderSource
 from app.sources.fts import FtsSource
 from app.sources.ocds import keep_release, release_action
@@ -160,3 +160,16 @@ def test_boe_attaches_the_pdf_the_summary_already_gives():
         }
     )
     assert plain.documents[0].url.endswith("BOE-B-2026-1.pdf")
+
+
+def test_boe_does_not_ingest_awards_that_name_the_sector():
+    # Una formalización cierra un proceso; no es señal de una convocatoria.
+    assert is_award(
+        "Anuncio de formalización de contratos de: Intendente de Ferrol. "
+        "Objeto: Servicio de Sostenimiento de Equipos y Sistemas de iluminación de los buques."
+    )
+    assert is_award("Anuncio de adjudicación del suministro de una boya oceanográfica")
+    # Una licitación o una resolución sí entran como información previa.
+    assert not is_award("Anuncio de licitación de: Intendente de Ferrol. Objeto: Servicio de apoyo a buques")
+    assert not is_award("Resolución de la Autoridad Portuaria de Gijón por la que se hace público un pliego")
+    assert not is_award("")

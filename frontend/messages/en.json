@@ -60,6 +60,7 @@
   "officialCall": "Official call",
   "officialPage": "Official page",
   "seenOn": "Seen {date}. The notice does not give a deadline.",
+  "seenDate": "Seen {date}",
   "openOnPortal": "Open on EU portal",
   "topicLabel": "Topic",
   "partOfCall": "Part of call",
