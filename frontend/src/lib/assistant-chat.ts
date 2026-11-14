@@ -37,7 +37,13 @@ type Stored = {
 };
 
 const STORAGE_KEY = "blue-tender-assistant";
-const REVEAL_MS = 48;
+const REVEAL_MS = 16;
+
+function revealStep(lag: number): number {
+  if (lag > 200) return 10;
+  if (lag > 80) return 5;
+  return 3;
+}
 const GUEST_KEY = "assistant-guest";
 
 function guestId(): string {
@@ -154,7 +160,7 @@ export function useAssistantChat(opportunityId: string | null, pageTitle: string
         continue;
       }
       const lag = target.length - shown.length;
-      const step = lag > 120 ? 2 : 1;
+      const step = revealStep(lag);
       const next = target.slice(0, shown.length + step);
       shownRef.current[id] = next;
       updates[id] = next;
